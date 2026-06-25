@@ -1,4 +1,4 @@
-# Etiquetador de datos orales — v2.0
+# Oraltags. Oral data tagger — v2.0
 
 > *Oralstats — explorador prosódico*
 
