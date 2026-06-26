@@ -257,6 +257,18 @@ CONFIG_DIR   <- file.path(APP_DIR, "config")
 ETIQ_FILE    <- file.path(CONFIG_DIR, "etiquetas_variables.txt")
 BACKUP_DIR   <- file.path(APP_DIR, "backup")
 ANALISIS_DIR <- file.path(APP_DIR, "analisis")
+PREFS_FILE   <- file.path(CONFIG_DIR, "preferencias.txt")
+
+ANIMO_PRESETS <- c(
+  "Cada grupo entonativo que anotas acerca un poco más el corpus a la ciencia. ¡Ánimo!",
+  "La paciencia de hoy es el corpus sólido de mañana.",
+  "Un segmento cada vez: así se construyen los grandes análisis.",
+  "Tu oído atento es el mejor instrumento de medida. ¡A por ello!",
+  "Anotar es escuchar dos veces. Disfruta del proceso.",
+  "Los datos que cuidas hoy sostendrán tus conclusiones de mañana.",
+  "Pequeños avances, gran investigación. ¡Sigue así!",
+  "Detrás de cada etiqueta hay una decisión valiosa. Confía en tu criterio."
+)
 
 ensure_dirs <- function() {
   for (d in c(CONFIG_DIR, BACKUP_DIR, ANALISIS_DIR)) {
@@ -728,6 +740,17 @@ ui <- fluidPage(
                               min = 0.7, max = 2, value = 1, step = 0.1, width = "100%")
                 )
               ),
+              fluidRow(
+                column(12,
+                  checkboxInput("animo_enabled",
+                                "Mostrar mensaje de ánimo al iniciar", value = FALSE),
+                  textAreaInput("animo_custom", "Tu propio mensaje (opcional):",
+                                rows = 2, width = "100%",
+                                placeholder = "Si lo dejas vacío, se mostrará una frase al azar."),
+                  actionButton("save_prefs_btn", "Guardar preferencias",
+                               class = "btn-primary btn-sm")
+                )
+              ),
             )
           )
         )
@@ -748,6 +771,22 @@ ui <- fluidPage(
 server <- function(input, output, session) {
 
   `%||%` <- function(a, b) if (!is.null(a)) a else b
+
+  # Cargar preferencias guardadas e inicializar controles + modal de bienvenida.
+  local({
+    prefs0 <- load_prefs(PREFS_FILE)
+    updateCheckboxInput(session, "animo_enabled", value = isTRUE(prefs0$animo_enabled))
+    updateTextAreaInput(session, "animo_custom",  value = prefs0$animo_custom %||% "")
+    updateSliderInput(session, "plot_font_scale",
+                      value = as.numeric(prefs0$plot_font_scale %||% 1))
+    if (isTRUE(prefs0$animo_enabled)) {
+      showModal(modalDialog(
+        title = "Bienvenido/a a Oraltags",
+        choose_message(prefs0$animo_custom, ANIMO_PRESETS),
+        easyClose = TRUE, footer = modalButton("Cerrar")
+      ))
+    }
+  })
 
   video_temp_dir <- tempdir()
   addResourcePath("tmpvideo", video_temp_dir)
@@ -2787,6 +2826,14 @@ server <- function(input, output, session) {
     out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
     out
   }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE)
+
+  observeEvent(input$save_prefs_btn, {
+    save_prefs(list(animo_enabled  = isTRUE(input$animo_enabled),
+                    animo_custom   = input$animo_custom %||% "",
+                    plot_font_scale = as.numeric(input$plot_font_scale %||% 1)),
+               PREFS_FILE)
+    showNotification("Preferencias guardadas", type = "message")
+  })
 
 }
 
