@@ -1,6 +1,6 @@
 # Oraltags. Oral data tagger — v2.0
 
-> *Oralstats — explorador prosódico*
+> *Oraltags — explorador prosódico de datos orales*
 
 Aplicación Shiny en R para la anotación lingüística y el análisis acústico de corpus orales. Permite cargar audio y transcripción, navegar grupo entonativo a grupo entonativo, calcular automáticamente métricas prosódicas, anotar con categorías totalmente configurables y explorar los resultados con tablas, figuras tipo Praat y gráficos estadísticos.
 

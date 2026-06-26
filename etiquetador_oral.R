@@ -1,5 +1,5 @@
 # etiquetador_oral.R  –  Versión 2.0
-# Oralstats Etiquetador
+# Oraltags
 
 # Permitir uploads de hasta 2 GB (ajusta según necesidad)
 options(shiny.maxRequestSize = 2048 * 1024^2)
@@ -47,7 +47,7 @@ if (HAS_PRAATPICTURE) library(praatpicture)
 APP_DIR <- .detectar_app_dir()
 if (dir.exists(APP_DIR)) {
   setwd(APP_DIR)
-  message("Etiquetador: carpetas de trabajo ancladas a ", APP_DIR)
+  message("Oraltags: carpetas de trabajo ancladas a ", APP_DIR)
 }
 
 # ── Helpers puros (acuerdo entre jueces y descriptivos de corpus) ──
@@ -375,8 +375,8 @@ ensure_annotation_cols <- function(df) {
 # UI
 # ============================================================
 ui <- fluidPage(
-  title = "Oralstats Etiquetador v2.0",
-  theme = shinythemes::shinytheme("united"),
+  title = "Oraltags",
+  theme = shinythemes::shinytheme("cerulean"),
   useShinyjs(),
 
   tags$head(tags$style(HTML("
@@ -426,8 +426,8 @@ ui <- fluidPage(
 
     titlePanel(div(
       style = "display:flex; align-items:center; justify-content:space-between;",
-      span("Etiquetador de datos orales. Versión 2.0"),
-      span(style = "font-size:12px; color:#6b7280;", "Oralstats – explorador prosódico")
+      span("Oraltags"),
+      span(style = "font-size:12px; color:#6b7280;", "Etiquetador de datos orales · explorador prosódico")
     )),
 
     fluidRow(
@@ -2302,14 +2302,31 @@ server <- function(input, output, session) {
   }
 
   # Actualizar selectores cuando cambia df_full
+  # Columnas nominales "de análisis" (no anotadas a mano) seleccionables en Estadísticas:
+  # el archivo de origen y el patrón melódico (tonema), que se computa automáticamente.
+  stat_extra_nominal <- c(filename = "Archivo",
+                          F0_final_pattern = "Patrón melódico (tonema)")
+
+  # Añade a 'ch' las columnas de stat_extra_nominal presentes con >=2 valores distintos.
+  add_extra_nominal <- function(ch, df) {
+    for (cn in names(stat_extra_nominal)) {
+      if (!cn %in% names(df)) next
+      vals <- na.omit(df[[cn]]); vals <- vals[nzchar(vals)]
+      if (length(unique(vals)) >= 2)
+        ch <- c(ch, setNames(cn, stat_extra_nominal[[cn]]))
+    }
+    ch
+  }
+
   observe({
     req(rv$df_full)
     df <- rv$df_full
 
-    # Variables categóricas: speaker + anotaciones con al menos 2 valores distintos
+    # Variables categóricas: speaker + archivo/patrón + anotaciones con >=2 valores distintos
     cat_choices <- c()
     if ("speaker" %in% names(df) && length(unique(na.omit(df$speaker))) >= 2)
       cat_choices <- c(cat_choices, c("Hablante" = "speaker"))
+    cat_choices <- add_extra_nominal(cat_choices, df)
     for (j in seq_len(n_anot)) {
       cn  <- paste0("anot", j)
       if (!cn %in% names(df)) next
@@ -2337,6 +2354,7 @@ server <- function(input, output, session) {
     grp_choices <- c("(sin agrupación)" = "")
     if ("speaker" %in% names(df) && length(unique(na.omit(df$speaker))) >= 2)
       grp_choices <- c(grp_choices, c("Hablante" = "speaker"))
+    grp_choices <- add_extra_nominal(grp_choices, df)
     for (j in seq_len(n_anot)) {
       cn  <- paste0("anot", j)
       if (!cn %in% names(df)) next
@@ -2374,7 +2392,9 @@ server <- function(input, output, session) {
       ylab <- "Frecuencia (n)"
       fmt  <- function(x) as.character(x)
     }
-    lbl <- if (!is.null(rv$anot_defs[[cn]])) sub(":$","",rv$anot_defs[[cn]]$label) else cn
+    lbl <- if (!is.null(rv$anot_defs[[cn]])) sub(":$","",rv$anot_defs[[cn]]$label)
+           else if (cn %in% names(stat_extra_nominal)) stat_extra_nominal[[cn]]
+           else cn
     par(mar = c(8, 5, 3, 1))
     bp <- barplot(tbl, col = "#3b82f6", border = "white",
                   main = lbl, ylab = ylab, las = 2,
