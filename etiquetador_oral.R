@@ -50,6 +50,12 @@ if (dir.exists(APP_DIR)) {
   message("Etiquetador: carpetas de trabajo ancladas a ", APP_DIR)
 }
 
+# ── Helpers puros (acuerdo entre jueces y descriptivos de corpus) ──
+for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R")) {
+  .p <- file.path(APP_DIR, "R", .f)
+  if (file.exists(.p)) source(.p)
+}
+
 n_anot <- 33
 
 # ============================================================
@@ -2334,22 +2340,6 @@ server <- function(input, output, session) {
                  add = TRUE, pch = 20, col = "#1d4ed880", cex = 0.7)
     }
   })
-
-  # Kurtosis y asimetría (sin paquetes extra)
-  stat_skewness <- function(x) {
-    x <- na.omit(x); n <- length(x)
-    if (n < 3) return(NA_real_)
-    m <- mean(x); s <- sd(x)
-    if (s == 0) return(NA_real_)
-    (sum((x - m)^3) / n) / s^3
-  }
-  stat_kurtosis <- function(x) {
-    x <- na.omit(x); n <- length(x)
-    if (n < 4) return(NA_real_)
-    m <- mean(x); s <- sd(x)
-    if (s == 0) return(NA_real_)
-    (sum((x - m)^4) / n) / s^4 - 3   # kurtosis de exceso
-  }
 
   output$stat_summary <- renderPrint({
     input$stat_box_update
