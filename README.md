@@ -21,19 +21,15 @@ Aplicación Shiny en R para la anotación lingüística y el análisis acústico
 
 ## Funcionalidades principales
 
-La app se organiza en diez pestañas superiores:
+La app se organiza en seis pestañas superiores:
 
 | Pestaña | Función |
 |---|---|
 | **Anotaciones** | Formulario de etiquetado dividido en cinco bloques temáticos (ver más abajo). |
-| **Tabla** | Tabla navegable y filtrable de todas las filas, con columna de `contexto` opcional. |
-| **Contexto** | Muestra las N filas anteriores y posteriores a la selección actual, resaltando la fila activa. |
-| **Análisis fonético** | Oscilograma, espectrograma y curva melódica (F0) del segmento; reproducción y cálculo de F0/intensidad de todos los segmentos. |
-| **Métricas** | Informe prosódico textual de la fila activa (pausas, velocidad de habla, F0, intensidad). |
-| **Praatpicture** | Figura multipanel al estilo Praat (oscilograma, espectrograma, F0, intensidad) renderizable a la carta. |
-| **Estadísticas** | Gráficos de barras (variables categóricas) y diagramas de caja (variables numéricas). |
+| **Contexto** | Filas anteriores/posteriores a la selección; permite **editar speaker/label de la fila activa** (se guarda en el análisis) y mostrar una columna **`ejemplo_para_paper`** con cita `(corpus, inicio-fin)`. |
+| **Análisis fonético** | Subpestañas **Imágenes** (oscilograma, espectrograma, F0), **Métricas** (informe prosódico) y **Praatpicture** (figura multipanel). |
+| **Estadísticas** | Subpestañas **Este archivo** (barras/boxplots del corpus cargado) y **Corpus completo** (visión global de `analisis_todos.txt`). |
 | **Coincidencia** | Acuerdo entre 2–10 jueces (archivos de análisis de otros equipos): % de acuerdo, Cohen's Kappa (ponderado para ordinales), Fleiss' Kappa y Krippendorff's α (opcional). |
-| **Corpus** | Visión global de `analisis_todos.txt`: nº de archivos y filas, descriptivos de cada variable numérica, gráficos y agrupación por hasta 4 variables. |
 | **Configuración** | Editor de variables de anotación: personaliza etiquetas y categorías. |
 
 ### Carga de material y navegación
