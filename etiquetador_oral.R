@@ -1841,8 +1841,9 @@ server <- function(input, output, session) {
     else
       list()
     datatable(rv$df, selection = "single", editable = TRUE,
-              options = list(pageLength = 20, scrollX = TRUE,
-                             columnDefs = col_defs),
+              extensions = "Buttons",
+              options = dt_with_buttons(list(pageLength = 20, scrollX = TRUE,
+                                             columnDefs = col_defs)),
               rownames = FALSE)
   }, server = TRUE)
 
@@ -1870,9 +1871,10 @@ server <- function(input, output, session) {
       stringsAsFactors = FALSE
     )
     datatable(ctx_df,
-      options = list(pageLength = 2 * nc + 1, scrollX = TRUE,
+      extensions = "Buttons",
+      options = dt_with_buttons(list(pageLength = 2 * nc + 1, scrollX = TRUE,
                      searching = FALSE, paging = FALSE,
-                     columnDefs = list(list(targets = 4, visible = FALSE))),
+                     columnDefs = list(list(targets = 4, visible = FALSE)))),
       rownames = FALSE
     ) %>% formatStyle("es_actual", target = "row",
                       backgroundColor = styleEqual(c(TRUE,FALSE), c("#ffffcc","white")))
@@ -2490,7 +2492,7 @@ server <- function(input, output, session) {
     data.frame(Archivo = names(dfs),
                Filas = vapply(dfs, nrow, integer(1)),
                check.names = FALSE)
-  }, options = list(dom = "t"), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(dom = "t")), rownames = FALSE)
 
   coinc_var_label <- function(cn) {
     if (!is.null(rv$anot_defs[[cn]])) sub(":$", "", trimws(rv$anot_defs[[cn]]$label)) else cn
@@ -2556,7 +2558,7 @@ server <- function(input, output, session) {
     res <- coinc_results()
     validate(need(!is.null(res$table), "Sin segmentos comunes entre los archivos."))
     res$table
-  }, options = list(pageLength = 25, dom = "tip"), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE)
 
   output$coinc_barplot <- renderPlot({
     res <- coinc_results()
@@ -2663,7 +2665,7 @@ server <- function(input, output, session) {
     s <- corpus_file_summary(df)
     req(!is.null(s$per_file))
     s$per_file[order(-s$per_file$n_filas), ]
-  }, options = list(pageLength = 10, dom = "tip"), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 10, dom = "tip")), rownames = FALSE)
 
   output$corpus_desc <- renderDT({
     df <- corpus_df(); req(df)
@@ -2679,7 +2681,7 @@ server <- function(input, output, session) {
     num_cols <- setdiff(names(out), "Variable")
     out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
     out
-  }, options = list(pageLength = 15, dom = "tip"), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 15, dom = "tip")), rownames = FALSE)
 
   output$corpus_plot <- renderPlot({
     df <- corpus_df(); req(df, nzchar(input$corpus_num_var %||% ""))
@@ -2724,7 +2726,7 @@ server <- function(input, output, session) {
     num_cols <- setdiff(names(out), "grupo")
     out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
     out
-  }, options = list(pageLength = 25, dom = "tip"), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE)
 
 }
 
