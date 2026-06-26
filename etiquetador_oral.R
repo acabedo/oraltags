@@ -51,7 +51,7 @@ if (dir.exists(APP_DIR)) {
 }
 
 # ── Helpers puros (acuerdo entre jueces y descriptivos de corpus) ──
-for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R", "plot_export.R", "prefs.R")) {
+for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R", "plot_export.R", "prefs.R", "contexto.R")) {
   .p <- file.path(APP_DIR, "R", .f)
   if (file.exists(.p)) source(.p)
 }
@@ -1689,19 +1689,8 @@ server <- function(input, output, session) {
       }
     }
 
-    # contexto ±5
-    if (!"contexto" %in% names(df)) df$contexto <- NA_character_
-    n_rows <- nrow(df)
-    for (i in seq_len(n_rows)) {
-      filas_ctx <- max(1, i - 5):min(n_rows, i + 5)
-      ctx <- mapply(function(sp, lb) {
-        sp <- trimws(ifelse(is.na(sp), "", sp))
-        lb <- trimws(ifelse(is.na(lb), "", lb))
-        if (!nzchar(lb)) return("")
-        if (nzchar(sp)) paste0(sp, ": ", lb) else lb
-      }, df$speaker[filas_ctx], df$label[filas_ctx])
-      df$contexto[i] <- paste(ctx[nzchar(ctx)], collapse = " | ")
-    }
+    # contexto ±5 (helper en R/contexto.R)
+    df <- recompute_contexto(df, window = 5)
 
     # reordenar columnas
     col_ord <- make_col_order()
