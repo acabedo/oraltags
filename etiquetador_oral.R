@@ -629,7 +629,10 @@ ui <- fluidPage(
                                       choices = NULL, multiple = TRUE, width = "100%")),
                 column(6, selectInput("coinc_ord_vars",
                                       "Variables ordinales (kappa ponderado):",
-                                      choices = NULL, multiple = TRUE, width = "100%"))
+                                      choices = NULL, multiple = TRUE, width = "100%"),
+                       div(class = "small-helper-text",
+                           "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); ",
+                           "los niveles de texto se ordenan alfabéticamente."))
               ),
               actionButton("coinc_run", "Calcular acuerdo",
                            class = "btn-primary btn-sm"),
@@ -2506,7 +2509,7 @@ server <- function(input, output, session) {
         `kappa parejas` = round(r$mean_pairwise, 3),
         `Krippendorff alpha` = round(r$krippendorff, 3),
         Interpretacion = r$interpretation,
-        Ponderado = ifelse(isTRUE(r$weighted), "sí", ""),
+        Ponderado = if (!isTRUE(r$weighted)) "" else if (length(dfs) == 2) "sí" else "sí (solo parejas)",
         check.names = FALSE, stringsAsFactors = FALSE)
     })
     rows <- rows[!vapply(rows, is.null, logical(1))]
@@ -2583,6 +2586,11 @@ server <- function(input, output, session) {
     cf <- file.path(ANALISIS_DIR, "analisis_todos.txt")
     if (!file.exists(cf)) return(NULL)
     tryCatch(read_analysis_file(cf), error = function(e) NULL)
+  })
+
+  # Refrescar limpia el archivo subido para volver al consolidado en disco
+  observeEvent(input$corpus_refresh, {
+    shinyjs::reset("corpus_file")
   })
 
   corpus_num_avail <- reactive({
