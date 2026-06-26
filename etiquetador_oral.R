@@ -589,6 +589,11 @@ ui <- fluidPage(
                     )
                   ),
                   plotOutput("stat_barplot", height = 420)
+                  ,
+                  fluidRow(column(12,
+                    downloadButton("stat_barplot_png", "PNG", class = "btn-sm"),
+                    downloadButton("stat_barplot_pdf", "PDF", class = "btn-sm")
+                  ))
                 ),
                 tabPanel("Boxplots", br(),
                   fluidRow(
@@ -607,6 +612,10 @@ ui <- fluidPage(
                     )
                   ),
                   plotOutput("stat_boxplot", height = 380),
+                  fluidRow(column(12,
+                    downloadButton("stat_boxplot_png", "PNG", class = "btn-sm"),
+                    downloadButton("stat_boxplot_pdf", "PDF", class = "btn-sm")
+                  )),
                   br(),
                   verbatimTextOutput("stat_summary")
                 )
@@ -641,6 +650,10 @@ ui <- fluidPage(
               DTOutput("coinc_table"),
               br(),
               plotOutput("coinc_barplot", height = 420),
+              fluidRow(column(12,
+                downloadButton("coinc_barplot_png", "PNG", class = "btn-sm"),
+                downloadButton("coinc_barplot_pdf", "PDF", class = "btn-sm")
+              )),
               br(),
               fluidRow(
                 column(6, selectInput("coinc_confusion_var",
@@ -677,6 +690,10 @@ ui <- fluidPage(
                                       choices = NULL, width = "100%"))
               ),
               plotOutput("corpus_plot", height = 420),
+              fluidRow(column(12,
+                downloadButton("corpus_plot_png", "PNG", class = "btn-sm"),
+                downloadButton("corpus_plot_pdf", "PDF", class = "btn-sm")
+              )),
               hr(),
               h6("Agrupar por hasta 4 variables (tabla cruzada de descriptivos)"),
               fluidRow(
@@ -2180,6 +2197,22 @@ server <- function(input, output, session) {
     if (is.na(s) || s <= 0) 1 else s
   })
 
+  # Registra descargas PNG (300 ppp) y PDF (vectorial) para un gráfico.
+  add_plot_download <- function(output, id, draw_fun, basename) {
+    output[[paste0(id, "_png")]] <- downloadHandler(
+      filename = function() plot_filename(basename, "png"),
+      content  = function(file) {
+        grDevices::png(file, width = 9, height = 6, units = "in", res = 300)
+        on.exit(grDevices::dev.off()); draw_fun()
+      })
+    output[[paste0(id, "_pdf")]] <- downloadHandler(
+      filename = function() plot_filename(basename, "pdf"),
+      content  = function(file) {
+        grDevices::pdf(file, width = 9, height = 6)
+        on.exit(grDevices::dev.off()); draw_fun()
+      })
+  }
+
   output$oscillo_plot <- renderPlot({
     req(rv$selected_segment)
     g <- gcex()
@@ -2391,27 +2424,23 @@ server <- function(input, output, session) {
   })
 
   # --- Gráfico de barras ---
-  output$stat_barplot <- renderPlot({
-    input$stat_bar_update
+  draw_stat_barplot <- function() {
+    g <- gcex()
     req(rv$df_full, nzchar(input$stat_cat_var %||% ""))
     cn   <- input$stat_cat_var
     df   <- rv$df_full
     if (!cn %in% names(df)) return(NULL)
     vals <- df[[cn]]
     vals <- na.omit(vals[nzchar(ifelse(is.na(vals), "", vals))])
-    # Separar valores múltiples (guardados con "; ")
     vals <- unlist(strsplit(as.character(vals), ";\\s*"))
     vals <- trimws(vals); vals <- vals[nzchar(vals)]
     if (length(vals) == 0) { plot.new(); text(.5,.5,"Sin datos"); return() }
-
     tbl <- sort(table(vals), decreasing = TRUE)
     if (input$stat_bar_type == "pct") {
-      tbl <- tbl / sum(tbl) * 100
-      ylab <- "Porcentaje (%)"
-      fmt  <- function(x) sprintf("%.1f%%", x)
+      tbl <- tbl / sum(tbl) * 100; ylab <- "Porcentaje (%)"
+      fmt <- function(x) sprintf("%.1f%%", x)
     } else {
-      ylab <- "Frecuencia (n)"
-      fmt  <- function(x) as.character(x)
+      ylab <- "Frecuencia (n)"; fmt <- function(x) as.character(x)
     }
     lbl <- if (!is.null(rv$anot_defs[[cn]])) sub(":$","",rv$anot_defs[[cn]]$label)
            else if (cn %in% names(stat_extra_nominal)) stat_extra_nominal[[cn]]
@@ -2419,43 +2448,45 @@ server <- function(input, output, session) {
     par(mar = c(8, 5, 3, 1))
     bp <- barplot(tbl, col = "#3b82f6", border = "white",
                   main = lbl, ylab = ylab, las = 2,
-                  ylim = c(0, max(tbl) * 1.1),  # margen superior para la etiqueta de la barra más alta
-                  cex.names = 0.8, cex.axis = 0.9, cex.main = 1)
+                  ylim = c(0, max(tbl) * 1.1),
+                  cex.names = 0.8 * g, cex.axis = 0.9 * g,
+                  cex.main = 1 * g, cex.lab = g)
     text(bp, tbl + max(tbl) * 0.02, labels = fmt(tbl),
-         cex = 0.75, adj = c(0.5, 0))
-  })
+         cex = 0.75 * g, adj = c(0.5, 0))
+  }
+  output$stat_barplot <- renderPlot({ input$stat_bar_update; draw_stat_barplot() })
+  add_plot_download(output, "stat_barplot", draw_stat_barplot, "barras")
 
   # --- Boxplot ---
-  output$stat_boxplot <- renderPlot({
-    input$stat_box_update
+  draw_stat_boxplot <- function() {
+    g <- gcex()
     req(rv$df_full, nzchar(input$stat_num_var %||% ""))
-    cn    <- input$stat_num_var
-    grp   <- input$stat_group_var
-    df    <- rv$df_full
+    cn  <- input$stat_num_var
+    grp <- input$stat_group_var
+    df  <- rv$df_full
     if (!cn %in% names(df)) return(NULL)
-    lbl   <- stat_col_label(cn)
-
+    lbl <- stat_col_label(cn)
     if (!is.null(grp) && nzchar(grp) && grp %in% names(df)) {
       df2   <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
       grp_v <- factor(df2[[grp]])
       par(mar = c(9, 5, 3, 1))
-      boxplot(df2[[cn]] ~ grp_v,
-              col = "#93c5fd", border = "#1d4ed8",
-              main = lbl, ylab = lbl, xlab = "",
-              las = 2, cex.axis = 0.8, outline = FALSE)
-      stripchart(df2[[cn]] ~ grp_v, vertical = TRUE,
-                 method = "jitter", add = TRUE,
-                 pch = 20, col = "#1d4ed880", cex = 0.6)
+      boxplot(df2[[cn]] ~ grp_v, col = "#93c5fd", border = "#1d4ed8",
+              main = lbl, ylab = lbl, xlab = "", las = 2,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g, outline = FALSE)
+      stripchart(df2[[cn]] ~ grp_v, vertical = TRUE, method = "jitter",
+                 add = TRUE, pch = 20, col = "#1d4ed880", cex = 0.6 * g)
     } else {
       vals <- na.omit(df[[cn]])
       par(mar = c(3, 5, 3, 1))
       boxplot(vals, col = "#93c5fd", border = "#1d4ed8",
-              main = lbl, ylab = lbl, outline = FALSE,
-              horizontal = FALSE)
+              main = lbl, ylab = lbl, outline = FALSE, horizontal = FALSE,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g)
       stripchart(vals, vertical = TRUE, method = "jitter",
-                 add = TRUE, pch = 20, col = "#1d4ed880", cex = 0.7)
+                 add = TRUE, pch = 20, col = "#1d4ed880", cex = 0.7 * g)
     }
-  })
+  }
+  output$stat_boxplot <- renderPlot({ input$stat_box_update; draw_stat_boxplot() })
+  add_plot_download(output, "stat_boxplot", draw_stat_boxplot, "boxplot")
 
   output$stat_summary <- renderPrint({
     input$stat_box_update
@@ -2579,7 +2610,8 @@ server <- function(input, output, session) {
     res$table
   }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE)
 
-  output$coinc_barplot <- renderPlot({
+  draw_coinc_barplot <- function() {
+    g <- gcex()
     res <- coinc_results()
     req(!is.null(res$table))
     kcol <- if (res$n_raters == 2) "Cohen kappa" else "Fleiss kappa"
@@ -2591,9 +2623,11 @@ server <- function(input, output, session) {
     barplot(vals, col = "#3b82f6", border = "white", las = 2,
             ylim = c(min(0, min(vals)) * 1.1, 1),
             main = sprintf("%s por variable", kcol), ylab = "kappa",
-            cex.names = 0.8)
+            cex.names = 0.8 * g, cex.axis = g, cex.main = g, cex.lab = g)
     abline(h = c(0.4, 0.6, 0.8), col = "#9ca3af", lty = 3)
-  })
+  }
+  output$coinc_barplot <- renderPlot({ draw_coinc_barplot() })
+  add_plot_download(output, "coinc_barplot", draw_coinc_barplot, "coincidencia_kappa")
 
   observeEvent(coinc_results(), {
     res <- coinc_results()
@@ -2702,7 +2736,8 @@ server <- function(input, output, session) {
     out
   }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 15, dom = "tip")), rownames = FALSE)
 
-  output$corpus_plot <- renderPlot({
+  draw_corpus_plot <- function() {
+    g <- gcex()
     df <- corpus_df(); req(df, nzchar(input$corpus_num_var %||% ""))
     cn <- input$corpus_num_var
     if (!cn %in% names(df)) return(NULL)
@@ -2715,11 +2750,13 @@ server <- function(input, output, session) {
         d2 <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
         par(mar = c(10, 5, 3, 1))
         boxplot(d2[[cn]] ~ factor(d2[[grp]]), col = "#93c5fd", border = "#1d4ed8",
-                main = lbl, ylab = lbl, xlab = "", las = 2, cex.axis = 0.8, outline = FALSE)
+                main = lbl, ylab = lbl, xlab = "", las = 2,
+                cex.axis = 0.8 * g, cex.main = g, cex.lab = g, outline = FALSE)
       } else {
         par(mar = c(3, 5, 3, 1))
         boxplot(na.omit(df[[cn]]), col = "#93c5fd", border = "#1d4ed8",
-                main = lbl, ylab = lbl, outline = FALSE)
+                main = lbl, ylab = lbl, outline = FALSE,
+                cex.axis = 0.8 * g, cex.main = g, cex.lab = g)
       }
     } else {
       if (has_grp) {
@@ -2727,14 +2764,18 @@ server <- function(input, output, session) {
         ag <- tapply(d2[[cn]], factor(d2[[grp]]), mean, na.rm = TRUE)
         par(mar = c(10, 5, 3, 1))
         barplot(ag, col = "#3b82f6", border = "white", main = paste("Media de", lbl),
-                ylab = lbl, las = 2, cex.names = 0.8)
+                ylab = lbl, las = 2, cex.names = 0.8 * g, cex.axis = g,
+                cex.main = g, cex.lab = g)
       } else {
         par(mar = c(3, 5, 3, 1))
         barplot(mean(df[[cn]], na.rm = TRUE), col = "#3b82f6", border = "white",
-                main = paste("Media de", lbl), ylab = lbl, names.arg = "TOTAL")
+                main = paste("Media de", lbl), ylab = lbl, names.arg = "TOTAL",
+                cex.axis = g, cex.main = g, cex.lab = g, cex.names = g)
       }
     }
-  })
+  }
+  output$corpus_plot <- renderPlot({ draw_corpus_plot() })
+  add_plot_download(output, "corpus_plot", draw_corpus_plot, "corpus")
 
   output$corpus_cross <- renderDT({
     df <- corpus_df(); req(df, nzchar(input$corpus_num_var %||% ""))
