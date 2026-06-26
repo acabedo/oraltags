@@ -439,7 +439,7 @@ ui <- fluidPage(
     titlePanel(div(
       style = "display:flex; align-items:center; justify-content:space-between;",
       div(style = "display:flex; align-items:center;",
-        tags$img(src = "logo.svg", height = "40px", style = "margin-right:10px;"),
+        HTML('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40" height="40" style="margin-right:10px;vertical-align:middle;" role="img" aria-label="Oraltags"><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="#e95420" stroke="#b5401a" stroke-width="3"/><rect x="28" y="16" width="44" height="24" rx="8" fill="#ffffff"/><polygon points="37,40 37,52 49,40" fill="#ffffff"/><g stroke="#e95420" stroke-width="3.5" stroke-linecap="round"><line x1="36" y1="23" x2="36" y2="33"/><line x1="43" y1="19" x2="43" y2="37"/><line x1="50" y1="21" x2="50" y2="35"/><line x1="57" y1="18" x2="57" y2="38"/><line x1="64" y1="24" x2="64" y2="32"/></g><text x="50" y="73" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="0.3" fill="#ffffff">Oraltags</text></svg>'),
         span("Oraltags", style = "font-size:22px; font-weight:600;")
       ),
       span(style = "font-size:12px; color:#6b7280;",
