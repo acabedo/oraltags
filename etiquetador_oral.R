@@ -438,8 +438,12 @@ ui <- fluidPage(
 
     titlePanel(div(
       style = "display:flex; align-items:center; justify-content:space-between;",
-      span("Oraltags"),
-      span(style = "font-size:12px; color:#6b7280;", "Etiquetador de datos orales · explorador prosódico")
+      div(style = "display:flex; align-items:center;",
+        tags$img(src = "logo.svg", height = "40px", style = "margin-right:10px;"),
+        span("Oraltags", style = "font-size:22px; font-weight:600;")
+      ),
+      span(style = "font-size:12px; color:#6b7280;",
+           "Etiquetador de datos orales · explorador prosódico")
     )),
 
     fluidRow(
