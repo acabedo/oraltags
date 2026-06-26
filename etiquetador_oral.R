@@ -647,6 +647,44 @@ ui <- fluidPage(
               verbatimTextOutput("coinc_confusion")
             ),
 
+            tabPanel("Corpus", br(),
+              fluidRow(
+                column(8, div(class = "small-helper-text",
+                  "Visión global del corpus consolidado (analisis/analisis_todos.txt).")),
+                column(4, actionButton("corpus_refresh", "Refrescar desde disco",
+                                       class = "btn-info btn-sm", style = "width:100%;"))
+              ),
+              fileInput("corpus_file", "(Opcional) Cargar otro consolidado:",
+                        accept = c(".txt", ".tsv", ".csv"), width = "100%"),
+              hr(),
+              verbatimTextOutput("corpus_summary"),
+              DTOutput("corpus_perfile"),
+              hr(),
+              h6("Descriptivos generales (variables numéricas)"),
+              DTOutput("corpus_desc"),
+              hr(),
+              h6("Gráfico"),
+              fluidRow(
+                column(4, selectInput("corpus_num_var", "Variable numérica:",
+                                      choices = NULL, width = "100%")),
+                column(4, radioButtons("corpus_plot_type", "Tipo:",
+                                       c("Boxplot" = "box", "Barras (medias)" = "bar"),
+                                       inline = TRUE)),
+                column(4, selectInput("corpus_group1", "Agrupar gráfico por:",
+                                      choices = NULL, width = "100%"))
+              ),
+              plotOutput("corpus_plot", height = 420),
+              hr(),
+              h6("Agrupar por hasta 4 variables (tabla cruzada de descriptivos)"),
+              fluidRow(
+                column(3, selectInput("corpus_g1", "Grupo 1:", choices = NULL, width = "100%")),
+                column(3, selectInput("corpus_g2", "Grupo 2:", choices = NULL, width = "100%")),
+                column(3, selectInput("corpus_g3", "Grupo 3:", choices = NULL, width = "100%")),
+                column(3, selectInput("corpus_g4", "Grupo 4:", choices = NULL, width = "100%"))
+              ),
+              DTOutput("corpus_cross")
+            ),
+
             tabPanel("Configuración", br(),
               h6("⚙️ Parámetros acústicos"),
               fluidRow(
@@ -2534,6 +2572,131 @@ server <- function(input, output, session) {
     cat("Matriz de confusión (juez 1 filas × juez 2 columnas):\n\n")
     print(table(juez1 = cmat[, 1], juez2 = cmat[, 2]))
   })
+
+  # ====================== CORPUS (visión global) ======================
+  corpus_df <- reactive({
+    input$corpus_refresh
+    if (!is.null(input$corpus_file)) {
+      return(tryCatch(read_analysis_file(input$corpus_file$datapath),
+                      error = function(e) NULL))
+    }
+    cf <- file.path(ANALISIS_DIR, "analisis_todos.txt")
+    if (!file.exists(cf)) return(NULL)
+    tryCatch(read_analysis_file(cf), error = function(e) NULL)
+  })
+
+  corpus_num_avail <- reactive({
+    df <- corpus_df(); req(df)
+    stat_num_cols[vapply(stat_num_cols, function(cn)
+      cn %in% names(df) && sum(!is.na(suppressWarnings(as.numeric(df[[cn]])))) >= 1,
+      logical(1))]
+  })
+
+  corpus_group_choices <- reactive({
+    df <- corpus_df(); req(df)
+    ch <- c("(ninguno)" = "")
+    if ("filename" %in% names(df)) ch <- c(ch, c("Archivo" = "filename"))
+    if ("speaker" %in% names(df))  ch <- c(ch, c("Hablante" = "speaker"))
+    for (j in seq_len(n_anot)) {
+      cn <- paste0("anot", j)
+      if (!cn %in% names(df)) next
+      vals <- df[[cn]]; vals <- vals[!is.na(vals) & nzchar(vals)]
+      n_lev <- length(unique(vals))
+      if (n_lev >= 2 && n_lev <= 30) {
+        lbl <- if (!is.null(rv$anot_defs[[cn]])) sub(":$", "", trimws(rv$anot_defs[[cn]]$label)) else cn
+        ch <- c(ch, setNames(cn, lbl))
+      }
+    }
+    ch
+  })
+
+  observeEvent(corpus_df(), {
+    nums <- corpus_num_avail()
+    num_ch <- setNames(nums, vapply(nums, stat_col_label, character(1)))
+    if (length(num_ch) == 0) num_ch <- c("(sin datos)" = "")
+    updateSelectInput(session, "corpus_num_var", choices = num_ch)
+    gch <- corpus_group_choices()
+    for (id in c("corpus_group1", "corpus_g1", "corpus_g2", "corpus_g3", "corpus_g4"))
+      updateSelectInput(session, id, choices = gch)
+  })
+
+  output$corpus_summary <- renderPrint({
+    df <- corpus_df()
+    validate(need(!is.null(df), "No se encontró analisis_todos.txt. Genera análisis o sube un archivo."))
+    s <- corpus_file_summary(df)
+    cat(sprintf("Archivos (corpus): %s\n",
+                if (is.na(s$n_files)) "N/D (sin columna filename)" else s$n_files))
+    cat(sprintf("Filas totales: %d\n", s$n_rows))
+    cat(sprintf("Variables (columnas): %d\n", s$n_vars))
+  })
+
+  output$corpus_perfile <- renderDT({
+    df <- corpus_df(); req(df)
+    s <- corpus_file_summary(df)
+    req(!is.null(s$per_file))
+    s$per_file[order(-s$per_file$n_filas), ]
+  }, options = list(pageLength = 10, dom = "tip"), rownames = FALSE)
+
+  output$corpus_desc <- renderDT({
+    df <- corpus_df(); req(df)
+    nums <- corpus_num_avail()
+    validate(need(length(nums) >= 1, "Sin variables numéricas con datos."))
+    rows <- lapply(nums, function(cn) {
+      d <- describe_numeric(df, cn)
+      d$grupo <- stat_col_label(cn)
+      names(d)[1] <- "Variable"
+      d
+    })
+    out <- do.call(rbind, rows)
+    num_cols <- setdiff(names(out), "Variable")
+    out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
+    out
+  }, options = list(pageLength = 15, dom = "tip"), rownames = FALSE)
+
+  output$corpus_plot <- renderPlot({
+    df <- corpus_df(); req(df, nzchar(input$corpus_num_var %||% ""))
+    cn <- input$corpus_num_var
+    if (!cn %in% names(df)) return(NULL)
+    df[[cn]] <- suppressWarnings(as.numeric(df[[cn]]))
+    grp <- input$corpus_group1
+    lbl <- stat_col_label(cn)
+    has_grp <- !is.null(grp) && nzchar(grp) && grp %in% names(df)
+    if (input$corpus_plot_type == "box") {
+      if (has_grp) {
+        d2 <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
+        par(mar = c(10, 5, 3, 1))
+        boxplot(d2[[cn]] ~ factor(d2[[grp]]), col = "#93c5fd", border = "#1d4ed8",
+                main = lbl, ylab = lbl, xlab = "", las = 2, cex.axis = 0.8, outline = FALSE)
+      } else {
+        par(mar = c(3, 5, 3, 1))
+        boxplot(na.omit(df[[cn]]), col = "#93c5fd", border = "#1d4ed8",
+                main = lbl, ylab = lbl, outline = FALSE)
+      }
+    } else {
+      if (has_grp) {
+        d2 <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
+        ag <- tapply(d2[[cn]], factor(d2[[grp]]), mean, na.rm = TRUE)
+        par(mar = c(10, 5, 3, 1))
+        barplot(ag, col = "#3b82f6", border = "white", main = paste("Media de", lbl),
+                ylab = lbl, las = 2, cex.names = 0.8)
+      } else {
+        par(mar = c(3, 5, 3, 1))
+        barplot(mean(df[[cn]], na.rm = TRUE), col = "#3b82f6", border = "white",
+                main = paste("Media de", lbl), ylab = lbl, names.arg = "TOTAL")
+      }
+    }
+  })
+
+  output$corpus_cross <- renderDT({
+    df <- corpus_df(); req(df, nzchar(input$corpus_num_var %||% ""))
+    cn <- input$corpus_num_var
+    grps <- unique(Filter(nzchar, c(input$corpus_g1, input$corpus_g2,
+                                    input$corpus_g3, input$corpus_g4)))
+    out <- describe_numeric(df, cn, grps)
+    num_cols <- setdiff(names(out), "grupo")
+    out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
+    out
+  }, options = list(pageLength = 25, dom = "tip"), rownames = FALSE)
 
 }
 
