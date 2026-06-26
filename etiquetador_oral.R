@@ -510,13 +510,6 @@ ui <- fluidPage(
                             placeholder = "Notas...", rows = 2, width = "100%")
             ),
 
-            tabPanel("Tabla",
-              div(style = "padding: 6px 0 2px;",
-                checkboxInput("show_contexto", "Mostrar columna 'contexto'", value = FALSE)
-              ),
-              DTOutput("table")
-            ),
-
             tabPanel("Contexto", br(),
               fluidRow(
                 column(4, numericInput("context_rows","Filas de contexto (+-):",
@@ -529,107 +522,154 @@ ui <- fluidPage(
             ),
 
             tabPanel("Analisis fonetico", br(),
-              fluidRow(column(12,
-                actionButton("play_segment1","Reproducir segmento",
-                             icon = icon("play"), class = "btn-success btn-sm",
-                             style = "margin-right:5px;"),
-                actionButton("compute_all","Calcular F0/Int de todos los segmentos",
-                             class = "btn-danger btn-sm"),
-                div(class = "small-helper-text",
-                    "Calcula métricas acústicas para todas las filas."),
-                hr()
-              )),
-              fluidRow(column(12, uiOutput("video_player"))),
-              br(),
-              fluidRow(
-                column(6, plotOutput("oscillo_plot",  height = 250)),
-                column(6, plotOutput("spectro_plot",  height = 250))
-              ),
-              br(),
-              plotOutput("pitch_plot", height = 300)
-            ),
-
-            tabPanel("Metricas", br(),
-              h5("Análisis prosódico de la fila actual"),
-              verbatimTextOutput("metrics_display")
-            ),
-
-            tabPanel("Praatpicture", br(),
-              if (HAS_PRAATPICTURE) {
-                tagList(
-                  fluidRow(
-                    column(3, checkboxInput("pp_show_wave",  "Oscilograma", TRUE)),
-                    column(3, checkboxInput("pp_show_spec",  "Espectrograma", TRUE)),
-                    column(3, checkboxInput("pp_show_pitch", "F0", TRUE)),
-                    column(3, checkboxInput("pp_show_int",   "Intensidad", FALSE))
-                  ),
-                  actionButton("render_praatpic", "Renderizar",
-                               class = "btn-info btn-sm", style = "margin-bottom:10px;"),
-                  plotOutput("praatpicture_plot", height = 500)
-                )
-              } else {
-                div(
-                  class = "small-helper-text",
-                  style = "padding:20px;",
-                  tags$b("El paquete 'praatpicture' no está instalado."),
+              tabsetPanel(type = "tabs",
+                tabPanel("Imágenes", br(),
+                  fluidRow(column(12,
+                    actionButton("play_segment1","Reproducir segmento",
+                                 icon = icon("play"), class = "btn-success btn-sm",
+                                 style = "margin-right:5px;"),
+                    actionButton("compute_all","Calcular F0/Int de todos los segmentos",
+                                 class = "btn-danger btn-sm"),
+                    div(class = "small-helper-text",
+                        "Calcula métricas acústicas para todas las filas."),
+                    hr()
+                  )),
+                  fluidRow(column(12, uiOutput("video_player"))),
                   br(),
-                  "Instálalo con: ",
-                  tags$code("install.packages('praatpicture')")
+                  fluidRow(
+                    column(6, plotOutput("oscillo_plot",  height = 250)),
+                    column(6, plotOutput("spectro_plot",  height = 250))
+                  ),
+                  br(),
+                  plotOutput("pitch_plot", height = 300)
+                ),
+                tabPanel("Métricas", br(),
+                  h5("Análisis prosódico de la fila actual"),
+                  verbatimTextOutput("metrics_display")
+                ),
+                tabPanel("Praatpicture", br(),
+                  if (HAS_PRAATPICTURE) {
+                    tagList(
+                      fluidRow(
+                        column(3, checkboxInput("pp_show_wave",  "Oscilograma", TRUE)),
+                        column(3, checkboxInput("pp_show_spec",  "Espectrograma", TRUE)),
+                        column(3, checkboxInput("pp_show_pitch", "F0", TRUE)),
+                        column(3, checkboxInput("pp_show_int",   "Intensidad", FALSE))
+                      ),
+                      actionButton("render_praatpic", "Renderizar",
+                                   class = "btn-info btn-sm", style = "margin-bottom:10px;"),
+                      plotOutput("praatpicture_plot", height = 500)
+                    )
+                  } else {
+                    div(
+                      class = "small-helper-text",
+                      style = "padding:20px;",
+                      tags$b("El paquete 'praatpicture' no está instalado."),
+                      br(),
+                      "Instálalo con: ",
+                      tags$code("install.packages('praatpicture')")
+                    )
+                  }
                 )
-              }
+              )
             ),
 
             # ====================== CONFIGURACIÓN ======================
             tabPanel("Estadísticas", br(),
               tabsetPanel(type = "tabs",
-                tabPanel("Barras", br(),
-                  fluidRow(
-                    column(5,
-                      selectInput("stat_cat_var", "Variable categórica:",
-                                  choices = NULL, width = "100%")
+                tabPanel("Este archivo", br(),
+                  tabsetPanel(type = "tabs",
+                    tabPanel("Barras", br(),
+                      fluidRow(
+                        column(5,
+                          selectInput("stat_cat_var", "Variable categórica:",
+                                      choices = NULL, width = "100%")
+                        ),
+                        column(4,
+                          radioButtons("stat_bar_type", "Mostrar como:",
+                                       choices = c("Absoluto" = "abs",
+                                                   "Porcentaje" = "pct"),
+                                       inline = TRUE)
+                        ),
+                        column(3, br(),
+                          actionButton("stat_bar_update", "Actualizar",
+                                       class = "btn-primary btn-sm",
+                                       style = "width:100%;")
+                        )
+                      ),
+                      plotOutput("stat_barplot", height = 420)
+                      ,
+                      fluidRow(column(12,
+                        downloadButton("stat_barplot_png", "PNG", class = "btn-sm"),
+                        downloadButton("stat_barplot_pdf", "PDF", class = "btn-sm")
+                      ))
                     ),
-                    column(4,
-                      radioButtons("stat_bar_type", "Mostrar como:",
-                                   choices = c("Absoluto" = "abs",
-                                               "Porcentaje" = "pct"),
-                                   inline = TRUE)
-                    ),
-                    column(3, br(),
-                      actionButton("stat_bar_update", "Actualizar",
-                                   class = "btn-primary btn-sm",
-                                   style = "width:100%;")
+                    tabPanel("Boxplots", br(),
+                      fluidRow(
+                        column(5,
+                          selectInput("stat_num_var", "Variable numérica:",
+                                      choices = NULL, width = "100%")
+                        ),
+                        column(4,
+                          selectInput("stat_group_var", "Agrupar por (opcional):",
+                                      choices = NULL, width = "100%")
+                        ),
+                        column(3, br(),
+                          actionButton("stat_box_update", "Actualizar",
+                                       class = "btn-primary btn-sm",
+                                       style = "width:100%;")
+                        )
+                      ),
+                      plotOutput("stat_boxplot", height = 380),
+                      fluidRow(column(12,
+                        downloadButton("stat_boxplot_png", "PNG", class = "btn-sm"),
+                        downloadButton("stat_boxplot_pdf", "PDF", class = "btn-sm")
+                      )),
+                      br(),
+                      verbatimTextOutput("stat_summary")
                     )
-                  ),
-                  plotOutput("stat_barplot", height = 420)
-                  ,
-                  fluidRow(column(12,
-                    downloadButton("stat_barplot_png", "PNG", class = "btn-sm"),
-                    downloadButton("stat_barplot_pdf", "PDF", class = "btn-sm")
-                  ))
+                  )
                 ),
-                tabPanel("Boxplots", br(),
+                tabPanel("Corpus completo", br(),
                   fluidRow(
-                    column(5,
-                      selectInput("stat_num_var", "Variable numérica:",
-                                  choices = NULL, width = "100%")
-                    ),
-                    column(4,
-                      selectInput("stat_group_var", "Agrupar por (opcional):",
-                                  choices = NULL, width = "100%")
-                    ),
-                    column(3, br(),
-                      actionButton("stat_box_update", "Actualizar",
-                                   class = "btn-primary btn-sm",
-                                   style = "width:100%;")
-                    )
+                    column(8, div(class = "small-helper-text",
+                      "Visión global del corpus consolidado (analisis/analisis_todos.txt).")),
+                    column(4, actionButton("corpus_refresh", "Refrescar desde disco",
+                                           class = "btn-info btn-sm", style = "width:100%;"))
                   ),
-                  plotOutput("stat_boxplot", height = 380),
+                  fileInput("corpus_file", "(Opcional) Cargar otro consolidado:",
+                            accept = c(".txt", ".tsv", ".csv"), width = "100%"),
+                  hr(),
+                  verbatimTextOutput("corpus_summary"),
+                  DTOutput("corpus_perfile"),
+                  hr(),
+                  h6("Descriptivos generales (variables numéricas)"),
+                  DTOutput("corpus_desc"),
+                  hr(),
+                  h6("Gráfico"),
+                  fluidRow(
+                    column(4, selectInput("corpus_num_var", "Variable numérica:",
+                                          choices = NULL, width = "100%")),
+                    column(4, radioButtons("corpus_plot_type", "Tipo:",
+                                           c("Boxplot" = "box", "Barras (medias)" = "bar"),
+                                           inline = TRUE)),
+                    column(4, selectInput("corpus_group1", "Agrupar gráfico por:",
+                                          choices = NULL, width = "100%"))
+                  ),
+                  plotOutput("corpus_plot", height = 420),
                   fluidRow(column(12,
-                    downloadButton("stat_boxplot_png", "PNG", class = "btn-sm"),
-                    downloadButton("stat_boxplot_pdf", "PDF", class = "btn-sm")
+                    downloadButton("corpus_plot_png", "PNG", class = "btn-sm"),
+                    downloadButton("corpus_plot_pdf", "PDF", class = "btn-sm")
                   )),
-                  br(),
-                  verbatimTextOutput("stat_summary")
+                  hr(),
+                  h6("Agrupar por hasta 4 variables (tabla cruzada de descriptivos)"),
+                  fluidRow(
+                    column(3, selectInput("corpus_g1", "Grupo 1:", choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g2", "Grupo 2:", choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g3", "Grupo 3:", choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g4", "Grupo 4:", choices = NULL, width = "100%"))
+                  ),
+                  DTOutput("corpus_cross")
                 )
               )
             ),
@@ -673,48 +713,6 @@ ui <- fluidPage(
                                       choices = NULL, width = "100%"))
               ),
               verbatimTextOutput("coinc_confusion")
-            ),
-
-            tabPanel("Corpus", br(),
-              fluidRow(
-                column(8, div(class = "small-helper-text",
-                  "Visión global del corpus consolidado (analisis/analisis_todos.txt).")),
-                column(4, actionButton("corpus_refresh", "Refrescar desde disco",
-                                       class = "btn-info btn-sm", style = "width:100%;"))
-              ),
-              fileInput("corpus_file", "(Opcional) Cargar otro consolidado:",
-                        accept = c(".txt", ".tsv", ".csv"), width = "100%"),
-              hr(),
-              verbatimTextOutput("corpus_summary"),
-              DTOutput("corpus_perfile"),
-              hr(),
-              h6("Descriptivos generales (variables numéricas)"),
-              DTOutput("corpus_desc"),
-              hr(),
-              h6("Gráfico"),
-              fluidRow(
-                column(4, selectInput("corpus_num_var", "Variable numérica:",
-                                      choices = NULL, width = "100%")),
-                column(4, radioButtons("corpus_plot_type", "Tipo:",
-                                       c("Boxplot" = "box", "Barras (medias)" = "bar"),
-                                       inline = TRUE)),
-                column(4, selectInput("corpus_group1", "Agrupar gráfico por:",
-                                      choices = NULL, width = "100%"))
-              ),
-              plotOutput("corpus_plot", height = 420),
-              fluidRow(column(12,
-                downloadButton("corpus_plot_png", "PNG", class = "btn-sm"),
-                downloadButton("corpus_plot_pdf", "PDF", class = "btn-sm")
-              )),
-              hr(),
-              h6("Agrupar por hasta 4 variables (tabla cruzada de descriptivos)"),
-              fluidRow(
-                column(3, selectInput("corpus_g1", "Grupo 1:", choices = NULL, width = "100%")),
-                column(3, selectInput("corpus_g2", "Grupo 2:", choices = NULL, width = "100%")),
-                column(3, selectInput("corpus_g3", "Grupo 3:", choices = NULL, width = "100%")),
-                column(3, selectInput("corpus_g4", "Grupo 4:", choices = NULL, width = "100%"))
-              ),
-              DTOutput("corpus_cross")
             ),
 
             tabPanel("Configuración", br(),
