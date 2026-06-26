@@ -750,7 +750,7 @@ ui <- fluidPage(
                   actionButton("save_prefs_btn", "Guardar preferencias",
                                class = "btn-primary btn-sm")
                 )
-              ),
+              )
             )
           )
         )
@@ -1942,7 +1942,7 @@ server <- function(input, output, session) {
       rownames = FALSE
     ) %>% formatStyle("es_actual", target = "row",
                       backgroundColor = styleEqual(c(TRUE,FALSE), c("#ffffcc","white")))
-  })
+  }, server = FALSE)
 
   # ============================================================
   # OBSERVER PRINCIPAL: cambio de fila seleccionada
@@ -2581,7 +2581,7 @@ server <- function(input, output, session) {
     data.frame(Archivo = names(dfs),
                Filas = vapply(dfs, nrow, integer(1)),
                check.names = FALSE)
-  }, extensions = "Buttons", options = dt_with_buttons(list(dom = "t")), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(dom = "t")), rownames = FALSE, server = FALSE)
 
   coinc_var_label <- function(cn) {
     if (!is.null(rv$anot_defs[[cn]])) sub(":$", "", trimws(rv$anot_defs[[cn]]$label)) else cn
@@ -2647,7 +2647,7 @@ server <- function(input, output, session) {
     res <- coinc_results()
     validate(need(!is.null(res$table), "Sin segmentos comunes entre los archivos."))
     res$table
-  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE, server = FALSE)
 
   draw_coinc_barplot <- function() {
     g <- gcex()
@@ -2757,7 +2757,7 @@ server <- function(input, output, session) {
     s <- corpus_file_summary(df)
     req(!is.null(s$per_file))
     s$per_file[order(-s$per_file$n_filas), ]
-  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 10, dom = "tip")), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 10, dom = "tip")), rownames = FALSE, server = FALSE)
 
   output$corpus_desc <- renderDT({
     df <- corpus_df(); req(df)
@@ -2773,7 +2773,7 @@ server <- function(input, output, session) {
     num_cols <- setdiff(names(out), "Variable")
     out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
     out
-  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 15, dom = "tip")), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 15, dom = "tip")), rownames = FALSE, server = FALSE)
 
   draw_corpus_plot <- function() {
     g <- gcex()
@@ -2825,7 +2825,7 @@ server <- function(input, output, session) {
     num_cols <- setdiff(names(out), "grupo")
     out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
     out
-  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE, server = FALSE)
 
   observeEvent(input$save_prefs_btn, {
     save_prefs(list(animo_enabled  = isTRUE(input$animo_enabled),
