@@ -31,3 +31,37 @@ test_that("interpret_kappa usa la escala Landis & Koch", {
   expect_equal(interpret_kappa(0.5), "Moderado")
   expect_equal(interpret_kappa(0.9), "Casi perfecto")
 })
+
+test_that("seg_key empareja por start/end/label y build_rater_matrix usa intersección", {
+  d1 <- data.frame(start = c(0, 1, 2), end = c(1, 2, 3),
+                   label = c("A", "B", "C"), anot1 = c("x", "y", "z"),
+                   stringsAsFactors = FALSE)
+  d2 <- data.frame(start = c(0, 1, 9), end = c(1, 2, 9),
+                   label = c("A", "B", "Z"), anot1 = c("x", "w", "q"),
+                   stringsAsFactors = FALSE)
+  mat <- build_rater_matrix(list(j1 = d1, j2 = d2), "anot1")
+  expect_equal(nrow(mat), 2)            # solo A y B son comunes
+  expect_equal(ncol(mat), 2)
+  expect_setequal(mat[, "j1"], c("x", "y"))
+})
+
+test_that("build_rater_matrix devuelve NULL sin segmentos comunes", {
+  d1 <- data.frame(start = 0, end = 1, label = "A", anot1 = "x",
+                   stringsAsFactors = FALSE)
+  d2 <- data.frame(start = 5, end = 6, label = "Z", anot1 = "q",
+                   stringsAsFactors = FALSE)
+  expect_null(build_rater_matrix(list(d1, d2), "anot1"))
+})
+
+test_that("compute_agreement_for_var: 2 jueces usa Cohen; 3 usa Fleiss", {
+  mat2 <- matrix(c("a","a","b","a","a","b"), ncol = 2)  # 3 filas, 2 jueces
+  r2 <- compute_agreement_for_var(mat2)
+  expect_equal(r2$n, 3)
+  expect_false(is.na(r2$cohen))
+  expect_true(is.na(r2$fleiss))
+
+  mat3 <- matrix(c("a","a","a", "a","a","a", "a","a","a"), ncol = 3)
+  r3 <- compute_agreement_for_var(mat3)
+  expect_equal(r3$fleiss, 1)
+  expect_equal(r3$interpretation, "Casi perfecto")
+})
