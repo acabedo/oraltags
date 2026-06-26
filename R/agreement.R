@@ -87,7 +87,7 @@ interpret_kappa <- function(k) {
 # Krippendorff's alpha vía irr (opcional). NA si irr no está instalado.
 krippendorff_alpha <- function(mat, method = "nominal") {
   if (!requireNamespace("irr", quietly = TRUE)) return(NA_real_)
-  res <- try(irr::kripp.alpha(t(mat), method = method), silent = TRUE)
+  res <- try(suppressWarnings(irr::kripp.alpha(t(mat), method = method)), silent = TRUE)
   if (inherits(res, "try-error")) return(NA_real_)
   as.numeric(res$value)
 }
