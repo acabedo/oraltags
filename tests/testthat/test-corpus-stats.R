@@ -34,3 +34,11 @@ test_that("corpus_file_summary cuenta archivos y filas", {
   expect_equal(s$n_rows, 3)
   expect_equal(s$per_file$n_filas[s$per_file$filename == "f1"], 2)
 })
+
+test_that("corpus_file_summary sin columna filename", {
+  df <- data.frame(x = 1:3)
+  s <- corpus_file_summary(df)
+  expect_true(is.na(s$n_files))
+  expect_equal(s$n_rows, 3)
+  expect_null(s$per_file)
+})

@@ -5,9 +5,9 @@
   x <- suppressWarnings(as.numeric(x)); x <- x[!is.na(x)]
   n <- length(x)
   if (n == 0) {
-    return(data.frame(n = 0, media = NA, sd = NA, min = NA, p25 = NA,
-                      mediana = NA, p75 = NA, max = NA,
-                      asimetria = NA, curtosis = NA))
+    return(data.frame(n = 0L, media = NA_real_, sd = NA_real_, min = NA_real_,
+                      p25 = NA_real_, mediana = NA_real_, p75 = NA_real_,
+                      max = NA_real_, asimetria = NA_real_, curtosis = NA_real_))
   }
   data.frame(
     n = n, media = mean(x), sd = stats::sd(x), min = min(x),
