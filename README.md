@@ -21,7 +21,7 @@ Aplicación Shiny en R para la anotación lingüística y el análisis acústico
 
 ## Funcionalidades principales
 
-La app se organiza en ocho pestañas superiores:
+La app se organiza en diez pestañas superiores:
 
 | Pestaña | Función |
 |---|---|
@@ -32,6 +32,8 @@ La app se organiza en ocho pestañas superiores:
 | **Métricas** | Informe prosódico textual de la fila activa (pausas, velocidad de habla, F0, intensidad). |
 | **Praatpicture** | Figura multipanel al estilo Praat (oscilograma, espectrograma, F0, intensidad) renderizable a la carta. |
 | **Estadísticas** | Gráficos de barras (variables categóricas) y diagramas de caja (variables numéricas). |
+| **Coincidencia** | Acuerdo entre 2–10 jueces (archivos de análisis de otros equipos): % de acuerdo, Cohen's Kappa (ponderado para ordinales), Fleiss' Kappa y Krippendorff's α (opcional). |
+| **Corpus** | Visión global de `analisis_todos.txt`: nº de archivos y filas, descriptivos de cada variable numérica, gráficos y agrupación por hasta 4 variables. |
 | **Configuración** | Editor de variables de anotación: personaliza etiquetas y categorías. |
 
 ### Carga de material y navegación
@@ -110,6 +112,7 @@ install.packages(c(
 ```
 
 > `rPraat` es necesario solo para leer archivos TextGrid de Praat; `praatpicture` solo para la pestaña *Praatpicture*.
+> `irr` es opcional: habilita Krippendorff's α en la pestaña *Coincidencia*. Sin él, esa columna aparece como N/D.
 
 ---
 
