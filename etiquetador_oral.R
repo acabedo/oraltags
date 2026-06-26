@@ -613,6 +613,40 @@ ui <- fluidPage(
               )
             ),
 
+            tabPanel("Coincidencia", br(),
+              h5("Acuerdo entre anotadores (jueces)"),
+              div(class = "small-helper-text",
+                  "Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO ",
+                  "corpus anotado por distintas personas. Se comparan los segmentos ",
+                  "comunes (mismo start/end/label)."),
+              fileInput("coinc_files", "Archivos de análisis (2–10):",
+                        multiple = TRUE, accept = c(".txt", ".tsv", ".csv"),
+                        width = "100%"),
+              DTOutput("coinc_files_info"),
+              hr(),
+              fluidRow(
+                column(6, selectInput("coinc_vars", "Variables a comparar:",
+                                      choices = NULL, multiple = TRUE, width = "100%")),
+                column(6, selectInput("coinc_ord_vars",
+                                      "Variables ordinales (kappa ponderado):",
+                                      choices = NULL, multiple = TRUE, width = "100%"))
+              ),
+              actionButton("coinc_run", "Calcular acuerdo",
+                           class = "btn-primary btn-sm"),
+              hr(),
+              verbatimTextOutput("coinc_summary"),
+              DTOutput("coinc_table"),
+              br(),
+              plotOutput("coinc_barplot", height = 420),
+              br(),
+              fluidRow(
+                column(6, selectInput("coinc_confusion_var",
+                                      "Matriz de confusión (solo 2 jueces):",
+                                      choices = NULL, width = "100%"))
+              ),
+              verbatimTextOutput("coinc_confusion")
+            ),
+
             tabPanel("Configuración", br(),
               h6("⚙️ Parámetros acústicos"),
               fluidRow(
@@ -2373,6 +2407,132 @@ server <- function(input, output, session) {
     } else {
       print_stats(df[[cn]])
     }
+  })
+
+  # ====================== COINCIDENCIA (acuerdo entre jueces) ======================
+  coinc_raw <- reactive({
+    req(input$coinc_files)
+    fi <- input$coinc_files
+    if (nrow(fi) > 10) {
+      showNotification("Más de 10 archivos: se usan los 10 primeros.", type = "warning")
+      fi <- fi[1:10, ]
+    }
+    dfs <- lapply(seq_len(nrow(fi)), function(i)
+      tryCatch(read_analysis_file(fi$datapath[i]), error = function(e) NULL))
+    names(dfs) <- tools::file_path_sans_ext(fi$name)
+    dfs[!vapply(dfs, is.null, logical(1))]
+  })
+
+  output$coinc_files_info <- renderDT({
+    dfs <- coinc_raw()
+    req(length(dfs) >= 1)
+    data.frame(Archivo = names(dfs),
+               Filas = vapply(dfs, nrow, integer(1)),
+               check.names = FALSE)
+  }, options = list(dom = "t"), rownames = FALSE)
+
+  coinc_var_label <- function(cn) {
+    if (!is.null(rv$anot_defs[[cn]])) sub(":$", "", trimws(rv$anot_defs[[cn]]$label)) else cn
+  }
+
+  observeEvent(coinc_raw(), {
+    dfs <- coinc_raw()
+    if (length(dfs) < 2) return()
+    anot_cols <- paste0("anot", seq_len(n_anot))
+    avail <- Filter(function(cn) {
+      all(vapply(dfs, function(d) cn %in% names(d), logical(1))) &&
+        sum(vapply(dfs, function(d)
+          sum(nzchar(trimws(ifelse(is.na(d[[cn]]), "", as.character(d[[cn]]))))),
+          integer(1))) >= 2
+    }, anot_cols)
+    choices <- setNames(avail, vapply(avail, coinc_var_label, character(1)))
+    updateSelectInput(session, "coinc_vars", choices = choices, selected = avail)
+    updateSelectInput(session, "coinc_ord_vars", choices = choices)
+  })
+
+  coinc_results <- eventReactive(input$coinc_run, {
+    dfs <- coinc_raw()
+    validate(need(length(dfs) >= 2, "Sube al menos 2 archivos."))
+    vars <- input$coinc_vars
+    validate(need(length(vars) >= 1, "Selecciona al menos una variable."))
+    ord <- input$coinc_ord_vars %||% character(0)
+    rows <- lapply(vars, function(v) {
+      mat <- build_rater_matrix(dfs, v)
+      if (is.null(mat)) return(NULL)
+      r <- compute_agreement_for_var(mat, ordinal = v %in% ord)
+      data.frame(
+        Variable = coinc_var_label(v), n = r$n,
+        `% acuerdo` = round(r$pct, 1),
+        `Cohen kappa` = round(r$cohen, 3),
+        `Fleiss kappa` = round(r$fleiss, 3),
+        `kappa parejas` = round(r$mean_pairwise, 3),
+        `Krippendorff alpha` = round(r$krippendorff, 3),
+        Interpretacion = r$interpretation,
+        Ponderado = ifelse(isTRUE(r$weighted), "sí", ""),
+        check.names = FALSE, stringsAsFactors = FALSE)
+    })
+    rows <- rows[!vapply(rows, is.null, logical(1))]
+    n_match <- {
+      m1 <- if (length(vars)) build_rater_matrix(dfs, vars[1]) else NULL
+      if (is.null(m1)) 0L else nrow(m1)
+    }
+    list(table = if (length(rows)) do.call(rbind, rows) else NULL,
+         n_raters = length(dfs), n_match = n_match)
+  })
+
+  output$coinc_summary <- renderPrint({
+    res <- coinc_results()
+    cat(sprintf("Jueces: %d\n", res$n_raters))
+    cat(sprintf("Filas (segmentos) comunes emparejados: %d\n", res$n_match))
+    if (!is.null(res$table)) {
+      kcol <- if (res$n_raters == 2) res$table[["Cohen kappa"]] else res$table[["Fleiss kappa"]]
+      cat(sprintf("Variables comparadas: %d | kappa medio: %.3f\n",
+                  nrow(res$table), mean(kcol, na.rm = TRUE)))
+    }
+  })
+
+  output$coinc_table <- renderDT({
+    res <- coinc_results()
+    validate(need(!is.null(res$table), "Sin segmentos comunes entre los archivos."))
+    res$table
+  }, options = list(pageLength = 25, dom = "tip"), rownames = FALSE)
+
+  output$coinc_barplot <- renderPlot({
+    res <- coinc_results()
+    req(!is.null(res$table))
+    kcol <- if (res$n_raters == 2) "Cohen kappa" else "Fleiss kappa"
+    vals <- res$table[[kcol]]; names(vals) <- res$table$Variable
+    vals <- vals[!is.na(vals)]
+    if (length(vals) == 0) { plot.new(); text(.5, .5, "Sin datos"); return() }
+    vals <- sort(vals, decreasing = TRUE)
+    par(mar = c(10, 5, 3, 1))
+    barplot(vals, col = "#3b82f6", border = "white", las = 2,
+            ylim = c(min(0, min(vals)) * 1.1, 1),
+            main = sprintf("%s por variable", kcol), ylab = "kappa",
+            cex.names = 0.8)
+    abline(h = c(0.4, 0.6, 0.8), col = "#9ca3af", lty = 3)
+  })
+
+  observeEvent(coinc_results(), {
+    res <- coinc_results()
+    if (res$n_raters == 2 && !is.null(res$table)) {
+      vars <- input$coinc_vars
+      ch <- setNames(vars, vapply(vars, coinc_var_label, character(1)))
+      updateSelectInput(session, "coinc_confusion_var", choices = ch)
+    } else {
+      updateSelectInput(session, "coinc_confusion_var",
+                        choices = c("(solo con 2 jueces)" = ""))
+    }
+  })
+
+  output$coinc_confusion <- renderPrint({
+    res <- coinc_results()
+    req(res$n_raters == 2, nzchar(input$coinc_confusion_var %||% ""))
+    mat <- build_rater_matrix(coinc_raw(), input$coinc_confusion_var)
+    req(!is.null(mat))
+    cmat <- mat[stats::complete.cases(mat), , drop = FALSE]
+    cat("Matriz de confusión (juez 1 filas × juez 2 columnas):\n\n")
+    print(table(juez1 = cmat[, 1], juez2 = cmat[, 2]))
   })
 
 }
