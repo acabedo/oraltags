@@ -1,0 +1,3 @@
+animo_enabled	TRUE
+animo_custom	Eres el mejor
+plot_font_scale	1
