@@ -2477,7 +2477,7 @@ server <- function(input, output, session) {
       if (is.null(m1)) 0L else nrow(m1)
     }
     list(table = if (length(rows)) do.call(rbind, rows) else NULL,
-         n_raters = length(dfs), n_match = n_match)
+         n_raters = length(dfs), n_match = n_match, vars_used = vars)
   })
 
   output$coinc_summary <- renderPrint({
@@ -2516,7 +2516,7 @@ server <- function(input, output, session) {
   observeEvent(coinc_results(), {
     res <- coinc_results()
     if (res$n_raters == 2 && !is.null(res$table)) {
-      vars <- input$coinc_vars
+      vars <- res$vars_used
       ch <- setNames(vars, vapply(vars, coinc_var_label, character(1)))
       updateSelectInput(session, "coinc_confusion_var", choices = ch)
     } else {
