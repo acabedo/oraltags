@@ -24,7 +24,8 @@ load_prefs <- function(path) {
 save_prefs <- function(prefs, path) {
   lines <- vapply(names(PREFS_DEFAULTS), function(k) {
     v <- if (is.null(prefs[[k]])) PREFS_DEFAULTS[[k]] else prefs[[k]]
-    paste0(k, "\t", as.character(v))
+    v <- gsub("[\r\n]+", " ", as.character(v))
+    paste0(k, "\t", v)
   }, character(1))
   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
   writeLines(lines, path, useBytes = TRUE)
