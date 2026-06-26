@@ -702,7 +702,15 @@ ui <- fluidPage(
                   actionButton("reset_var_defs", "Restaurar por defecto",
                                class = "btn-danger btn-sm", style = "width:100%;")
                 )
-              )
+              ),
+              hr(),
+              h6("🎚️ Preferencias"),
+              fluidRow(
+                column(12,
+                  sliderInput("plot_font_scale", "Tamaño de letra de gráficos:",
+                              min = 0.7, max = 2, value = 1, step = 0.1, width = "100%")
+                )
+              ),
             )
           )
         )
@@ -2166,11 +2174,18 @@ server <- function(input, output, session) {
     )
   })
 
+  # Escala global del tamaño de letra de los gráficos (deslizador de Configuración).
+  gcex <- reactive({
+    s <- suppressWarnings(as.numeric(input$plot_font_scale %||% 1))
+    if (is.na(s) || s <= 0) 1 else s
+  })
+
   output$oscillo_plot <- renderPlot({
     req(rv$selected_segment)
+    g <- gcex()
     seewave::oscillo(rv$selected_segment, f = rv$selected_segment@samp.rate,
-                     k = 1, colwave = "steelblue")
-    title("Oscilograma")
+                     k = 1, colwave = "steelblue", cexlab = g, cexaxis = g)
+    title("Oscilograma", cex.main = g)
   })
 
   output$spectro_plot <- renderPlot({
@@ -2180,22 +2195,26 @@ server <- function(input, output, session) {
     fs <- seg@samp.rate; n <- length(seg@left)
     if (n < 32) { plot.new(); text(0.5,0.5,"Segmento muy corto"); return() }
     wl <- min(256L, n)
+    g <- gcex()
     tryCatch(
-      seewave::spectro(seg, f = fs, wl = wl, ovlp = 85, osc = FALSE, scale = TRUE),
+      seewave::spectro(seg, f = fs, wl = wl, ovlp = 85, osc = FALSE, scale = TRUE,
+                       cexlab = g, cexaxis = g),
       error = function(e) { plot.new(); text(0.5,0.5, paste("Error:", e$message)) }
     )
-    title("Espectrograma")
+    title("Espectrograma", cex.main = g)
   })
 
   output$pitch_plot <- renderPlot({
+    g <- gcex()
     if (is.null(rv$pitch_data) || nrow(rv$pitch_data) == 0) {
-      plot.new(); title("Curva melodica (F0)")
-      text(0.5, 0.5, "Sin valores de F0 detectados", cex = 1.2, col = "gray50")
+      plot.new(); title("Curva melodica (F0)", cex.main = g)
+      text(0.5, 0.5, "Sin valores de F0 detectados", cex = 1.2 * g, col = "gray50")
       return()
     }
     plot(rv$pitch_data$time, rv$pitch_data$freq, type = "b", pch = 19,
          col = "dodgerblue3", lwd = 2, cex = 1.2,
          xlab = "Tiempo (s)", ylab = "Frecuencia (Hz)",
+         cex.lab = g, cex.axis = g, cex.main = g,
          main = sprintf("Curva melodica (F0) – %d puntos", nrow(rv$pitch_data)))
     grid(col = "gray80", lwd = 1)
   })
