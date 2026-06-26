@@ -51,7 +51,7 @@ if (dir.exists(APP_DIR)) {
 }
 
 # ── Helpers puros (acuerdo entre jueces y descriptivos de corpus) ──
-for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R")) {
+for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R", "plot_export.R")) {
   .p <- file.path(APP_DIR, "R", .f)
   if (file.exists(.p)) source(.p)
 }
@@ -376,7 +376,7 @@ ensure_annotation_cols <- function(df) {
 # ============================================================
 ui <- fluidPage(
   title = "Oraltags",
-  theme = shinythemes::shinytheme("cerulean"),
+  theme = shinythemes::shinytheme("united"),
   useShinyjs(),
 
   tags$head(tags$style(HTML("
