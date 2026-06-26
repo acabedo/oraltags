@@ -512,9 +512,19 @@ ui <- fluidPage(
 
             tabPanel("Contexto", br(),
               fluidRow(
+                column(4, textInput("edit_speaker", "Speaker:", width = "100%")),
+                column(6, textInput("edit_label", "Label (texto):", width = "100%")),
+                column(2, br(),
+                  actionButton("save_row_edit", "Guardar fila",
+                               class = "btn-primary btn-sm", style = "width:100%;"))
+              ),
+              fluidRow(
                 column(4, numericInput("context_rows","Filas de contexto (+-):",
                                        value = 5, min = 1, max = 20, step = 1, width = "100%")),
-                column(8, div(class = "small-helper-text", br(),
+                column(4, br(),
+                  actionButton("toggle_ejemplo", "Mostrar ejemplo_para_paper",
+                               class = "btn-info btn-sm", style = "width:100%;")),
+                column(4, div(class = "small-helper-text", br(),
                               "El contexto se muestra en orden temporal con formato ",
                               tags$code("speaker: texto")))
               ),
@@ -1908,24 +1918,57 @@ server <- function(input, output, session) {
   # ============================================================
   # TABLA DE CONTEXTO
   # ============================================================
+
+  # --- Contexto: editar la fila activa y guardar ---
+  observeEvent(rv$selected_row_index, {
+    req(rv$df_full, rv$selected_row_index)
+    idx <- rv$selected_row_index
+    updateTextInput(session, "edit_speaker", value = rv$df_full$speaker[idx] %||% "")
+    updateTextInput(session, "edit_label",   value = rv$df_full$label[idx]   %||% "")
+  })
+
+  observeEvent(input$save_row_edit, {
+    req(rv$df_full, rv$selected_row_index)
+    idx <- rv$selected_row_index
+    rv$df_full$speaker[idx] <- input$edit_speaker %||% ""
+    rv$df_full$label[idx]   <- input$edit_label   %||% ""
+    rv$df_full <- recompute_contexto(rv$df_full, window = 5)
+    tryCatch({
+      save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE)
+      showNotification("Fila guardada", type = "message")
+    }, error = function(e) showNotification(paste("Error al guardar:", e$message), type = "error"))
+  })
+
+  # --- Contexto: mostrar/ocultar columna ejemplo_para_paper ---
+  show_ejemplo <- reactiveVal(FALSE)
+  observeEvent(input$toggle_ejemplo, {
+    show_ejemplo(!show_ejemplo())
+    updateActionButton(session, "toggle_ejemplo",
+      label = if (show_ejemplo()) "Ocultar ejemplo_para_paper" else "Mostrar ejemplo_para_paper")
+  })
+
   output$context_table <- renderDT({
     req(rv$df_full, rv$selected_row_index, input$context_rows)
     idx    <- rv$selected_row_index
     nc     <- input$context_rows
     filas  <- max(1, idx - nc):min(nrow(rv$df_full), idx + nc)
+    corpus <- corpus_base_name(rv$current_filename %||% "")
+    cita   <- format_cita(corpus, rv$df_full$start[idx], rv$df_full$end[idx])
     ctx_df <- data.frame(
       Fila     = filas,
       speaker  = rv$df_full$speaker[filas],
       label    = rv$df_full$label[filas],
-      contexto = rv$df_full$contexto[filas],
+      ejemplo_para_paper = paste0(rv$df_full$contexto[filas], " ", cita),
       es_actual= (filas == idx),
       stringsAsFactors = FALSE
     )
+    # es_actual (índice 4) siempre oculta; ejemplo_para_paper (índice 3) oculta salvo toggle
+    hidden <- if (show_ejemplo()) 4 else c(3, 4)
     datatable(ctx_df,
       extensions = "Buttons",
       options = dt_with_buttons(list(pageLength = 2 * nc + 1, scrollX = TRUE,
                      searching = FALSE, paging = FALSE,
-                     columnDefs = list(list(targets = 4, visible = FALSE)))),
+                     columnDefs = list(list(targets = hidden, visible = FALSE)))),
       rownames = FALSE
     ) %>% formatStyle("es_actual", target = "row",
                       backgroundColor = styleEqual(c(TRUE,FALSE), c("#ffffcc","white")))
