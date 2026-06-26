@@ -97,6 +97,13 @@ Cada variable de anotación (`anot1`, `anot2`, …) tiene una etiqueta editable 
 - **Sistema de backup**: copia de seguridad con marca de tiempo en `backup/` al cargar datos.
 - **Exportación**: CSV, TXT y volcado directo a Google Sheets.
 
+### Exportación y personalización (v2.1)
+
+- **Descarga de gráficos** en alta calidad (PNG 300 ppp y PDF vectorial) en los gráficos de *Estadísticas*, *Coincidencia* y *Corpus*.
+- **Exportación de tablas** a CSV, Excel y portapapeles (botones integrados en cada tabla; exportan todas las filas).
+- **Tamaño de letra de los gráficos** ajustable con un deslizador global en *Configuración*.
+- **Mensaje de ánimo** opcional al iniciar (frase al azar o mensaje propio), activable en *Configuración*.
+
 ---
 
 ## Requisitos
