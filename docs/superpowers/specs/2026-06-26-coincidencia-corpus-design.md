@@ -32,9 +32,10 @@ Se añaden DOS pestañas nuevas tras «Estadísticas», sin tocar la lógica exi
 
 1. **Emparejado de filas (Coincidencia):** por `start`/`end` (redondeados) + `label`.
    Solo se comparan los segmentos presentes en TODOS los archivos seleccionados.
-2. **Anotadores (Coincidencia):** 2 a la vez con soporte N. Medidas: % de acuerdo,
+2. **Anotadores (Coincidencia):** de 2 a 10 jueces (archivos). Medidas: % de acuerdo,
    Cohen's Kappa (ponderado para ordinales), Fleiss' Kappa + kappa medio por parejas
-   cuando hay >2, Krippendorff's α opcional.
+   cuando hay >2, Krippendorff's α opcional. Para >2 jueces, las medidas pareadas
+   (Cohen, matriz de confusión) usan la media sobre todas las parejas.
 3. **Agrupación (Corpus):** «agrupar por hasta 4 variables» genera una tabla de
    descriptivos cruzada; el gráfico usa 1 sola variable de agrupación.
 
@@ -48,6 +49,8 @@ Subir varios archivos `analisis_*.txt` del mismo corpus anotado por distintas pe
 
 ### UI
 - `fileInput("coinc_files", multiple = TRUE)` aceptando `.txt/.tsv/.csv`.
+  Soporta de **2 a 10 archivos** (jueces); si se suben más de 10, se avisa y se usan
+  los 10 primeros (o se rechaza con mensaje claro).
 - Tabla/lista de archivos cargados con su nº de filas leídas.
 - `selectInput("coinc_vars", multiple = TRUE)`: variables a comparar; por defecto todas
   las `anot*` con datos en ≥2 archivos. Etiquetas vía `anot_defs`.
