@@ -8,9 +8,10 @@ abstract: >-
   acuerdo entre jueces y exploración estadística.
 type: software
 authors:
-  - family-names: "Cabedo Nebot"
+  - family-names: "Cabedo-Nebot"
     given-names: "Adrián"
-    # orcid: "https://orcid.org/0000-0000-0000-0000"   # <-- añade tu ORCID
+    orcid: "https://orcid.org/0000-0002-3881-9308"
+    affiliation: "Universitat de València"
 license: GPL-3.0
 repository-code: "https://github.com/acabedo/oraltags"
 keywords:
