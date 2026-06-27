@@ -677,13 +677,28 @@ ui <- fluidPage(
                   hr(),
                   h6(i18n$t("Gráfico")),
                   fluidRow(
-                    column(4, selectInput("corpus_num_var", i18n$t("Variable numérica:"),
-                                          choices = NULL, width = "100%")),
                     column(4, radioButtons("corpus_plot_type", "Tipo:",
-                                           c("Boxplot" = "box", "Barras (medias)" = "bar"),
+                                           c("Barras (frecuencias)" = "bar", "Boxplot" = "box"),
                                            inline = TRUE)),
-                    column(4, selectInput("corpus_group1", i18n$t("Agrupar gráfico por:"),
-                                          choices = NULL, width = "100%"))
+                    column(8,
+                      conditionalPanel("input.corpus_plot_type == 'bar'",
+                        fluidRow(
+                          column(6, selectInput("corpus_cat_var", i18n$t("Variable categórica:"),
+                                                choices = NULL, width = "100%")),
+                          column(6, radioButtons("corpus_bar_type", i18n$t("Mostrar como:"),
+                                                 c("Absoluto" = "abs", "Porcentaje" = "pct"),
+                                                 inline = TRUE))
+                        )
+                      ),
+                      conditionalPanel("input.corpus_plot_type == 'box'",
+                        fluidRow(
+                          column(6, selectInput("corpus_num_var", i18n$t("Variable numérica:"),
+                                                choices = NULL, width = "100%")),
+                          column(6, selectInput("corpus_group1", i18n$t("Agrupar gráfico por:"),
+                                                choices = NULL, width = "100%"))
+                        )
+                      )
+                    )
                   ),
                   plotOutput("corpus_plot", height = 420),
                   fluidRow(column(12,
@@ -2531,12 +2546,8 @@ server <- function(input, output, session) {
     cn   <- input$stat_cat_var
     df   <- rv$df_full
     if (!cn %in% names(df)) return(NULL)
-    vals <- df[[cn]]
-    vals <- na.omit(vals[nzchar(ifelse(is.na(vals), "", vals))])
-    vals <- unlist(strsplit(as.character(vals), ";\\s*"))
-    vals <- trimws(vals); vals <- vals[nzchar(vals)]
-    if (length(vals) == 0) { plot.new(); text(.5,.5,"Sin datos"); return() }
-    tbl <- sort(table(vals), decreasing = TRUE)
+    tbl <- freq_table(df[[cn]])
+    if (length(tbl) == 0) { plot.new(); text(.5,.5,"Sin datos"); return() }
     if (input$stat_bar_type == "pct") {
       tbl <- tbl / sum(tbl) * 100; ylab <- "Porcentaje (%)"
       fmt <- function(x) sprintf("%.1f%%", x)
@@ -2802,6 +2813,9 @@ server <- function(input, output, session) {
     gch <- corpus_group_choices()
     for (id in c("corpus_group1", "corpus_g1", "corpus_g2", "corpus_g3", "corpus_g4"))
       updateSelectInput(session, id, choices = gch)
+    cat_ch <- gch[nzchar(gch)]   # variables nominales (sin la opción vacía)
+    if (length(cat_ch) == 0) cat_ch <- c("(sin datos)" = "")
+    updateSelectInput(session, "corpus_cat_var", choices = cat_ch)
   })
 
   output$corpus_summary <- renderPrint({
@@ -2839,40 +2853,51 @@ server <- function(input, output, session) {
 
   draw_corpus_plot <- function() {
     g <- gcex()
-    df <- corpus_df(); req(df, nzchar(input$corpus_num_var %||% ""))
+    df <- corpus_df(); req(df)
+    # --- Barras: frecuencias (abs/%) de una variable nominal en todo el corpus ---
+    if (identical(input$corpus_plot_type, "bar")) {
+      cv <- input$corpus_cat_var
+      if (is.null(cv) || !nzchar(cv) || !cv %in% names(df)) {
+        plot.new(); text(.5, .5, "Selecciona una variable categórica"); return(invisible())
+      }
+      tbl <- freq_table(df[[cv]])
+      if (length(tbl) == 0) { plot.new(); text(.5, .5, "Sin datos"); return(invisible()) }
+      if (identical(input$corpus_bar_type, "pct")) {
+        tbl <- tbl / sum(tbl) * 100; ylab <- "Porcentaje (%)"
+        fmt <- function(x) sprintf("%.1f%%", x)
+      } else {
+        ylab <- "Frecuencia (n)"; fmt <- function(x) as.character(x)
+      }
+      lbl <- if (cv == "filename") "Archivo"
+             else if (cv == "speaker") "Hablante"
+             else if (!is.null(rv$anot_defs[[cv]])) sub(":$", "", trimws(rv$anot_defs[[cv]]$label))
+             else cv
+      par(mar = c(10, 5, 3, 1))
+      bp <- barplot(tbl, col = "#3b82f6", border = "white", main = lbl, ylab = ylab,
+                    las = 2, ylim = c(0, max(tbl) * 1.1),
+                    cex.names = 0.8 * g, cex.axis = 0.9 * g, cex.main = g, cex.lab = g)
+      text(bp, tbl + max(tbl) * 0.02, labels = fmt(tbl), cex = 0.75 * g, adj = c(0.5, 0))
+      return(invisible())
+    }
+    # --- Boxplot de una variable numérica (opcionalmente por grupo) ---
+    req(nzchar(input$corpus_num_var %||% ""))
     cn <- input$corpus_num_var
     if (!cn %in% names(df)) return(NULL)
     df[[cn]] <- suppressWarnings(as.numeric(df[[cn]]))
     grp <- input$corpus_group1
     lbl <- stat_col_label(cn)
     has_grp <- !is.null(grp) && nzchar(grp) && grp %in% names(df)
-    if (input$corpus_plot_type == "box") {
-      if (has_grp) {
-        d2 <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
-        par(mar = c(10, 5, 3, 1))
-        boxplot(d2[[cn]] ~ factor(d2[[grp]]), col = "#93c5fd", border = "#1d4ed8",
-                main = lbl, ylab = lbl, xlab = "", las = 2,
-                cex.axis = 0.8 * g, cex.main = g, cex.lab = g, outline = FALSE)
-      } else {
-        par(mar = c(3, 5, 3, 1))
-        boxplot(na.omit(df[[cn]]), col = "#93c5fd", border = "#1d4ed8",
-                main = lbl, ylab = lbl, outline = FALSE,
-                cex.axis = 0.8 * g, cex.main = g, cex.lab = g)
-      }
+    if (has_grp) {
+      d2 <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
+      par(mar = c(10, 5, 3, 1))
+      boxplot(d2[[cn]] ~ factor(d2[[grp]]), col = "#93c5fd", border = "#1d4ed8",
+              main = lbl, ylab = lbl, xlab = "", las = 2,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g, outline = FALSE)
     } else {
-      if (has_grp) {
-        d2 <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
-        ag <- tapply(d2[[cn]], factor(d2[[grp]]), mean, na.rm = TRUE)
-        par(mar = c(10, 5, 3, 1))
-        barplot(ag, col = "#3b82f6", border = "white", main = paste("Media de", lbl),
-                ylab = lbl, las = 2, cex.names = 0.8 * g, cex.axis = g,
-                cex.main = g, cex.lab = g)
-      } else {
-        par(mar = c(3, 5, 3, 1))
-        barplot(mean(df[[cn]], na.rm = TRUE), col = "#3b82f6", border = "white",
-                main = paste("Media de", lbl), ylab = lbl, names.arg = "TOTAL",
-                cex.axis = g, cex.main = g, cex.lab = g, cex.names = g)
-      }
+      par(mar = c(3, 5, 3, 1))
+      boxplot(na.omit(df[[cn]]), col = "#93c5fd", border = "#1d4ed8",
+              main = lbl, ylab = lbl, outline = FALSE,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g)
     }
   }
   output$corpus_plot <- renderPlot({ draw_corpus_plot() })

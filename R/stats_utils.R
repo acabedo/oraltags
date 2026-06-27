@@ -17,3 +17,13 @@ stat_kurtosis <- function(x) {
   if (is.na(s) || s == 0) return(NA_real_)
   (sum((x - m)^4) / n) / s^4 - 3
 }
+
+# Tabla de frecuencias de una variable categórica: separa celdas multivalor
+# ("a; b"), descarta NA/vacíos y devuelve la tabla ordenada de mayor a menor.
+freq_table <- function(values) {
+  v <- as.character(values)
+  v <- v[!is.na(v) & nzchar(v)]
+  v <- unlist(strsplit(v, ";\\s*"))
+  v <- trimws(v); v <- v[nzchar(v)]
+  sort(table(v), decreasing = TRUE)
+}
