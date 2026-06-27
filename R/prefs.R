@@ -1,6 +1,6 @@
 # R/prefs.R — preferencias persistentes (puras, base R)
 
-PREFS_DEFAULTS <- list(animo_enabled = FALSE, animo_custom = "", plot_font_scale = 1)
+PREFS_DEFAULTS <- list(animo_enabled = FALSE, animo_custom = "", plot_font_scale = 1, idioma = "es")
 
 load_prefs <- function(path) {
   prefs <- PREFS_DEFAULTS

@@ -51,7 +51,7 @@ if (dir.exists(APP_DIR)) {
 }
 
 # ── Helpers puros (acuerdo entre jueces y descriptivos de corpus) ──
-for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R", "plot_export.R", "prefs.R", "contexto.R")) {
+for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R", "plot_export.R", "prefs.R", "contexto.R", "i18n_util.R")) {
   .p <- file.path(APP_DIR, "R", .f)
   if (file.exists(.p)) source(.p)
 }

@@ -29,6 +29,13 @@ test_that("choose_message: propio si lo hay, si no una predefinida", {
   expect_equal(choose_message(NULL, character(0)), "")
 })
 
+test_that("prefs persiste el idioma", {
+  f <- tempfile()
+  save_prefs(list(animo_enabled = FALSE, animo_custom = "", plot_font_scale = 1, idioma = "en"), f)
+  expect_equal(load_prefs(f)$idioma, "en")
+  expect_equal(load_prefs(tempfile())$idioma, "es")   # default
+})
+
 test_that("save_prefs colapsa saltos de línea del mensaje propio", {
   f <- tempfile()
   save_prefs(list(animo_enabled = TRUE,
