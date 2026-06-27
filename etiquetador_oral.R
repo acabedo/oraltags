@@ -449,7 +449,7 @@ ui <- fluidPage(
     titlePanel(div(
       style = "display:flex; align-items:center; justify-content:space-between;",
       div(style = "display:flex; align-items:center;",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="40" height="40" style="margin-right:10px;vertical-align:middle;" role="img" aria-label="Oraltags"><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="#e95420" stroke="#b5401a" stroke-width="3"/><rect x="28" y="16" width="44" height="24" rx="8" fill="#ffffff"/><polygon points="37,40 37,52 49,40" fill="#ffffff"/><g stroke="#e95420" stroke-width="3.5" stroke-linecap="round"><line x1="36" y1="23" x2="36" y2="33"/><line x1="43" y1="19" x2="43" y2="37"/><line x1="50" y1="21" x2="50" y2="35"/><line x1="57" y1="18" x2="57" y2="38"/><line x1="64" y1="24" x2="64" y2="32"/></g><text x="50" y="73" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="0.3" fill="#ffffff">Oraltags</text></svg>'),
+        HTML('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="52" height="52" style="margin-right:10px;vertical-align:middle;" role="img" aria-label="Oraltags"><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="#e95420" stroke="#b5401a" stroke-width="3"/><rect x="28" y="16" width="44" height="24" rx="8" fill="#ffffff"/><polygon points="37,40 37,52 49,40" fill="#ffffff"/><g stroke="#e95420" stroke-width="3.5" stroke-linecap="round"><line x1="36" y1="23" x2="36" y2="33"/><line x1="43" y1="19" x2="43" y2="37"/><line x1="50" y1="21" x2="50" y2="35"/><line x1="57" y1="18" x2="57" y2="38"/><line x1="64" y1="24" x2="64" y2="32"/></g><text x="50" y="73" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="0.3" fill="#ffffff">Oraltags</text></svg>'),
         span("Oraltags", style = "font-size:12px; font-weight:600;")
       ),
       div(style = "display:flex; align-items:center; gap:10px;",
@@ -2540,6 +2540,19 @@ server <- function(input, output, session) {
   })
 
   # --- Gráfico de barras ---
+  # Barplot horizontal con margen izquierdo ajustado a la etiqueta más larga,
+  # para que las categorías con nombres largos no se corten. 'fmt' formatea
+  # el valor que se escribe al final de cada barra.
+  draw_freq_barh <- function(tbl, main, axlab, g, fmt) {
+    tbl <- rev(tbl)                                  # la barra mayor arriba
+    leftmar <- min(2 + max(nchar(names(tbl)), 1) * 0.45, 28)
+    par(mar = c(4.5, leftmar, 3, 1))
+    bp <- barplot(tbl, horiz = TRUE, las = 1, col = "#3b82f6", border = "white",
+                  main = main, xlab = axlab, xlim = c(0, max(tbl) * 1.12),
+                  cex.names = 0.8 * g, cex.axis = 0.9 * g, cex.main = g, cex.lab = g)
+    text(tbl + max(tbl) * 0.01, bp, labels = fmt(tbl), cex = 0.75 * g, adj = c(0, 0.5))
+  }
+
   draw_stat_barplot <- function() {
     g <- gcex()
     req(rv$df_full, nzchar(input$stat_cat_var %||% ""))
@@ -2557,14 +2570,7 @@ server <- function(input, output, session) {
     lbl <- if (!is.null(rv$anot_defs[[cn]])) sub(":$","",rv$anot_defs[[cn]]$label)
            else if (cn %in% names(stat_extra_nominal)) stat_extra_nominal[[cn]]
            else cn
-    par(mar = c(8, 5, 3, 1))
-    bp <- barplot(tbl, col = "#3b82f6", border = "white",
-                  main = lbl, ylab = ylab, las = 2,
-                  ylim = c(0, max(tbl) * 1.1),
-                  cex.names = 0.8 * g, cex.axis = 0.9 * g,
-                  cex.main = 1 * g, cex.lab = g)
-    text(bp, tbl + max(tbl) * 0.02, labels = fmt(tbl),
-         cex = 0.75 * g, adj = c(0.5, 0))
+    draw_freq_barh(tbl, lbl, ylab, g, fmt)
   }
   output$stat_barplot <- renderPlot({ input$stat_bar_update; draw_stat_barplot() })
   add_plot_download(output, "stat_barplot", draw_stat_barplot, "barras")
@@ -2730,13 +2736,14 @@ server <- function(input, output, session) {
     vals <- res$table[[kcol]]; names(vals) <- res$table$Variable
     vals <- vals[!is.na(vals)]
     if (length(vals) == 0) { plot.new(); text(.5, .5, "Sin datos"); return() }
-    vals <- sort(vals, decreasing = TRUE)
-    par(mar = c(10, 5, 3, 1))
-    barplot(vals, col = "#3b82f6", border = "white", las = 2,
-            ylim = c(min(0, min(vals)) * 1.1, 1),
-            main = sprintf("%s por variable", kcol), ylab = "kappa",
+    vals <- rev(sort(vals, decreasing = TRUE))      # mayor arriba (barras horizontales)
+    leftmar <- min(2 + max(nchar(names(vals)), 1) * 0.45, 28)
+    par(mar = c(4.5, leftmar, 3, 1))
+    barplot(vals, horiz = TRUE, las = 1, col = "#3b82f6", border = "white",
+            xlim = c(min(0, min(vals)) * 1.1, 1),
+            main = sprintf("%s por variable", kcol), xlab = "kappa",
             cex.names = 0.8 * g, cex.axis = g, cex.main = g, cex.lab = g)
-    abline(h = c(0.4, 0.6, 0.8), col = "#9ca3af", lty = 3)
+    abline(v = c(0.4, 0.6, 0.8), col = "#9ca3af", lty = 3)
   }
   output$coinc_barplot <- renderPlot({ draw_coinc_barplot() })
   add_plot_download(output, "coinc_barplot", draw_coinc_barplot, "coincidencia_kappa")
@@ -2872,11 +2879,7 @@ server <- function(input, output, session) {
              else if (cv == "speaker") "Hablante"
              else if (!is.null(rv$anot_defs[[cv]])) sub(":$", "", trimws(rv$anot_defs[[cv]]$label))
              else cv
-      par(mar = c(10, 5, 3, 1))
-      bp <- barplot(tbl, col = "#3b82f6", border = "white", main = lbl, ylab = ylab,
-                    las = 2, ylim = c(0, max(tbl) * 1.1),
-                    cex.names = 0.8 * g, cex.axis = 0.9 * g, cex.main = g, cex.lab = g)
-      text(bp, tbl + max(tbl) * 0.02, labels = fmt(tbl), cex = 0.75 * g, adj = c(0.5, 0))
+      draw_freq_barh(tbl, lbl, ylab, g, fmt)
       return(invisible())
     }
     # --- Boxplot de una variable numérica (opcionalmente por grupo) ---
