@@ -798,8 +798,8 @@ ui <- fluidPage(
 
     div(class = "app-footer",
       HTML("&copy; 2026 Adrián Cabedo Nebot &middot;
-           <a href='https://creativecommons.org/licenses/by/4.0/deed.es' target='_blank'>
-           CC BY 4.0</a>")
+           <a href='https://www.gnu.org/licenses/gpl-3.0.html' target='_blank'>
+           GPL-3.0</a>")
     )
   )
 )

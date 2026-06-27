@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "Si usas este software, por favor cítalo como se indica."
+title: "Oraltags: etiquetador de datos orales y explorador prosódico"
+abstract: >-
+  Aplicación Shiny en R para la anotación lingüística y el análisis acústico-prosódico
+  de corpus orales: carga de audio/vídeo y transcripción, navegación por grupos
+  entonativos, cálculo automático de métricas prosódicas, anotación configurable,
+  acuerdo entre jueces y exploración estadística.
+type: software
+authors:
+  - family-names: "Cabedo Nebot"
+    given-names: "Adrián"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"   # <-- añade tu ORCID
+license: GPL-3.0
+repository-code: "https://github.com/acabedo/oraltags"
+keywords:
+  - "oral corpora"
+  - "linguistic annotation"
+  - "prosody"
+  - "speech analysis"
+  - "intonation"
+  - "shiny"
+  - "R"

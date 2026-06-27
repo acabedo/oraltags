@@ -174,6 +174,6 @@ La transcripción debe incluir al menos estas columnas:
 ## Licencia
 
 © 2025 Adrián Cabedo Nebot.  
-Distribuido bajo licencia **Creative Commons Atribución 4.0 Internacional (CC BY 4.0)**.  
-Se permite el uso, distribución y modificación siempre que se cite la autoría.  
-[Ver texto completo de la licencia](https://creativecommons.org/licenses/by/4.0/deed.es)
+Distribuido bajo licencia **GNU General Public License v3.0 (GPL-3.0)**.  
+Se permite el uso, distribución y modificación bajo los términos de la GPL-3.0.  
+[Ver texto completo de la licencia](LICENSE)
