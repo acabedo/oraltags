@@ -45,3 +45,14 @@ test_that("save_prefs colapsa saltos de línea del mensaje propio", {
   expect_false(grepl("\n", p$animo_custom))
   expect_equal(p$animo_custom, "línea uno línea dos")
 })
+
+test_that("guardar otras preferencias (patrón modifyList) no resetea idioma", {
+  f <- tempfile()
+  save_prefs(list(animo_enabled = FALSE, animo_custom = "", plot_font_scale = 1, idioma = "en"), f)
+  save_prefs(modifyList(load_prefs(f),
+                        list(animo_enabled = TRUE, animo_custom = "x", plot_font_scale = 1.5)), f)
+  p <- load_prefs(f)
+  expect_equal(p$idioma, "en")
+  expect_true(p$animo_enabled)
+  expect_equal(p$plot_font_scale, 1.5)
+})
