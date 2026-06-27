@@ -474,31 +474,31 @@ ui <- fluidPage(
           uiOutput("sidebar_segment_info"),
 
           fluidRow(
-            column(6, actionButton("play_segment", "▶ Segmento",
+            column(6, actionButton("play_segment", i18n$t("▶ Segmento"),
                                    class = "btn-success btn-sm", style = "width:100%;")),
-            column(6, actionButton("play_with_context", "▶ Contexto",
+            column(6, actionButton("play_with_context", i18n$t("▶ Contexto"),
                                    class = "btn-info btn-sm", style = "width:100%;"))
           ),
           div(style = "display:flex; gap:6px; margin-top:6px;",
-            numericInput("context_before", "Antes (s):",
+            numericInput("context_before", i18n$t("Antes (s):"),
                          value = 0, min = 0, max = 5, step = 0.5, width = "50%"),
-            numericInput("context_after",  "Despues (s):",
+            numericInput("context_after",  i18n$t("Despues (s):"),
                          value = 0, min = 0, max = 5, step = 0.5, width = "50%")
           ),
 
           hr(),
 
-          h5("Navegación secuencial", style = "margin-top:0;"),
+          h5(i18n$t("Navegación secuencial"), style = "margin-top:0;"),
           fluidRow(
-            column(6, actionButton("prev_row","<= Anterior",
+            column(6, actionButton("prev_row",i18n$t("<= Anterior"),
                                    class = "btn-secondary btn-sm", style = "width:100%;")),
-            column(6, actionButton("next_row","Siguiente =>",
+            column(6, actionButton("next_row",i18n$t("Siguiente =>"),
                                    class = "btn-secondary btn-sm", style = "width:100%;"))
           ),
           br(),
           textOutput("sequential_position"),
-          numericInput("goto_row","Ir a fila:", value = 1, min = 1, step = 1, width = "100%"),
-          actionButton("goto_row_btn","Ir",
+          numericInput("goto_row",i18n$t("Ir a fila:"), value = 1, min = 1, step = 1, width = "100%"),
+          actionButton("goto_row_btn",i18n$t("Ir"),
                        class = "btn-secondary btn-sm", style = "width:100%; margin-top:5px;")
         )
       )),
@@ -510,35 +510,35 @@ ui <- fluidPage(
           tabsetPanel(
 
             # ====================== ANOTACIONES (primer tab) ======================
-            tabPanel("Anotaciones", br(),
+            tabPanel(i18n$t("Anotaciones"), br(),
 
               fluidRow(
                 column(10, uiOutput("annotation_tabs_ui")),
                 column(2, br(),
-                  actionButton("save_annotation","Guardar",
+                  actionButton("save_annotation",i18n$t("Guardar"),
                                class = "btn-primary btn-sm", style = "width:100%;"),
                   br(), br(),
                   textOutput("annotation_status")
                 )
               ),
               br(),
-              textAreaInput("observaciones","Observaciones:",
+              textAreaInput("observaciones",i18n$t("Observaciones:"),
                             placeholder = "Notas...", rows = 2, width = "100%")
             ),
 
-            tabPanel("Contexto", br(),
+            tabPanel(i18n$t("Contexto"), br(),
               fluidRow(
                 column(4, textInput("edit_speaker", "Speaker:", width = "100%")),
-                column(6, textInput("edit_label", "Label (texto):", width = "100%")),
+                column(6, textInput("edit_label", i18n$t("Label (texto):"), width = "100%")),
                 column(2, br(),
-                  actionButton("save_row_edit", "Guardar fila",
+                  actionButton("save_row_edit", i18n$t("Guardar fila"),
                                class = "btn-primary btn-sm", style = "width:100%;"))
               ),
               fluidRow(
-                column(4, numericInput("context_rows","Filas de contexto (+-):",
+                column(4, numericInput("context_rows",i18n$t("Filas de contexto (+-):" ),
                                        value = 5, min = 1, max = 20, step = 1, width = "100%")),
                 column(4, br(),
-                  actionButton("toggle_ejemplo", "Mostrar ejemplo_para_paper",
+                  actionButton("toggle_ejemplo", i18n$t("Mostrar ejemplo_para_paper"),
                                class = "btn-info btn-sm", style = "width:100%;")),
                 column(4, div(class = "small-helper-text", br(),
                               "El contexto se muestra en orden temporal con formato ",
@@ -547,14 +547,14 @@ ui <- fluidPage(
               hr(), DTOutput("context_table")
             ),
 
-            tabPanel("Analisis fonetico", br(),
+            tabPanel(i18n$t("Analisis fonetico"), br(),
               tabsetPanel(type = "tabs",
-                tabPanel("Imágenes", br(),
+                tabPanel(i18n$t("Imágenes"), br(),
                   fluidRow(column(12,
-                    actionButton("play_segment1","Reproducir segmento",
+                    actionButton("play_segment1",i18n$t("Reproducir segmento"),
                                  icon = icon("play"), class = "btn-success btn-sm",
                                  style = "margin-right:5px;"),
-                    actionButton("compute_all","Calcular F0/Int de todos los segmentos",
+                    actionButton("compute_all",i18n$t("Calcular F0/Int de todos los segmentos"),
                                  class = "btn-danger btn-sm"),
                     div(class = "small-helper-text",
                         "Calcula métricas acústicas para todas las filas."),
@@ -569,20 +569,20 @@ ui <- fluidPage(
                   br(),
                   plotOutput("pitch_plot", height = 300)
                 ),
-                tabPanel("Métricas", br(),
-                  h5("Análisis prosódico de la fila actual"),
+                tabPanel(i18n$t("Métricas"), br(),
+                  h5(i18n$t("Análisis prosódico de la fila actual")),
                   verbatimTextOutput("metrics_display")
                 ),
                 tabPanel("Praatpicture", br(),
                   if (HAS_PRAATPICTURE) {
                     tagList(
                       fluidRow(
-                        column(3, checkboxInput("pp_show_wave",  "Oscilograma", TRUE)),
-                        column(3, checkboxInput("pp_show_spec",  "Espectrograma", TRUE)),
+                        column(3, checkboxInput("pp_show_wave",  i18n$t("Oscilograma"), TRUE)),
+                        column(3, checkboxInput("pp_show_spec",  i18n$t("Espectrograma"), TRUE)),
                         column(3, checkboxInput("pp_show_pitch", "F0", TRUE)),
-                        column(3, checkboxInput("pp_show_int",   "Intensidad", FALSE))
+                        column(3, checkboxInput("pp_show_int",   i18n$t("Intensidad"), FALSE))
                       ),
-                      actionButton("render_praatpic", "Renderizar",
+                      actionButton("render_praatpic", i18n$t("Renderizar"),
                                    class = "btn-info btn-sm", style = "margin-bottom:10px;"),
                       plotOutput("praatpicture_plot", height = 500)
                     )
@@ -601,24 +601,24 @@ ui <- fluidPage(
             ),
 
             # ====================== CONFIGURACIÓN ======================
-            tabPanel("Estadísticas", br(),
+            tabPanel(i18n$t("Estadísticas"), br(),
               tabsetPanel(type = "tabs",
-                tabPanel("Este archivo", br(),
+                tabPanel(i18n$t("Este archivo"), br(),
                   tabsetPanel(type = "tabs",
-                    tabPanel("Barras", br(),
+                    tabPanel(i18n$t("Barras"), br(),
                       fluidRow(
                         column(5,
-                          selectInput("stat_cat_var", "Variable categórica:",
+                          selectInput("stat_cat_var", i18n$t("Variable categórica:"),
                                       choices = NULL, width = "100%")
                         ),
                         column(4,
-                          radioButtons("stat_bar_type", "Mostrar como:",
+                          radioButtons("stat_bar_type", i18n$t("Mostrar como:"),
                                        choices = c("Absoluto" = "abs",
                                                    "Porcentaje" = "pct"),
                                        inline = TRUE)
                         ),
                         column(3, br(),
-                          actionButton("stat_bar_update", "Actualizar",
+                          actionButton("stat_bar_update", i18n$t("Actualizar"),
                                        class = "btn-primary btn-sm",
                                        style = "width:100%;")
                         )
@@ -633,15 +633,15 @@ ui <- fluidPage(
                     tabPanel("Boxplots", br(),
                       fluidRow(
                         column(5,
-                          selectInput("stat_num_var", "Variable numérica:",
+                          selectInput("stat_num_var", i18n$t("Variable numérica:"),
                                       choices = NULL, width = "100%")
                         ),
                         column(4,
-                          selectInput("stat_group_var", "Agrupar por (opcional):",
+                          selectInput("stat_group_var", i18n$t("Agrupar por (opcional):"),
                                       choices = NULL, width = "100%")
                         ),
                         column(3, br(),
-                          actionButton("stat_box_update", "Actualizar",
+                          actionButton("stat_box_update", i18n$t("Actualizar"),
                                        class = "btn-primary btn-sm",
                                        style = "width:100%;")
                         )
@@ -656,30 +656,30 @@ ui <- fluidPage(
                     )
                   )
                 ),
-                tabPanel("Corpus completo", br(),
+                tabPanel(i18n$t("Corpus completo"), br(),
                   fluidRow(
                     column(8, div(class = "small-helper-text",
                       "Visión global del corpus consolidado (analisis/analisis_todos.txt).")),
-                    column(4, actionButton("corpus_refresh", "Refrescar desde disco",
+                    column(4, actionButton("corpus_refresh", i18n$t("Refrescar desde disco"),
                                            class = "btn-info btn-sm", style = "width:100%;"))
                   ),
-                  fileInput("corpus_file", "(Opcional) Cargar otro consolidado:",
+                  fileInput("corpus_file", i18n$t("(Opcional) Cargar otro consolidado:"),
                             accept = c(".txt", ".tsv", ".csv"), width = "100%"),
                   hr(),
                   verbatimTextOutput("corpus_summary"),
                   DTOutput("corpus_perfile"),
                   hr(),
-                  h6("Descriptivos generales (variables numéricas)"),
+                  h6(i18n$t("Descriptivos generales (variables numéricas)")),
                   DTOutput("corpus_desc"),
                   hr(),
-                  h6("Gráfico"),
+                  h6(i18n$t("Gráfico")),
                   fluidRow(
-                    column(4, selectInput("corpus_num_var", "Variable numérica:",
+                    column(4, selectInput("corpus_num_var", i18n$t("Variable numérica:"),
                                           choices = NULL, width = "100%")),
                     column(4, radioButtons("corpus_plot_type", "Tipo:",
                                            c("Boxplot" = "box", "Barras (medias)" = "bar"),
                                            inline = TRUE)),
-                    column(4, selectInput("corpus_group1", "Agrupar gráfico por:",
+                    column(4, selectInput("corpus_group1", i18n$t("Agrupar gráfico por:"),
                                           choices = NULL, width = "100%"))
                   ),
                   plotOutput("corpus_plot", height = 420),
@@ -688,40 +688,40 @@ ui <- fluidPage(
                     downloadButton("corpus_plot_pdf", "PDF", class = "btn-sm")
                   )),
                   hr(),
-                  h6("Agrupar por hasta 4 variables (tabla cruzada de descriptivos)"),
+                  h6(i18n$t("Agrupar por hasta 4 variables (tabla cruzada de descriptivos)")),
                   fluidRow(
-                    column(3, selectInput("corpus_g1", "Grupo 1:", choices = NULL, width = "100%")),
-                    column(3, selectInput("corpus_g2", "Grupo 2:", choices = NULL, width = "100%")),
-                    column(3, selectInput("corpus_g3", "Grupo 3:", choices = NULL, width = "100%")),
-                    column(3, selectInput("corpus_g4", "Grupo 4:", choices = NULL, width = "100%"))
+                    column(3, selectInput("corpus_g1", i18n$t("Grupo 1:"), choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g2", i18n$t("Grupo 2:"), choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g3", i18n$t("Grupo 3:"), choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g4", i18n$t("Grupo 4:"), choices = NULL, width = "100%"))
                   ),
                   DTOutput("corpus_cross")
                 )
               )
             ),
 
-            tabPanel("Coincidencia", br(),
-              h5("Acuerdo entre anotadores (jueces)"),
+            tabPanel(i18n$t("Coincidencia"), br(),
+              h5(i18n$t("Acuerdo entre anotadores (jueces)")),
               div(class = "small-helper-text",
                   "Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO ",
                   "corpus anotado por distintas personas. Se comparan los segmentos ",
                   "comunes (mismo start/end/label)."),
-              fileInput("coinc_files", "Archivos de análisis (2–10):",
+              fileInput("coinc_files", i18n$t("Archivos de análisis (2–10):"),
                         multiple = TRUE, accept = c(".txt", ".tsv", ".csv"),
                         width = "100%"),
               DTOutput("coinc_files_info"),
               hr(),
               fluidRow(
-                column(6, selectInput("coinc_vars", "Variables a comparar:",
+                column(6, selectInput("coinc_vars", i18n$t("Variables a comparar:"),
                                       choices = NULL, multiple = TRUE, width = "100%")),
                 column(6, selectInput("coinc_ord_vars",
-                                      "Variables ordinales (kappa ponderado):",
+                                      i18n$t("Variables ordinales (kappa ponderado):"),
                                       choices = NULL, multiple = TRUE, width = "100%"),
                        div(class = "small-helper-text",
                            "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); ",
                            "los niveles de texto se ordenan alfabéticamente."))
               ),
-              actionButton("coinc_run", "Calcular acuerdo",
+              actionButton("coinc_run", i18n$t("Calcular acuerdo"),
                            class = "btn-primary btn-sm"),
               hr(),
               verbatimTextOutput("coinc_summary"),
@@ -741,37 +741,37 @@ ui <- fluidPage(
               verbatimTextOutput("coinc_confusion")
             ),
 
-            tabPanel("Configuración", br(),
-              h6("⚙️ Parámetros acústicos"),
+            tabPanel(i18n$t("Configuración"), br(),
+              h6(i18n$t("⚙️ Parámetros acústicos")),
               fluidRow(
                 column(6, numericInput("quartile_pct",
-                           "Porcentaje cuartiles (%):",
+                           i18n$t("Porcentaje cuartiles (%):"),
                            value = 20, min = 5, max = 50, step = 5, width = "100%")),
                 column(6, br(),
-                  actionButton("open_var_editor", "Editar variables",
+                  actionButton("open_var_editor", i18n$t("Editar variables"),
                                icon = icon("edit"), class = "btn-info btn-sm",
                                style = "width:100%;"),
                   br(), br(),
-                  actionButton("reset_var_defs", "Restaurar por defecto",
+                  actionButton("reset_var_defs", i18n$t("Restaurar por defecto"),
                                class = "btn-danger btn-sm", style = "width:100%;")
                 )
               ),
               hr(),
-              h6("🎚️ Preferencias"),
+              h6(i18n$t("🎚️ Preferencias")),
               fluidRow(
                 column(12,
-                  sliderInput("plot_font_scale", "Tamaño de letra de gráficos:",
+                  sliderInput("plot_font_scale", i18n$t("Tamaño de letra de gráficos:"),
                               min = 0.7, max = 2, value = 1, step = 0.1, width = "100%")
                 )
               ),
               fluidRow(
                 column(12,
                   checkboxInput("animo_enabled",
-                                "Mostrar mensaje de ánimo al iniciar", value = FALSE),
-                  textAreaInput("animo_custom", "Tu propio mensaje (opcional):",
+                                i18n$t("Mostrar mensaje de ánimo al iniciar"), value = FALSE),
+                  textAreaInput("animo_custom", i18n$t("Tu propio mensaje (opcional):"),
                                 rows = 2, width = "100%",
                                 placeholder = "Si lo dejas vacío, se mostrará una frase al azar."),
-                  actionButton("save_prefs_btn", "Guardar preferencias",
+                  actionButton("save_prefs_btn", i18n$t("Guardar preferencias"),
                                class = "btn-primary btn-sm")
                 )
               )
@@ -995,12 +995,12 @@ server <- function(input, output, session) {
     if (is.null(rv$current_filename)) {
       # Estado A: sin análisis
       tagList(
-        h5("Abrir análisis", style = "margin-top:0; margin-bottom:8px;"),
+        h5(i18n$t("Abrir análisis"), style = "margin-top:0; margin-bottom:8px;"),
         selectInput("existing_analysis", NULL,
                     choices  = scan_analysis_files(),
                     width    = "100%",
                     selected = ""),
-        actionButton("open_existing", "Abrir",
+        actionButton("open_existing", i18n$t("Abrir"),
                      icon  = icon("folder-open"),
                      class = "btn-primary btn-sm",
                      style = "width:100%; margin-bottom:10px;"),
@@ -1026,7 +1026,7 @@ server <- function(input, output, session) {
         div(class = "file-name",  base),
         div(class = "file-meta",  sprintf("%d grupos entonativos", n)),
         br(),
-        actionButton("change_analysis", "Cambiar archivo",
+        actionButton("change_analysis", i18n$t("Cambiar archivo"),
                      icon  = icon("exchange-alt"),
                      class = "btn-secondary btn-sm",
                      style = "width:100%;")
@@ -1083,11 +1083,11 @@ server <- function(input, output, session) {
         p(sprintf("Ya existe un análisis guardado para '%s'.", base)),
         p("¿Quieres cargarlo (rápido) o regenerar los grupos entonativos desde el TextGrid?"),
         footer = tagList(
-          actionButton("load_existing_from_tg", "Cargar análisis guardado",
+          actionButton("load_existing_from_tg", i18n$t("Cargar análisis guardado"),
                        class = "btn-primary"),
-          actionButton("regen_from_tg", "Regenerar GEs desde TextGrid",
+          actionButton("regen_from_tg", i18n$t("Regenerar GEs desde TextGrid"),
                        class = "btn-warning"),
-          modalButton("Cancelar")
+          modalButton(i18n$t("Cancelar"))
         )
       ))
       return()
@@ -1104,16 +1104,16 @@ server <- function(input, output, session) {
         p("Se detectaron los tiers 'phones' y 'words'."),
         p("Se generarán GEs automáticamente usando los siguientes umbrales:"),
         fluidRow(
-          column(6, numericInput("ge_pause_min", "Pausa mínima (s):",
+          column(6, numericInput("ge_pause_min", i18n$t("Pausa mínima (s):"),
                                  value = 0.3, min = 0.05, step = 0.05, width = "100%")),
-          column(6, numericInput("ge_f0_reset", "Reset F0 mínimo (st):",
+          column(6, numericInput("ge_f0_reset", i18n$t("Reset F0 mínimo (st):"),
                                  value = 5, min = 1, step = 0.5, width = "100%"))
         ),
         p(style="font-size:11px;color:#6b7280;",
           "Nota: el criterio de reset F0 se aplica en una versión futura."),
         footer = tagList(
-          actionButton("ge_confirm", "Generar GEs", class = "btn-primary"),
-          modalButton("Cancelar")
+          actionButton("ge_confirm", i18n$t("Generar GEs"), class = "btn-primary"),
+          modalButton(i18n$t("Cancelar"))
         )
       ))
     } else {
@@ -1189,14 +1189,14 @@ server <- function(input, output, session) {
       showModal(modalDialog(
         title = "Regenerar grupos entonativos",
         fluidRow(
-          column(6, numericInput("ge_pause_min", "Pausa mínima (s):",
+          column(6, numericInput("ge_pause_min", i18n$t("Pausa mínima (s):"),
                                  value = 0.3, min = 0.05, step = 0.05, width = "100%")),
-          column(6, numericInput("ge_f0_reset",  "Reset F0 mínimo (st):",
+          column(6, numericInput("ge_f0_reset",  i18n$t("Reset F0 mínimo (st):"),
                                  value = 5, min = 1, step = 0.5, width = "100%"))
         ),
         footer = tagList(
-          actionButton("ge_confirm", "Generar GEs", class = "btn-primary"),
-          modalButton("Cancelar")
+          actionButton("ge_confirm", i18n$t("Generar GEs"), class = "btn-primary"),
+          modalButton(i18n$t("Cancelar"))
         )
       ))
     } else {
@@ -1328,8 +1328,8 @@ server <- function(input, output, session) {
       easyClose = FALSE,
       div(style = "max-height:60vh; overflow-y:auto;", tagList(rows)),
       footer  = tagList(
-        actionButton("ve_save",   "Guardar cambios", class = "btn-primary"),
-        actionButton("ve_cancel", "Cancelar",        class = "btn-default")
+        actionButton("ve_save",   i18n$t("Guardar cambios"), class = "btn-primary"),
+        actionButton("ve_cancel", i18n$t("Cancelar"),        class = "btn-default")
       )
     ))
   })
@@ -1972,7 +1972,7 @@ server <- function(input, output, session) {
   observeEvent(input$toggle_ejemplo, {
     show_ejemplo(!show_ejemplo())
     updateActionButton(session, "toggle_ejemplo",
-      label = if (show_ejemplo()) "Ocultar ejemplo_para_paper" else "Mostrar ejemplo_para_paper")
+      label = if (show_ejemplo()) i18n$t("Ocultar ejemplo_para_paper") else i18n$t("Mostrar ejemplo_para_paper"))
   })
 
   output$context_table <- renderDT({
