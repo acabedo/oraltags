@@ -58,21 +58,21 @@ programming, (i) a configurable multi-layer pragmatic-discursive annotation sche
 automatic per-segment prosodic metrics, and (iii) inter-annotator agreement statistics,
 together with export of the resulting annotated, time-aligned dataset.
 
-[TODO: 2–3 sentences describing the concrete motivation / pain point that led to building the
-tool, and the intended audience — e.g. researchers in pragmatics, prosody and conversation
-analysis of spoken Spanish, and teaching contexts. Please confirm/edit.]
+The motivation behind `Oraltags` is to facilitate the combined **qualitative and
+quantitative** analysis of real speech material through an interface suited to that task, so
+that researchers and students can annotate and measure spoken data within a single
+environment and without writing code. It is aimed primarily at linguists and graduate
+students working on the pragmatics, discourse and prosody of spoken language, as well as at
+teaching in these areas.
 
-The default annotation scheme is grounded in [TODO: name the theoretical framework / project
-the scheme derives from (e.g. atenuación / Val.Es.Co or equivalent), with citation(s) — see
-the placeholder keys `@scheme1`, `@scheme2` in `paper.bib`]. Because every label and category
-is editable from the interface, the same tool can be reused for different annotation schemes
-without changing any code.
+Because every annotation label and category is fully editable from the interface, the default
+scheme—organised in blocks covering utterance structure, pragmatics, discourse and
+interaction, paralinguistic phenomena and emotion (the latter following Ekman's basic
+emotions [@ekman])—can be adapted or replaced for different research questions without
+changing any code.
 
-`Oraltags` has been used in [TODO: describe real use — projects, corpora, courses or
-publications that have employed the tool; this strengthens the submission].
-
-# Acknowledgements
-
-[TODO: funding/grants and acknowledgements, if any.]
+`Oraltags` has already supported empirical graduate research: two Master's theses in the
+*Máster de Estudios Hispánicos Avanzados* at the Universitat de València (by Alba Molins and
+Yaiza Bustos) used the tool for the annotation and prosodic analysis of their oral data.
 
 # References
