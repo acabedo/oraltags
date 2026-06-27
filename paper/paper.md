@@ -77,4 +77,28 @@ and prosodically analyse semi-directed sociolinguistic interviews — one on spo
 from the PRESEEA-Valencia corpus (Alba Molins), and the other on gender differences in covert
 and overt prestige in interviews about bodybuilding (Yaiza Bustos).
 
+# Functionality
+
+`Oraltags` is organised as a set of tabs covering a full analysis workflow without leaving the
+application (\autoref{fig:main}):
+
+- **Material loading and navigation.** Audio (WAV/MP3) or video (MP4) together with a
+  transcription (CSV, plain text or Praat TextGrid) are loaded as time-aligned intonation
+  groups, which the user reviews sequentially while listening to each segment or its
+  surrounding context.
+- **Automatic prosodic metrics.** For every segment the application computes, using established
+  R routines [@wrassp; @seewave], the mean, median, standard deviation and range of F0, global
+  pitch movement and final toneme, intensity, speech rate, and surrounding pauses.
+- **Configurable annotation.** A multi-block scheme (structure, pragmatics, discourse and
+  interaction, paralinguistic phenomena, and emotion) whose labels and categories are fully
+  editable from the interface, so the same tool serves different annotation schemes.
+- **Inter-annotator agreement.** For a corpus annotated by several judges, `Oraltags` reports
+  percentage agreement, Cohen's and Fleiss' kappa [@landiskoch], and Krippendorff's alpha
+  [@krippendorff].
+- **Exploration and export.** Navigable tables, bar and box plots, Praat-style figures, and
+  whole-corpus descriptive statistics, with export to CSV and Excel. The interface is bilingual
+  (Spanish/English).
+
+![The main annotation and analysis interface of Oraltags.\label{fig:main}](../imgs/1_etiquetador_pantalla_inicial.png)
+
 # References
