@@ -1039,7 +1039,7 @@ server <- function(input, output, session) {
     req(nzchar(input$existing_analysis))
     path <- file.path(ANALISIS_DIR, input$existing_analysis)
     if (!file.exists(path)) {
-      showNotification("Archivo no encontrado.", type = "error"); return()
+      showNotification(tr("Archivo no encontrado.", session_lang(), I18N_DICT), type = "error"); return()
     }
     df <- tryCatch(
       read.table(path, sep = "\t", header = TRUE, stringsAsFactors = FALSE,
@@ -1094,7 +1094,7 @@ server <- function(input, output, session) {
     }
     tg <- tryCatch(tg.read(tg_path), error = function(e) NULL)
     if (is.null(tg)) {
-      showNotification("No se pudo leer el TextGrid.", type = "error"); return()
+      showNotification(tr("No se pudo leer el TextGrid.", session_lang(), I18N_DICT), type = "error"); return()
     }
     rv$pending_tg_path <- tg_path
     rv$pending_tg_base <- base
@@ -1182,7 +1182,7 @@ server <- function(input, output, session) {
     audio_path <- find_audio_for_base(base)
     tg <- tryCatch(tg.read(rv$pending_tg_path), error = function(e) NULL)
     if (is.null(tg) || is.null(audio_path)) {
-      showNotification("Error al leer TextGrid o audio no encontrado.", type="error")
+      showNotification(tr("Error al leer TextGrid o audio no encontrado.", session_lang(), I18N_DICT), type="error")
       return()
     }
     if (is_mfa_textgrid(tg)) {
@@ -1215,12 +1215,12 @@ server <- function(input, output, session) {
     pause_min  <- if (!is.null(input$ge_pause_min)) input$ge_pause_min else 0.3
     tg <- tryCatch(tg.read(rv$pending_tg_path), error = function(e) NULL)
     if (is.null(tg) || is.null(audio_path)) {
-      showNotification("Error al leer TextGrid.", type = "error"); return()
+      showNotification(tr("Error al leer TextGrid.", session_lang(), I18N_DICT), type = "error"); return()
     }
     withProgress(message = "Generando grupos entonativos...", value = 0.3, {
       df <- parse_textgrid(tg, mfa_mode = TRUE, pause_min = pause_min)
       if (is.null(df)) {
-        showNotification("No se generaron GEs. Revisa los tiers del TextGrid.",
+        showNotification(tr("No se generaron GEs. Revisa los tiers del TextGrid.", session_lang(), I18N_DICT),
                          type = "error"); return()
       }
       df <- prepare_df(df)
@@ -1354,13 +1354,13 @@ server <- function(input, output, session) {
     rv$anot_defs <- new_defs
     save_etiquetas(new_defs)
     removeModal()
-    showNotification("Variables actualizadas y guardadas.", type = "message", duration = 3)
+    showNotification(tr("Variables actualizadas y guardadas.", session_lang(), I18N_DICT), type = "message", duration = 3)
   })
 
   observeEvent(input$reset_var_defs, {
     rv$anot_defs <- anot_defs_default
     if (file.exists(ETIQ_FILE)) file.remove(ETIQ_FILE)
-    showNotification("Variables restauradas a los valores por defecto.", type = "message", duration = 3)
+    showNotification(tr("Variables restauradas a los valores por defecto.", session_lang(), I18N_DICT), type = "message", duration = 3)
   })
 
   # ============================================================
@@ -1879,13 +1879,13 @@ server <- function(input, output, session) {
     req(rv$df_full)
     if (rv$sequential_index < nrow(rv$df_full))
       rv$sequential_index <- rv$sequential_index + 1
-    else showNotification("Última fila.", type = "warning", duration = 2)
+    else showNotification(tr("Última fila.", session_lang(), I18N_DICT), type = "warning", duration = 2)
   })
   observeEvent(input$prev_row, {
     req(rv$df_full)
     if (rv$sequential_index > 1)
       rv$sequential_index <- rv$sequential_index - 1
-    else showNotification("Primera fila.", type = "warning", duration = 2)
+    else showNotification(tr("Primera fila.", session_lang(), I18N_DICT), type = "warning", duration = 2)
   })
   observeEvent(input$goto_row_btn, {
     req(rv$df_full)
@@ -1963,7 +1963,7 @@ server <- function(input, output, session) {
     rv$df_full <- recompute_contexto(rv$df_full, window = 5)
     tryCatch({
       save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE)
-      showNotification("Fila guardada", type = "message")
+      showNotification(tr("Fila guardada", session_lang(), I18N_DICT), type = "message")
     }, error = function(e) showNotification(paste("Error al guardar:", e$message), type = "error"))
   })
 
@@ -2083,7 +2083,7 @@ server <- function(input, output, session) {
     req(rv$df_full, rv$selected_row_index, rv$current_filename)
     i <- rv$selected_row_index
     if (is.null(i) || is.na(i) || i < 1 || i > nrow(rv$df_full)) {
-      showNotification("No hay fila válida seleccionada.", type = "error"); return()
+      showNotification(tr("No hay fila válida seleccionada.", session_lang(), I18N_DICT), type = "error"); return()
     }
     for (id in anot_ids_auto) {
       val <- input[[id]]
@@ -2103,7 +2103,7 @@ server <- function(input, output, session) {
     rv$df <- df_to_display()
     replaceData(proxy, rv$df, resetPaging = FALSE, rownames = FALSE)
     autosave_status(sprintf("Guardado (fila %d)", i))
-    showNotification("Anotaciones guardadas.", type = "message", duration = 2)
+    showNotification(tr("Anotaciones guardadas.", session_lang(), I18N_DICT), type = "message", duration = 2)
   })
 
   # ============================================================
@@ -2395,12 +2395,12 @@ server <- function(input, output, session) {
     req(rv$df_full, rv$selected_row_index, rv$audio_cached)
     i <- rv$selected_row_index
     if (is.null(i) || i < 1 || i > nrow(rv$df_full)) {
-      showNotification("Sin fila válida.", type = "error"); return()
+      showNotification(tr("Sin fila válida.", session_lang(), I18N_DICT), type = "error"); return()
     }
     start_t <- as.numeric(rv$df_full$start[i])
     end_t   <- as.numeric(rv$df_full$end[i])
     if (is.na(start_t) || is.na(end_t)) {
-      showNotification("Tiempos inválidos.", type = "error"); return()
+      showNotification(tr("Tiempos inválidos.", session_lang(), I18N_DICT), type = "error"); return()
     }
     wave_full <- rv$audio_cached
     total_dur <- length(wave_full@left) / wave_full@samp.rate
@@ -2624,7 +2624,7 @@ server <- function(input, output, session) {
     req(input$coinc_files)
     fi <- input$coinc_files
     if (nrow(fi) > 10) {
-      showNotification("Más de 10 archivos: se usan los 10 primeros.", type = "warning")
+      showNotification(tr("Más de 10 archivos: se usan los 10 primeros.", session_lang(), I18N_DICT), type = "warning")
       fi <- fi[1:10, ]
     }
     dfs <- lapply(seq_len(nrow(fi)), function(i)
@@ -2890,7 +2890,7 @@ server <- function(input, output, session) {
                     animo_custom   = input$animo_custom %||% "",
                     plot_font_scale = as.numeric(input$plot_font_scale %||% 1)),
                PREFS_FILE)
-    showNotification("Preferencias guardadas", type = "message")
+    showNotification(tr("Preferencias guardadas", session_lang(), I18N_DICT), type = "message")
   })
 
 }
