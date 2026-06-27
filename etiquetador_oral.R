@@ -423,6 +423,8 @@ ui <- fluidPage(
     .nav-tabs>li.active>a,.nav-tabs>li.active>a:focus,.nav-tabs>li.active>a:hover {
       background-color:#2563eb; color:#ffffff !important; }
     #table,#context_table { font-size:13px; }
+    .lang-select .form-group { margin-bottom:0; }
+    #lang { height:30px; padding:2px 6px; font-size:12px; }
     #annotation_status { font-size:12px; color:#10b981; margin-top:6px; }
     .anot-box { border:2px solid #e5e7eb; border-radius:10px; padding:12px 14px; background:#fafafa; }
     #sequential_position { font-weight:500; color:#4b5563; margin-bottom:6px; }
@@ -453,8 +455,9 @@ ui <- fluidPage(
       div(style = "display:flex; align-items:center; gap:10px;",
         span(style = "font-size:12px; color:#6b7280;",
              i18n$t("Etiquetador de datos orales · explorador prosódico")),
-        selectInput("lang", NULL, choices = c("Español" = "es", "English" = "en"),
-                    selected = "es", width = "120px")
+        div(class = "lang-select",
+          selectInput("lang", NULL, choices = c("Español" = "es", "English" = "en"),
+                      selected = "es", width = "96px", selectize = FALSE))
       )
     )),
 
