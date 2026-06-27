@@ -72,7 +72,9 @@ emotions [@ekman])—can be adapted or replaced for different research questions
 changing any code.
 
 `Oraltags` has already supported empirical graduate research: two Master's theses in the
-*Máster de Estudios Hispánicos Avanzados* at the Universitat de València (by Alba Molins and
-Yaiza Bustos) used the tool for the annotation and prosodic analysis of their oral data.
+*Máster de Estudios Hispánicos Avanzados* at the Universitat de València used it to annotate
+and prosodically analyse semi-directed sociolinguistic interviews — one on spontaneous speech
+from the PRESEEA-Valencia corpus (Alba Molins), and the other on gender differences in covert
+and overt prestige in interviews about bodybuilding (Yaiza Bustos).
 
 # References
