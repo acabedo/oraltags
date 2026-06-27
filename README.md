@@ -99,6 +99,7 @@ Cada variable de anotación (`anot1`, `anot2`, …) tiene una etiqueta editable 
 - **Exportación de tablas** a CSV, Excel y portapapeles (botones integrados en cada tabla; exportan todas las filas).
 - **Tamaño de letra de los gráficos** ajustable con un deslizador global en *Configuración*.
 - **Mensaje de ánimo** opcional al iniciar (frase al azar o mensaje propio), activable en *Configuración*.
+- **Idioma de la interfaz**: selector **Español / English** en la cabecera (cambio en caliente; recuerda la elección). El esquema de anotación permanece en español.
 
 ---
 
@@ -110,7 +111,7 @@ Cada variable de anotación (`anot1`, `anot2`, …) tiene una etiqueta editable 
 ```r
 install.packages(c(
   "shiny", "DT", "tuneR", "shinyjs", "shinythemes",
-  "seewave", "wrassp", "praatpicture", "tools", "av", "rPraat"
+  "seewave", "wrassp", "praatpicture", "tools", "av", "rPraat", "shiny.i18n"
 ))
 ```
 
