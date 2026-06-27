@@ -1,3 +1,4 @@
-animo_enabled	TRUE
+animo_enabled	FALSE
 animo_custom	Eres el mejor
 plot_font_scale	1
+idioma	en
