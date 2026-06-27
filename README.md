@@ -117,6 +117,7 @@ install.packages(c(
 
 > `rPraat` es necesario solo para leer archivos TextGrid de Praat; `praatpicture` solo para la pestaña *Praatpicture*.
 > `irr` es opcional: habilita Krippendorff's α en la pestaña *Coincidencia*. Sin él, esa columna aparece como N/D.
+> `ffmpeg` es opcional (binario externo, no un paquete de R): si está en el `PATH`, al cargar un MP4 el visor del sidebar corta y reproduce el clip exacto de cada grupo entonativo. Sin él la app funciona igual, pero el vídeo del segmento usa el archivo completo (sincronización aproximada). El audio y el resto del análisis no lo necesitan.
 
 ---
 
