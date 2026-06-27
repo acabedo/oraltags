@@ -843,6 +843,32 @@ server <- function(input, output, session) {
   video_temp_dir <- tempdir()
   addResourcePath("tmpvideo", video_temp_dir)
 
+  # ---- Vídeo: cortar el clip del segmento (start–end) con ffmpeg, para
+  #      reproducirlo desde 0 (como el audio) sin depender de seek en el cliente ----
+  .find_ffmpeg <- function() {
+    f <- Sys.which("ffmpeg")
+    if (nzchar(f)) return(unname(f))
+    for (p in c("/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg",
+                path.expand("~/miniforge3/bin/ffmpeg"), path.expand("~/miniconda3/bin/ffmpeg"))) {
+      if (file.exists(p)) return(p)
+    }
+    ""
+  }
+  cut_video_clip <- function(input_mp4, start, end) {
+    ff <- .find_ffmpeg()
+    if (!nzchar(ff) || is.null(input_mp4) || !file.exists(input_mp4)) return(NULL)
+    start <- max(0, as.numeric(start)); dur <- max(0.1, as.numeric(end) - start)
+    fn  <- sprintf("clip_%s_%05d.mp4", format(Sys.time(), "%H%M%S"), round(runif(1) * 1e5))
+    out <- file.path(video_temp_dir, fn)
+    args <- c("-y", "-ss", sprintf("%.3f", start), "-i", input_mp4,
+              "-t", sprintf("%.3f", dur),
+              "-c:v", "libx264", "-preset", "veryfast", "-crf", "28",
+              "-c:a", "aac", "-movflags", "+faststart", "-loglevel", "error", out)
+    ok <- tryCatch(system2(ff, args, stdout = FALSE, stderr = FALSE), error = function(e) 1L)
+    if (!identical(as.integer(ok), 0L) || !file.exists(out)) return(NULL)
+    paste0("tmpvideo/", fn)
+  }
+
   ensure_dirs()
 
   # ---- Valores reactivos ----
@@ -855,6 +881,8 @@ server <- function(input, output, session) {
     pitch_data      = NULL,   # pitch para la gráfica del segmento actual
     video_path      = NULL,
     video_url       = NULL,
+    video_clip_url  = NULL,
+    video_clip_path = NULL,
     is_video        = FALSE,
     selected_start  = NULL,
     selected_end    = NULL,
@@ -2303,23 +2331,49 @@ server <- function(input, output, session) {
   # ============================================================
   # GRÁFICAS
   # ============================================================
+  # Al cambiar de segmento, cortar su clip de vídeo (si hay vídeo cargado)
+  observeEvent(rv$selected_row_index, {
+    if (!isTRUE(rv$is_video) || is.null(rv$video_path) ||
+        is.null(rv$df_full) || is.null(rv$selected_row_index)) {
+      rv$video_clip_url <- NULL; return()
+    }
+    idx <- rv$selected_row_index
+    s <- suppressWarnings(as.numeric(rv$df_full$start[idx]))
+    e <- suppressWarnings(as.numeric(rv$df_full$end[idx]))
+    if (is.na(s) || is.na(e)) { rv$video_clip_url <- NULL; return() }
+    old <- rv$video_clip_path
+    url <- cut_video_clip(rv$video_path, s, e)
+    rv$video_clip_url  <- url
+    rv$video_clip_path <- if (is.null(url)) NULL else file.path(video_temp_dir, basename(url))
+    if (!is.null(old) && file.exists(old)) try(unlink(old), silent = TRUE)
+  })
+
   output$sidebar_video <- renderUI({
-    if (!rv$is_video || is.null(rv$video_url) || is.null(rv$selected_start)) return(NULL)
-    vid_id <- paste0("vid_", round(runif(1) * 1e5))
-    tagList(
-      tags$video(id = vid_id, width = "100%", height = "180px",
+    if (!isTRUE(rv$is_video)) return(NULL)
+    if (!is.null(rv$video_clip_url)) {
+      # Clip cortado al segmento: se reproduce desde 0 (sin seek), como el audio
+      tags$video(src = rv$video_clip_url, width = "100%", height = "180px",
                  controls = "controls", preload = "auto",
                  style = "border-radius:6px; margin-bottom:8px; background:#000;",
-                 tags$source(src = rv$video_url, type = "video/mp4"),
-                 "Tu navegador no soporta video."),
-      tags$script(HTML(sprintf(
-        "(function(){var v=document.getElementById('%s');
-         if(v){v.load();v.onloadedmetadata=function(){
-           if(Number.isFinite(%f)) v.currentTime=%f;
-         };}})();",
-        vid_id, round(rv$selected_start,3), round(rv$selected_start,3)
-      )))
-    )
+                 "Tu navegador no soporta video.")
+    } else if (!is.null(rv$video_url) && !is.null(rv$selected_start)) {
+      # Fallback (sin ffmpeg): vídeo completo + seek al inicio del segmento
+      vid_id <- paste0("vid_", round(runif(1) * 1e5))
+      tagList(
+        tags$video(id = vid_id, width = "100%", height = "180px",
+                   controls = "controls", preload = "auto",
+                   style = "border-radius:6px; margin-bottom:8px; background:#000;",
+                   tags$source(src = rv$video_url, type = "video/mp4"),
+                   "Tu navegador no soporta video."),
+        tags$script(HTML(sprintf(
+          "(function(){var v=document.getElementById('%s');
+           if(v){v.load();v.onloadedmetadata=function(){
+             if(Number.isFinite(%f)) v.currentTime=%f;
+           };}})();",
+          vid_id, round(rv$selected_start,3), round(rv$selected_start,3)
+        )))
+      )
+    } else NULL
   })
 
   # Escala global del tamaño de letra de los gráficos (deslizador de Configuración).
