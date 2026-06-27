@@ -1,0 +1,28 @@
+name: Draft PDF
+
+on:
+  push:
+    paths:
+      - 'paper/**'
+      - '.github/workflows/draft-pdf.yaml'
+  workflow_dispatch:
+
+jobs:
+  paper:
+    runs-on: ubuntu-latest
+    name: Build the JOSS draft PDF
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build the official JOSS PDF
+        uses: openjournals/openjournals-draft-action@master
+        with:
+          journal: joss
+          paper-path: paper/paper.md
+
+      - name: Upload the PDF as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper
+          # The action writes the compiled PDF next to paper.md
+          path: paper/paper.pdf
