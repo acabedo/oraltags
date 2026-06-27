@@ -474,6 +474,7 @@ ui <- fluidPage(
 
           hr(),
 
+          uiOutput("sidebar_video"),
           uiOutput("sidebar_segment_info"),
 
           fluidRow(
@@ -563,7 +564,6 @@ ui <- fluidPage(
                         i18n$t("Calcula métricas acústicas para todas las filas.")),
                     hr()
                   )),
-                  fluidRow(column(12, uiOutput("video_player"))),
                   br(),
                   fluidRow(
                     column(6, plotOutput("oscillo_plot",  height = 250)),
@@ -1030,6 +1030,10 @@ server <- function(input, output, session) {
         fileInput("new_audio_upload",
                   "Subir audio (si no está en www/audios):",
                   accept = c(".wav", ".mp3"),
+                  width  = "100%"),
+        fileInput("new_video_upload",
+                  "Subir MP4:",
+                  accept = c(".mp4"),
                   width  = "100%")
       )
     } else {
@@ -1153,6 +1157,23 @@ server <- function(input, output, session) {
     if (!is.null(rv$pending_tg_path) && !is.null(rv$pending_tg_base)) {
       base_audio <- tools::file_path_sans_ext(input$new_audio_upload$name)
       if (base_audio == rv$pending_tg_base) {
+        process_pending_tg(rv$pending_tg_path, rv$pending_tg_base, dest)
+      }
+    }
+  })
+
+  # Nuevo MP4 subido (vídeo + audio): mismo flujo que el audio; load_audio detecta mp4
+  observeEvent(input$new_video_upload, {
+    req(input$new_video_upload)
+    dest_dir <- file.path("www", "audios")
+    if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+    dest <- file.path(dest_dir, input$new_video_upload$name)
+    file.copy(input$new_video_upload$datapath, dest, overwrite = TRUE)
+    showNotification(sprintf("MP4 guardado: %s", input$new_video_upload$name),
+                     type = "message", duration = 3)
+    if (!is.null(rv$pending_tg_path) && !is.null(rv$pending_tg_base)) {
+      base_video <- tools::file_path_sans_ext(input$new_video_upload$name)
+      if (base_video == rv$pending_tg_base) {
         process_pending_tg(rv$pending_tg_path, rv$pending_tg_base, dest)
       }
     }
@@ -2282,13 +2303,13 @@ server <- function(input, output, session) {
   # ============================================================
   # GRÁFICAS
   # ============================================================
-  output$video_player <- renderUI({
+  output$sidebar_video <- renderUI({
     if (!rv$is_video || is.null(rv$video_url) || is.null(rv$selected_start)) return(NULL)
     vid_id <- paste0("vid_", round(runif(1) * 1e5))
     tagList(
-      h4("Video del segmento"),
-      tags$video(id = vid_id, width = "100%", height = "300px",
+      tags$video(id = vid_id, width = "100%", height = "180px",
                  controls = "controls", preload = "auto",
+                 style = "border-radius:6px; margin-bottom:8px; background:#000;",
                  tags$source(src = rv$video_url, type = "video/mp4"),
                  "Tu navegador no soporta video."),
       tags$script(HTML(sprintf(
@@ -2297,11 +2318,7 @@ server <- function(input, output, session) {
            if(Number.isFinite(%f)) v.currentTime=%f;
          };}})();",
         vid_id, round(rv$selected_start,3), round(rv$selected_start,3)
-      ))),
-      p(sprintf("Segmento: %.2f – %.2f s (%.2f s)",
-                rv$selected_start, rv$selected_end,
-                rv$selected_end - rv$selected_start),
-        style = "color:#666; font-size:12px;")
+      )))
     )
   })
 
