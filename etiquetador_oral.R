@@ -449,8 +449,8 @@ ui <- fluidPage(
     titlePanel(div(
       style = "display:flex; align-items:center; justify-content:space-between;",
       div(style = "display:flex; align-items:center;",
-        HTML('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="52" height="52" style="margin-right:10px;vertical-align:middle;" role="img" aria-label="Oraltags"><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="#e95420" stroke="#b5401a" stroke-width="3"/><rect x="28" y="16" width="44" height="24" rx="8" fill="#ffffff"/><polygon points="37,40 37,52 49,40" fill="#ffffff"/><g stroke="#e95420" stroke-width="3.5" stroke-linecap="round"><line x1="36" y1="23" x2="36" y2="33"/><line x1="43" y1="19" x2="43" y2="37"/><line x1="50" y1="21" x2="50" y2="35"/><line x1="57" y1="18" x2="57" y2="38"/><line x1="64" y1="24" x2="64" y2="32"/></g><text x="50" y="73" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="0.3" fill="#ffffff">Oraltags</text></svg>'),
-        span("Oraltags", style = "font-size:12px; font-weight:600;")
+        HTML('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="92" height="92" style="margin-right:10px;vertical-align:middle;" role="img" aria-label="Oraltags"><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="#e95420" stroke="#b5401a" stroke-width="3"/><rect x="28" y="16" width="44" height="24" rx="8" fill="#ffffff"/><polygon points="37,40 37,52 49,40" fill="#ffffff"/><g stroke="#e95420" stroke-width="3.5" stroke-linecap="round"><line x1="36" y1="23" x2="36" y2="33"/><line x1="43" y1="19" x2="43" y2="37"/><line x1="50" y1="21" x2="50" y2="35"/><line x1="57" y1="18" x2="57" y2="38"/><line x1="64" y1="24" x2="64" y2="32"/></g><text x="50" y="73" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="0.3" fill="#ffffff">Oraltags</text></svg>'),
+        span("", style = "font-size:12px; font-weight:600;")
       ),
       div(style = "display:flex; align-items:center; gap:10px;",
         span(style = "font-size:12px; color:#6b7280;",
@@ -544,7 +544,7 @@ ui <- fluidPage(
                   actionButton("toggle_ejemplo", i18n$t("Mostrar ejemplo_para_paper"),
                                class = "btn-info btn-sm", style = "width:100%;")),
                 column(4, div(class = "small-helper-text", br(),
-                              "El contexto se muestra en orden temporal con formato ",
+                              i18n$t("El contexto se muestra en orden temporal con formato "),
                               tags$code("speaker: texto")))
               ),
               hr(), DTOutput("context_table")
@@ -560,7 +560,7 @@ ui <- fluidPage(
                     actionButton("compute_all",i18n$t("Calcular F0/Int de todos los segmentos"),
                                  class = "btn-danger btn-sm"),
                     div(class = "small-helper-text",
-                        "Calcula métricas acústicas para todas las filas."),
+                        i18n$t("Calcula métricas acústicas para todas las filas.")),
                     hr()
                   )),
                   fluidRow(column(12, uiOutput("video_player"))),
@@ -593,9 +593,9 @@ ui <- fluidPage(
                     div(
                       class = "small-helper-text",
                       style = "padding:20px;",
-                      tags$b("El paquete 'praatpicture' no está instalado."),
+                      tags$b(i18n$t("El paquete 'praatpicture' no está instalado.")),
                       br(),
-                      "Instálalo con: ",
+                      i18n$t("Instálalo con: "),
                       tags$code("install.packages('praatpicture')")
                     )
                   }
@@ -616,8 +616,8 @@ ui <- fluidPage(
                         ),
                         column(4,
                           radioButtons("stat_bar_type", i18n$t("Mostrar como:"),
-                                       choices = c("Absoluto" = "abs",
-                                                   "Porcentaje" = "pct"),
+                                       choiceNames = list(i18n$t("Absoluto"), i18n$t("Porcentaje")),
+                                       choiceValues = c("abs", "pct"),
                                        inline = TRUE)
                         ),
                         column(3, br(),
@@ -662,7 +662,7 @@ ui <- fluidPage(
                 tabPanel(i18n$t("Corpus completo"), br(),
                   fluidRow(
                     column(8, div(class = "small-helper-text",
-                      "Visión global del corpus consolidado (analisis/analisis_todos.txt).")),
+                      i18n$t("Visión global del corpus consolidado (analisis/analisis_todos.txt)."))),
                     column(4, actionButton("corpus_refresh", i18n$t("Refrescar desde disco"),
                                            class = "btn-info btn-sm", style = "width:100%;"))
                   ),
@@ -677,17 +677,17 @@ ui <- fluidPage(
                   hr(),
                   h6(i18n$t("Gráfico")),
                   fluidRow(
-                    column(4, radioButtons("corpus_plot_type", "Tipo:",
-                                           c("Barras (frecuencias)" = "bar", "Boxplot" = "box"),
-                                           inline = TRUE)),
+                    column(4, radioButtons("corpus_plot_type", i18n$t("Tipo:"),
+                                           choiceNames = list(i18n$t("Barras (frecuencias)"), "Boxplot"),
+                                           choiceValues = c("bar", "box"), inline = TRUE)),
                     column(8,
                       conditionalPanel("input.corpus_plot_type == 'bar'",
                         fluidRow(
                           column(6, selectInput("corpus_cat_var", i18n$t("Variable categórica:"),
                                                 choices = NULL, width = "100%")),
                           column(6, radioButtons("corpus_bar_type", i18n$t("Mostrar como:"),
-                                                 c("Absoluto" = "abs", "Porcentaje" = "pct"),
-                                                 inline = TRUE))
+                                                 choiceNames = list(i18n$t("Absoluto"), i18n$t("Porcentaje")),
+                                                 choiceValues = c("abs", "pct"), inline = TRUE))
                         )
                       ),
                       conditionalPanel("input.corpus_plot_type == 'box'",
@@ -721,9 +721,7 @@ ui <- fluidPage(
             tabPanel(i18n$t("Coincidencia"), br(),
               h5(i18n$t("Acuerdo entre anotadores (jueces)")),
               div(class = "small-helper-text",
-                  "Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO ",
-                  "corpus anotado por distintas personas. Se comparan los segmentos ",
-                  "comunes (mismo start/end/label)."),
+                  i18n$t("Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO corpus anotado por distintas personas. Se comparan los segmentos comunes (mismo start/end/label).")),
               fileInput("coinc_files", i18n$t("Archivos de análisis (2–10):"),
                         multiple = TRUE, accept = c(".txt", ".tsv", ".csv"),
                         width = "100%"),
@@ -736,8 +734,7 @@ ui <- fluidPage(
                                       i18n$t("Variables ordinales (kappa ponderado):"),
                                       choices = NULL, multiple = TRUE, width = "100%"),
                        div(class = "small-helper-text",
-                           "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); ",
-                           "los niveles de texto se ordenan alfabéticamente."))
+                           i18n$t("Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); los niveles de texto se ordenan alfabéticamente.")))
               ),
               actionButton("coinc_run", i18n$t("Calcular acuerdo"),
                            class = "btn-primary btn-sm"),
@@ -753,7 +750,7 @@ ui <- fluidPage(
               br(),
               fluidRow(
                 column(6, selectInput("coinc_confusion_var",
-                                      "Matriz de confusión (solo 2 jueces):",
+                                      i18n$t("Matriz de confusión (solo 2 jueces):"),
                                       choices = NULL, width = "100%"))
               ),
               verbatimTextOutput("coinc_confusion")
@@ -779,7 +776,7 @@ ui <- fluidPage(
               fluidRow(
                 column(12,
                   sliderInput("plot_font_scale", i18n$t("Tamaño de letra de gráficos:"),
-                              min = 0.7, max = 2, value = 1, step = 0.1, width = "100%")
+                              min = 0.7, max = 2, value = 1.6, step = 0.1, width = "100%")
                 )
               ),
               fluidRow(
@@ -1269,11 +1266,12 @@ server <- function(input, output, session) {
   # ============================================================
   output$annotation_tabs_ui <- renderUI({
     defs <- rv$anot_defs
+    lang <- session_lang()   # re-renderiza el formulario al cambiar de idioma
     mk <- function(id) make_select_from_def(id, defs[[id]])
 
     div(class = "anot-box",
     tabsetPanel(type = "pills",
-      tabPanel("Estructura",
+      tabPanel(tr("Estructura", lang, I18N_DICT),
         fluidRow(
           column(4, mk("anot1"), mk("anot2")),
           column(4, mk("anot3"), mk("anot4")),
@@ -1281,7 +1279,7 @@ server <- function(input, output, session) {
         ),
         fluidRow(column(6, mk("anot7")), column(6, mk("anot8")))
       ),
-      tabPanel("Pragmática",
+      tabPanel(tr("Pragmática", lang, I18N_DICT),
         fluidRow(
           column(4, mk("anot9"),  mk("anot10")),
           column(4, mk("anot11"), mk("anot12")),
@@ -1290,7 +1288,7 @@ server <- function(input, output, session) {
         fluidRow(column(6, mk("anot15")), column(6, mk("anot16"))),
         fluidRow(column(6, mk("anot17")))
       ),
-      tabPanel("Discurso e interaccion",
+      tabPanel(tr("Discurso e interaccion", lang, I18N_DICT),
         fluidRow(
           column(4, mk("anot18"), mk("anot19")),
           column(4, mk("anot20"), mk("anot21")),
@@ -1298,7 +1296,7 @@ server <- function(input, output, session) {
         ),
         fluidRow(column(6, mk("anot24")), column(6, mk("anot25")))
       ),
-      tabPanel("Paralinguistico / no verbal",
+      tabPanel(tr("Paralinguistico / no verbal", lang, I18N_DICT),
         fluidRow(
           column(4, mk("anot26")),
           column(4, mk("anot28"), mk("anot29")),
@@ -1310,7 +1308,7 @@ server <- function(input, output, session) {
           column(6, mk("anot33"))
         )
       ),
-      tabPanel("Emociones",
+      tabPanel(tr("Emociones", lang, I18N_DICT),
         br(),
         h6("Tono emocional (Ekman)"),
         uiOutput("emotion_ui"),

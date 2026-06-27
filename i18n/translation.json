@@ -90,6 +90,23 @@
     { "es": "Tiempos inválidos.", "en": "Invalid times." },
     { "es": "Última fila.", "en": "Last row." },
     { "es": "Variables actualizadas y guardadas.", "en": "Variables updated and saved." },
-    { "es": "Variables restauradas a los valores por defecto.", "en": "Variables restored to defaults." }
+    { "es": "Variables restauradas a los valores por defecto.", "en": "Variables restored to defaults." },
+    { "es": "Tipo:", "en": "Type:" },
+    { "es": "Absoluto", "en": "Absolute" },
+    { "es": "Porcentaje", "en": "Percentage" },
+    { "es": "Barras (frecuencias)", "en": "Bars (frequencies)" },
+    { "es": "Matriz de confusión (solo 2 jueces):", "en": "Confusion matrix (only 2 judges):" },
+    { "es": "Estructura", "en": "Structure" },
+    { "es": "Pragmática", "en": "Pragmatics" },
+    { "es": "Discurso e interaccion", "en": "Discourse and interaction" },
+    { "es": "Paralinguistico / no verbal", "en": "Paralinguistic / non-verbal" },
+    { "es": "Emociones", "en": "Emotions" },
+    { "es": "El contexto se muestra en orden temporal con formato ", "en": "The context is shown in temporal order with the format " },
+    { "es": "Calcula métricas acústicas para todas las filas.", "en": "Computes acoustic metrics for all rows." },
+    { "es": "El paquete 'praatpicture' no está instalado.", "en": "The 'praatpicture' package is not installed." },
+    { "es": "Instálalo con: ", "en": "Install it with: " },
+    { "es": "Visión global del corpus consolidado (analisis/analisis_todos.txt).", "en": "Global overview of the consolidated corpus (analisis/analisis_todos.txt)." },
+    { "es": "Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO corpus anotado por distintas personas. Se comparan los segmentos comunes (mismo start/end/label).", "en": "Upload 2 to 10 analysis files (analisis_*.txt) of the SAME corpus annotated by different people. Common segments are compared (same start/end/label)." },
+    { "es": "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); los niveles de texto se ordenan alfabéticamente.", "en": "For ordinals, levels should be numeric (e.g. 1–5); text levels are sorted alphabetically." }
   ]
 }
