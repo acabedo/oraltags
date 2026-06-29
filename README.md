@@ -1,112 +1,114 @@
 # Oraltags. Oral data tagger — v2.0
 
-> *Oraltags — explorador prosódico de datos orales*
+**🌐 Language / Idioma:** **English** · [Español](README_ES.md)
 
-Aplicación Shiny en R para la anotación lingüística y el análisis acústico de corpus orales. Permite cargar audio y transcripción, navegar grupo entonativo a grupo entonativo, calcular automáticamente métricas prosódicas, anotar con categorías totalmente configurables y explorar los resultados con tablas, figuras tipo Praat y gráficos estadísticos.
+> *Oraltags — a prosody explorer for oral data*
 
-![Pantalla inicial del etiquetador](imgs/1_etiquetador_pantalla_inicial.png)
+An R/Shiny application for the linguistic annotation and acoustic analysis of oral corpora. It lets you load audio and a transcription, navigate intonation group by intonation group, automatically compute prosodic metrics, annotate with fully configurable categories, and explore the results with tables, Praat-style figures and statistical charts.
 
----
-
-## Novedades de la v2.0
-
-- **Editor de variables de anotación**: ahora todas las categorías (etiquetas y valores posibles) son configurables desde la propia interfaz, sin tocar el código.
-- **Nueva pestaña *Emociones*** con tono emocional de Ekman e intensidad.
-- **Pestaña *Métricas*** con un informe prosódico textual completo de la fila activa.
-- **Pestaña *Praatpicture*** para renderizar figuras multipanel al estilo Praat.
-- **Pestaña *Estadísticas*** con gráficos de barras y diagramas de caja sobre las anotaciones.
-- Panel lateral con **navegación secuencial**, reproducción del segmento y de su contexto previo/posterior ajustable.
+![Oraltags initial screen](imgs/1_etiquetador_pantalla_inicial.png)
 
 ---
 
-## Funcionalidades principales
+## What's new in v2.0
 
-La app se organiza en seis pestañas superiores:
+- **Annotation-variable editor**: every category (labels and possible values) is now configurable from the interface itself, without touching the code.
+- **New *Emotions* tab** with Ekman emotional tone and intensity.
+- **\*Metrics\* tab** with a complete textual prosodic report of the active row.
+- **\*Praatpicture\* tab** for rendering multi-panel, Praat-style figures.
+- **\*Statistics\* tab** with bar charts and box plots over the annotations.
+- Side panel with **sequential navigation**, segment playback and adjustable preceding/following context.
 
-| Pestaña | Función |
+---
+
+## Main features
+
+The app is organised into six top-level tabs:
+
+| Tab | Function |
 |---|---|
-| **Anotaciones** | Formulario de etiquetado dividido en cinco bloques temáticos (ver más abajo). |
-| **Contexto** | Filas anteriores/posteriores a la selección; permite **editar speaker/label de la fila activa** (se guarda en el análisis) y mostrar una columna **`ejemplo_para_paper`** con cita `(corpus, inicio-fin)`. |
-| **Análisis fonético** | Subpestañas **Imágenes** (oscilograma, espectrograma, F0), **Métricas** (informe prosódico) y **Praatpicture** (figura multipanel). |
-| **Estadísticas** | Subpestañas **Este archivo** (barras/boxplots del corpus cargado) y **Corpus completo** (visión global de `analisis_todos.txt`). |
-| **Coincidencia** | Acuerdo entre 2–10 jueces (archivos de análisis de otros equipos): % de acuerdo, Cohen's Kappa (ponderado para ordinales), Fleiss' Kappa y Krippendorff's α (opcional). |
-| **Configuración** | Editor de variables de anotación: personaliza etiquetas y categorías. |
+| **Annotations** | Tagging form divided into five thematic blocks (see below). |
+| **Context** | Rows before/after the selection; lets you **edit the speaker/label of the active row** (saved to the analysis) and show an **`ejemplo_para_paper`** column with a `(corpus, start-end)` citation. |
+| **Phonetic analysis** | Subtabs **Images** (oscillogram, spectrogram, F0), **Metrics** (prosodic report) and **Praatpicture** (multi-panel figure). |
+| **Statistics** | Subtabs **This file** (bars/boxplots of the loaded corpus) and **Full corpus** (global overview of `analisis_todos.txt`). |
+| **Agreement** | Agreement between 2–10 judges (analysis files from other teams): percentage agreement, Cohen's Kappa (weighted for ordinals), Fleiss' Kappa and Krippendorff's α (optional). |
+| **Settings** | Annotation-variable editor: customise labels and categories. |
 
-### Carga de material y navegación
+### Material loading and navigation
 
-- **Carga de material**: audio en WAV, MP3 o MP4 + transcripción en CSV, TXT o TextGrid (Praat). Conversión automática de MP3/MP4 a WAV para el análisis.
-- **Navegación secuencial**: botones ⬅ Anterior / Siguiente ➡, salto directo a cualquier fila e indicador de posición (`Fila X de N`).
-- **Reproducción**: del segmento aislado o con contexto previo/posterior, ajustando los segundos *Antes (s)* y *Después (s)*.
-- **Pares precargados**: coloca audio + transcripción con el mismo nombre base en `www/audios/` y la app los detecta automáticamente.
+- **Material loading**: audio in WAV, MP3 or MP4 + transcription in CSV, TXT or TextGrid (Praat). Automatic MP3/MP4 to WAV conversion for analysis.
+- **Sequential navigation**: ⬅ Previous / Next ➡ buttons, direct jump to any row and a position indicator (`Row X of N`).
+- **Playback**: of the isolated segment or with preceding/following context, by adjusting the *Before (s)* and *After (s)* seconds.
+- **Preloaded pairs**: place audio + transcription with the same base name in `www/audios/` and the app detects them automatically.
 
-### Análisis acústico automático por segmento
+### Automatic per-segment acoustic analysis
 
-Las métricas se recalculan automáticamente al cambiar de fila:
+Metrics are recomputed automatically when you change row:
 
-- F0 media y mediana (Hz), con `wrassp::ksvF0`
-- Desviación típica y rango de F0 (en semitonos / p10–p90)
-- Inflexión global y tonema final (último 20 %), con su patrón melódico
-- Intensidad media (dB)
-- Velocidad de habla (palabras/s y fonemas/s) y pausas anterior/posterior
+- Mean and median F0 (Hz), with `wrassp::ksvF0`
+- F0 standard deviation and range (in semitones / p10–p90)
+- Global pitch movement and final toneme (last 20 %), with its melodic pattern
+- Mean intensity (dB)
+- Speech rate (words/s and phonemes/s) and preceding/following pauses
 
-![Análisis fonético: oscilograma, espectrograma y curva melódica](imgs/5_analisis_fonetico.png)
+![Phonetic analysis: oscillogram, spectrogram and pitch curve](imgs/5_analisis_fonetico.png)
 
-![Métricas: informe prosódico textual de la fila activa](imgs/6_valores_foneticos.png)
+![Metrics: textual prosodic report of the active row](imgs/6_valores_foneticos.png)
 
-![Praatpicture: figura multipanel al estilo Praat](imgs/7_praatpicture.png)
+![Praatpicture: multi-panel Praat-style figure](imgs/7_praatpicture.png)
 
-### Anotación
+### Annotation
 
-El formulario de **Anotaciones** se divide en cinco bloques. Las categorías que se muestran son las de fábrica, pero pueden modificarse por completo desde **Configuración**:
+The **Annotations** form is divided into five blocks. The categories shown are the defaults, but they can be fully modified from **Settings**:
 
-| Bloque | Ejemplos de categorías |
+| Block | Example categories |
 |---|---|
-| **Estructura** | Tipo de enunciado, modalidad oracional, estatus informativo, complejidad sintáctica, reformulación / expansión, función discursiva global, referencia a discurso ajeno, temporalidad del contenido |
-| **Pragmática** | Función pragmática, función interpersonal, atenuación, intensificación, cortesía, imagen del otro, autoimagen |
-| **Discurso e interacción** | Movimiento conversacional, gestión del turno, relación con el turno previo, dinámica interactiva, marcador discursivo, función fática, deixis, recursos coloquiales |
-| **Paralingüístico / no verbal** | Sonidos no verbales, solapamientos no verbales, ruido articulatorio, fenómenos respiratorios, turnos no verbales, ruido ambiental, actitud vocal |
-| **Emociones** | Tono emocional de Ekman (Neutra, Alegría, Tristeza, Miedo, Ira, Asco, Sorpresa, Desprecio) e intensidad (1–5) |
+| **Structure** | Utterance type, sentence modality, information status, syntactic complexity, reformulation / expansion, global discourse function, reference to others' discourse, temporality of the content |
+| **Pragmatics** | Pragmatic function, interpersonal function, mitigation, intensification, politeness, other's face, self-image |
+| **Discourse and interaction** | Conversational move, turn management, relation to the previous turn, interactive dynamics, discourse marker, phatic function, deixis, colloquial resources |
+| **Paralinguistic / non-verbal** | Non-verbal sounds, non-verbal overlaps, articulatory noise, breathing phenomena, non-verbal turns, ambient noise, vocal attitude |
+| **Emotions** | Ekman emotional tone (Neutral, Joy, Sadness, Fear, Anger, Disgust, Surprise, Contempt) and intensity (1–5) |
 
-![Anotación: bloque de Emociones (tono emocional de Ekman e intensidad)](imgs/2_anotacion.png)
+![Annotation: Emotions block (Ekman emotional tone and intensity)](imgs/2_anotacion.png)
 
-### Tablas y contexto
+### Tables and context
 
-![Tabla de anotación con columna de contexto](imgs/3_tabla_anotacion_contexto.png)
+![Annotation table with a context column](imgs/3_tabla_anotacion_contexto.png)
 
-![Vista de contexto: N filas anteriores y posteriores a la selección actual](imgs/4_tabla_contexto.png)
+![Context view: N rows before and after the current selection](imgs/4_tabla_contexto.png)
 
-### Estadísticas
+### Statistics
 
-![Estadísticas: gráfico de barras de una variable categórica](imgs/8_grafico_barras.png)
+![Statistics: bar chart of a categorical variable](imgs/8_grafico_barras.png)
 
-![Estadísticas: diagrama de caja de una variable numérica](imgs/9_grafico_boxplot.png)
+![Statistics: box plot of a numeric variable](imgs/9_grafico_boxplot.png)
 
-### Configuración (editor de variables)
+### Settings (variable editor)
 
-Cada variable de anotación (`anot1`, `anot2`, …) tiene una etiqueta editable y su lista de categorías (una por línea). Así, el mismo etiquetador sirve para esquemas de anotación distintos sin reprogramar nada.
+Each annotation variable (`anot1`, `anot2`, …) has an editable label and its list of categories (one per line). This way, the same tagger works for different annotation schemes without any reprogramming.
 
-![Editor de variables de anotación](imgs/10_edicion_variables.png)
+![Annotation-variable editor](imgs/10_edicion_variables.png)
 
-### Persistencia y exportación
+### Persistence and export
 
-- **Guardado automático**: al navegar o anotar, los datos se persisten en un TSV (`analisis_<nombre>.txt`) y en un consolidado (`analisis_todos.txt`).
-- **Sistema de backup**: copia de seguridad con marca de tiempo en `backup/` al cargar datos.
-- **Exportación**: CSV, TXT y volcado directo a Google Sheets.
+- **Automatic saving**: as you navigate or annotate, data is persisted to a TSV (`analisis_<name>.txt`) and to a consolidated file (`analisis_todos.txt`).
+- **Backup system**: a timestamped backup is created in `backup/` when data is loaded.
+- **Export**: CSV, TXT and direct dump to Google Sheets.
 
-### Exportación y personalización (v2.1)
+### Export and customisation (v2.1)
 
-- **Descarga de gráficos** en alta calidad (PNG 300 ppp y PDF vectorial) en los gráficos de *Estadísticas*, *Coincidencia* y *Corpus*.
-- **Exportación de tablas** a CSV, Excel y portapapeles (botones integrados en cada tabla; exportan todas las filas).
-- **Tamaño de letra de los gráficos** ajustable con un deslizador global en *Configuración*.
-- **Mensaje de ánimo** opcional al iniciar (frase al azar o mensaje propio), activable en *Configuración*.
-- **Idioma de la interfaz**: selector **Español / English** en la cabecera (cambio en caliente; recuerda la elección). El esquema de anotación permanece en español.
+- **High-quality chart download** (PNG 300 dpi and vector PDF) for the *Statistics*, *Agreement* and *Corpus* charts.
+- **Table export** to CSV, Excel and clipboard (buttons embedded in each table; they export all rows).
+- **Chart font size** adjustable with a global slider in *Settings*.
+- **Encouraging message** shown optionally at startup (random phrase or your own), enabled in *Settings*.
+- **Interface language**: a **Spanish / English** selector in the header (hot switching; remembers your choice). The annotation scheme stays in Spanish.
 
 ---
 
-## Requisitos
+## Requirements
 
 - R ≥ 4.1
-- Paquetes R:
+- R packages:
 
 ```r
 install.packages(c(
@@ -115,65 +117,65 @@ install.packages(c(
 ))
 ```
 
-> `rPraat` es necesario solo para leer archivos TextGrid de Praat; `praatpicture` solo para la pestaña *Praatpicture*.
-> `irr` es opcional: habilita Krippendorff's α en la pestaña *Coincidencia*. Sin él, esa columna aparece como N/D.
-> `ffmpeg` es opcional (binario externo, no un paquete de R): si está en el `PATH`, al cargar un MP4 el visor del sidebar corta y reproduce el clip exacto de cada grupo entonativo. Sin él la app funciona igual, pero el vídeo del segmento usa el archivo completo (sincronización aproximada). El audio y el resto del análisis no lo necesitan.
+> `rPraat` is only needed to read Praat TextGrid files; `praatpicture` only for the *Praatpicture* tab.
+> `irr` is optional: it enables Krippendorff's α in the *Agreement* tab. Without it, that column shows as N/A.
+> `ffmpeg` is optional (an external binary, not an R package): if it is on the `PATH`, when an MP4 is loaded the sidebar viewer cuts and plays the exact clip of each intonation group. Without it the app still works, but the segment video uses the full file (approximate synchronisation). Audio and the rest of the analysis do not need it.
 
 ---
 
-## Instalación y uso
+## Installation and use
 
 ```r
-# Clonar el repositorio y situarse en la carpeta
-setwd("ruta/a/etiquetador_oral")
+# Clone the repository and move into the folder
+setwd("path/to/etiquetador_oral")
 
-# Lanzar la aplicación
+# Launch the application
 shiny::runApp("etiquetador.R")
 ```
 
-### Organización de archivos
+### File organisation
 
 ```
 etiquetador_oral/
-├── etiquetador.R            # Código principal de la app
-├── imgs/                    # Capturas de ejemplo (este README)
+├── etiquetador.R            # Main app code
+├── imgs/                    # Example screenshots (this README)
 ├── www/
-│   └── audios/              # Pares precargados (mismo nombre base)
+│   └── audios/              # Preloaded pairs (same base name)
 │       ├── entrevista1.mp3
 │       └── entrevista1.csv
-├── backup/                  # Backups automáticos (se crea al cargar datos)
-├── analisis_<nombre>.txt    # Análisis individual por corpus (generado automáticamente)
-└── analisis_todos.txt       # Consolidado de todos los corpus (generado automáticamente)
+├── backup/                  # Automatic backups (created when data is loaded)
+├── analisis_<name>.txt      # Per-corpus analysis (generated automatically)
+└── analisis_todos.txt       # Consolidated file for all corpora (generated automatically)
 ```
 
-### Formato de la transcripción (CSV / TXT)
+### Transcription format (CSV / TXT)
 
-La transcripción debe incluir al menos estas columnas:
+The transcription must include at least these columns:
 
-| Columna | Descripción |
+| Column | Description |
 |---|---|
-| `speaker` | Identificador del hablante |
-| `start` | Tiempo de inicio en segundos |
-| `end` | Tiempo de fin en segundos |
-| `label` | Transcripción del segmento |
+| `speaker` | Speaker identifier |
+| `start` | Start time in seconds |
+| `end` | End time in seconds |
+| `label` | Transcription of the segment |
 
 ---
 
-## Flujo de trabajo
+## Workflow
 
-1. Carga el audio y la transcripción (pestaña **Precargados** o **Cargar**).
-2. Navega con **⬅ Anterior / Siguiente ➡** o salta directamente a una fila.
-3. Escucha el segmento con **▶ Segmento** o con contexto previo/posterior ajustable.
-4. Las métricas acústicas se calculan automáticamente al cambiar de fila (pestañas *Análisis fonético* y *Métricas*).
-5. Rellena las anotaciones en los bloques de **Anotaciones** y pulsa **Guardar**.
-6. Si lo necesitas, ajusta el esquema de etiquetas en **Configuración**.
-7. Explora los resultados en **Estadísticas** y exporta como CSV, TXT o Google Sheets.
+1. Load the audio and the transcription (**Preloaded** or **Load** tab).
+2. Navigate with **⬅ Previous / Next ➡** or jump directly to a row.
+3. Listen to the segment with **▶ Segment** or with adjustable preceding/following context.
+4. Acoustic metrics are computed automatically when you change row (*Phonetic analysis* and *Metrics* tabs).
+5. Fill in the annotations in the **Annotations** blocks and click **Save**.
+6. If needed, adjust the label scheme in **Settings**.
+7. Explore the results in **Statistics** and export as CSV, TXT or Google Sheets.
 
 ---
 
-## Licencia
+## License
 
 © 2025 Adrián Cabedo Nebot.  
-Distribuido bajo licencia **GNU General Public License v3.0 (GPL-3.0)**.  
-Se permite el uso, distribución y modificación bajo los términos de la GPL-3.0.  
-[Ver texto completo de la licencia](LICENSE)
+Distributed under the **GNU General Public License v3.0 (GPL-3.0)**.  
+Use, distribution and modification are permitted under the terms of the GPL-3.0.  
+[See the full license text](LICENSE)
