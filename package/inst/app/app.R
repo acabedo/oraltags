@@ -1,0 +1,3020 @@
+# etiquetador_oral.R  –  Versión 2.0
+# Oraltags
+
+# Permitir uploads de hasta 2 GB (ajusta según necesidad)
+options(shiny.maxRequestSize = 2048 * 1024^2)
+
+library(shiny)
+library(DT)
+library(tuneR)
+library(shinyjs)
+library(shinythemes)
+library(seewave)
+library(wrassp)
+library(tools)
+library(av)
+library(rPraat)
+library(shiny.i18n)
+
+HAS_PRAATPICTURE <- requireNamespace("praatpicture", quietly = TRUE)
+if (HAS_PRAATPICTURE) library(praatpicture)
+
+# ============================================================
+# DIRECTORIOS DEL PAQUETE Y DE DATOS DEL USUARIO
+#   APP_DIR  : carpeta 'app' instalada (assets de solo lectura: www, helpers).
+#   DATA_DIR : carpeta de datos del usuario (config, analisis, backup, audios).
+#              Persistente y escribible; se crea en el primer arranque vía
+#              oraltags::oraltags_data_dir().
+# ============================================================
+APP_DIR  <- system.file("app", package = "oraltags")
+DATA_DIR <- oraltags::oraltags_data_dir()
+
+# ── Helpers puros (acuerdo entre jueces y descriptivos de corpus) ──
+for (.f in c("stats_utils.R", "agreement.R", "corpus_stats.R", "plot_export.R", "prefs.R", "contexto.R", "i18n_util.R")) {
+  .p <- file.path(APP_DIR, "helpers", .f)
+  if (file.exists(.p)) source(.p)
+}
+
+n_anot <- 33
+
+# ============================================================
+# DEFINICIONES POR DEFECTO DE VARIABLES DE ANOTACIÓN
+# ============================================================
+anot_defs_default <- list(
+
+  anot1 = list(
+    label   = "Tipo de enunciado (estructura):",
+    choices = c("","Enunciado completo","Fragmento","Enunciado suspendido",
+                "Respuesta mínima (sí, ya, claro...)","Continuador (ajá, mhm, sí sí...)")
+  ),
+  anot2 = list(
+    label   = "Modalidad oracional:",
+    choices = c("","Afirmativa","Negativa","Interrogativa total (sí/no)",
+                "Interrogativa parcial (qu-)","Imperativa / directiva",
+                "Exclamativa","Dubitativa / mitigada","Optativa / desiderativa")
+  ),
+  anot3 = list(
+    label   = "Estatus informativo:",
+    choices = c("","Información nueva","Información dada",
+                "Recordatorio / reactivación","Reformulación de lo anterior",
+                "Comentario metadiscursivo (sobre cómo se dice)")
+  ),
+  anot4 = list(
+    label   = "Complejidad sintáctica:",
+    choices = c("","Simple","Yuxtaposición de enunciados","Coordinación",
+                "Subordinación ligera","Subordinación elaborada / estilo cercano a escrito")
+  ),
+  anot5 = list(
+    label   = "Reformulación / expansión:",
+    choices = c("","Sin reformulación","Autocorrección puntual",
+                "Paráfrasis (decir lo mismo de otra forma)",
+                "Expansión aclarativa / explicativa","Resumir / recapitular lo anterior")
+  ),
+  anot6 = list(
+    label   = "Función discursiva global:",
+    choices = c("","Narrativa (contar hechos)","Descriptiva","Explicativa / expositiva",
+                "Argumentativa (defender un punto de vista)","Instruccional / directiva")
+  ),
+  anot7 = list(
+    label   = "Referencia a discurso ajeno:",
+    choices = c("","No hay cita","Cita directa (dijo: \"...\")","Cita indirecta (dijo que...)",
+                "Estilo libre / eco del otro")
+  ),
+  anot8 = list(
+    label   = "Temporalidad del contenido:",
+    choices = c("","Presente / general","Pasado (relato)","Futuro / proyección",
+                "Hipotético / condicional")
+  ),
+  anot9 = list(
+    label   = "Función pragmática básica:",
+    choices = c("","Asertiva / informativa","Directiva (petición, orden, consejo)",
+                "Expresiva (emoción, reacción)","Fática (mantener contacto)",
+                "Metapragmática (hablar del hablar)")
+  ),
+  anot10 = list(
+    label   = "Función interpersonal:",
+    choices = c("","Neutra","Gestión de acuerdo / desacuerdo",
+                "Gestión de cercanía / complicidad","Gestión de conflicto / tensión")
+  ),
+  anot11 = list(
+    label   = "Atenuación: presencia y tipo global:",
+    choices = c("","Sin atenuación","Atenuación débil","Atenuación media","Atenuación fuerte")
+  ),
+  anot12 = list(
+    label   = "Atenuación: orientación principal:",
+    choices = c("","Orientada al yo (autoprotección)","Orientada al tú (no dañar al otro)",
+                "Orientada al decir (presentación del enunciado)",
+                "Orientada a la relación (cuidar el vínculo)")
+  ),
+  anot13 = list(
+    label   = "Atenuación: procedimiento dominante:",
+    choices = c("","Léxico (un poco, algo, más bien...)","Modalizadores (creo, me parece, supongo...)",
+                "Reformulación / rodeos","Marcadores atenuantes (bueno, hombre, oye...)",
+                "Cita / referencia a terceros (según dicen...)","Otros procedimientos")
+  ),
+  anot14 = list(
+    label   = "Intensificación:",
+    choices = c("","Sin intensificación","Cuantitativa (mucho, un montón...)",
+                "Cualitativa (súper, re-, -ísimo...)","Acto de habla (te lo juro, de verdad...)",
+                "Evaluativa (es brutal, es horrible...)","Múltiple (varias combinadas)")
+  ),
+  anot15 = list(
+    label   = "Estrategia de cortesía:",
+    choices = c("","No relevante / neutra","Cortesía positiva (acercamiento, elogio)",
+                "Cortesía negativa (no imponer, minimizar daño)",
+                "Ataque a la imagen del otro","Autoimagen mitigada (autocrítica, modestia)")
+  ),
+  anot16 = list(
+    label   = "Imagen del otro:",
+    choices = c("","Neutra","Apoyo / refuerzo del otro","Crítica indirecta",
+                "Crítica directa","Broma / ironía sobre el otro")
+  ),
+  anot17 = list(
+    label   = "Autoimagen:",
+    choices = c("","Neutra","Autoelogio / autopromoción","Autocrítica seria",
+                "Autocrítica irónica / lúdica","Justificación / excusa")
+  ),
+  anot18 = list(
+    label   = "Movimiento conversacional:",
+    choices = c("","Inicio de tema / secuencia","Continuación / desarrollo",
+                "Respuesta directa al otro","Reacción evaluativa",
+                "Cambio de tema","Cierre de secuencia")
+  ),
+  anot19 = list(
+    label   = "Gestión del turno:",
+    choices = c("","Toma de turno limpia","Autoseguimiento (seguir con el turno)",
+                "Cesión de turno","Interrupción","Solapamiento cooperativo",
+                "Solapamiento competitivo")
+  ),
+  anot20 = list(
+    label   = "Relación con el turno previo:",
+    choices = c("","Continuación lineal","Contraste / oposición","Aclaración / precisión",
+                "Respuesta a pregunta","Desplazamiento temático")
+  ),
+  anot21 = list(
+    label   = "Dinámica interactiva (solapamiento/ritmo):",
+    choices = c("","Interacción pausada (pocos solapamientos)","Interacción ágil (turnos breves)",
+                "Alta densidad de solapamientos cooperativos",
+                "Solapamientos conflictivos / competitivos")
+  ),
+  anot22 = list(
+    label   = "Marcador discursivo principal:",
+    choices = c("","Apertura (bueno, oye, mira...)","Conectivo aditivo (y, además, encima...)",
+                "Conectivo contrastivo (pero, sin embargo...)",
+                "Consecuencia (entonces, así que, por eso...)",
+                "Reformulación (o sea, quiero decir...)","Cierre (en fin, nada...)")
+  ),
+  anot23 = list(
+    label   = "Función fática / de contacto:",
+    choices = c("","No fática","Asegurar contacto (¿sabes?, ¿no?, ¿eh?)",
+                "Apelación directa al otro","Confirmación / feedback mínimo",
+                "Preguntas fáticas (¿vale?, ¿sí?)")
+  ),
+  anot24 = list(
+    label   = "Deixis dominante:",
+    choices = c("","Personal (yo, tú, nosotros...)","Espacial (aquí, ahí, allí...)",
+                "Temporal (ahora, luego, antes...)","Textual / anafórica (eso, lo dicho, aquello...)",
+                "Exofórica (esto/eso de aquí y ahora)")
+  ),
+  anot25 = list(
+    label   = "Recursos coloquiales y muletillas:",
+    choices = c("","Ninguno destacado","Interjecciones (¡ay!, ¡jo!, ¡uf!...)",
+                "Muletillas (en plan, ¿sabes?, ¿vale?, tío/tía...)",
+                "Frases hechas / proverbios","Argot / jerga específica")
+  ),
+  anot26 = list(
+    label   = "Paralenguaje (sonidos no verbales):",
+    choices = c("","Ninguno","Risa","Risa leve / nasal","Risa solapada con habla",
+                "Tos","Carraspeo","Suspiro","Resoplido","Chasquido / clic de lengua",
+                "Sollozo / llanto","Otros sonidos no verbales")
+  ),
+  anot27 = list(
+    label   = "Tono emocional (Ekman):",
+    choices = c("","Neutra / sin emoción marcada","Alegría","Tristeza","Miedo",
+                "Ira / enfado","Asco","Sorpresa","Desprecio")
+  ),
+  anot28 = list(
+    label   = "Solapamientos no verbales:",
+    choices = c("","No hay","Risa solapada","Suspiro solapado",
+                "Sonidos incidentales del hablante","Solapamiento cooperativo",
+                "Solapamiento conflictivo")
+  ),
+  anot29 = list(
+    label   = "Ruido articulatorio / gestual audible:",
+    choices = c("","Ninguno","Pensativo (mmm...)","Desaprobación (tsk, clic)",
+                "Llamada / atención (chss, besito)","Esfuerzo / molestia","Otros")
+  ),
+  anot30 = list(
+    label   = "Fenómenos respiratorios:",
+    choices = c("","Ninguno","Inspiración audible","Expiración marcada",
+                "Suspiro largo","Hiperventilación ligera")
+  ),
+  anot31 = list(
+    label   = "Sonidos no verbales como toma de turno:",
+    choices = c("","No hay","Mhm / ajá (aceptación)","¿Eh? (petición de aclaración)",
+                "Risa como toma de turno","Sonidos que inician turno (chasquido, inspiración)",
+                "Otros")
+  ),
+  anot32 = list(
+    label   = "Ruido ambiental con impacto discursivo:",
+    choices = c("","Irrelevante","Ruido que interfiere en el turno","Risas de terceros",
+                "Golpes / choques / movimiento",
+                "Música / sonido que provoca reformulación","Otros")
+  ),
+  anot33 = list(
+    label   = "Actitud vocal no verbal:",
+    choices = c("","Neutra","Cercanía / intimidad","Tensión / ansiedad",
+                "Confrontativa (bufidos, resoplidos)","Desdén (risita nasal, clic)",
+                "Lúdica / irónica")
+  )
+)
+
+# ============================================================
+# CONFIGURACIÓN: carga y guardado de etiquetas personalizadas
+# ============================================================
+CONFIG_DIR   <- file.path(DATA_DIR, "config")
+ETIQ_FILE    <- file.path(CONFIG_DIR, "etiquetas_variables.txt")
+BACKUP_DIR   <- file.path(DATA_DIR, "backup")
+ANALISIS_DIR <- file.path(DATA_DIR, "analisis")
+PREFS_FILE   <- file.path(CONFIG_DIR, "preferencias.txt")
+AUDIO_DIR    <- file.path(DATA_DIR, "audios")
+
+ANIMO_PRESETS <- c(
+  "Cada grupo entonativo que anotas acerca un poco más el corpus a la ciencia. ¡Ánimo!",
+  "La paciencia de hoy es el corpus sólido de mañana.",
+  "Un segmento cada vez: así se construyen los grandes análisis.",
+  "Tu oído atento es el mejor instrumento de medida. ¡A por ello!",
+  "Anotar es escuchar dos veces. Disfruta del proceso.",
+  "Los datos que cuidas hoy sostendrán tus conclusiones de mañana.",
+  "Pequeños avances, gran investigación. ¡Sigue así!",
+  "Detrás de cada etiqueta hay una decisión valiosa. Confía en tu criterio."
+)
+
+ensure_dirs <- function() {
+  for (d in c(CONFIG_DIR, BACKUP_DIR, ANALISIS_DIR, AUDIO_DIR)) {
+    if (!dir.exists(d)) dir.create(d, recursive = TRUE)
+  }
+}
+ensure_dirs()  # crea las carpetas de datos del usuario en el primer arranque
+
+save_etiquetas <- function(defs) {
+  ensure_dirs()
+  rows <- lapply(names(defs), function(id) {
+    def <- defs[[id]]
+    ch <- def$choices[def$choices != ""]
+    data.frame(id = id, label = def$label,
+               choices = paste(ch, collapse = ";"),
+               stringsAsFactors = FALSE)
+  })
+  df <- do.call(rbind, rows)
+  write.table(df, ETIQ_FILE, sep = "\t", row.names = FALSE,
+              quote = TRUE, fileEncoding = "UTF-8")
+}
+
+load_etiquetas <- function() {
+  defs <- anot_defs_default
+  if (!file.exists(ETIQ_FILE)) return(defs)
+  tryCatch({
+    df <- read.table(ETIQ_FILE, sep = "\t", header = TRUE,
+                     stringsAsFactors = FALSE, quote = "\"",
+                     fileEncoding = "UTF-8")
+    for (i in seq_len(nrow(df))) {
+      id <- df$id[i]
+      if (!id %in% names(defs)) next
+      defs[[id]]$label <- df$label[i]
+      ch <- strsplit(df$choices[i], ";", fixed = TRUE)[[1]]
+      defs[[id]]$choices <- c("", ch[nzchar(trimws(ch))])
+    }
+  }, error = function(e) message("Error cargando etiquetas: ", e$message))
+  defs
+}
+
+# ============================================================
+# ANÁLISIS POR CUARTILES
+# ============================================================
+quartile_means <- function(vals, times, t_start, t_end) {
+  sel <- times >= t_start & times <= t_end & is.finite(vals) & vals > 0
+  v   <- vals[sel]
+  if (length(v) < 4) return(rep(NA_real_, 4))
+  n  <- length(v)
+  br <- round(seq(1, n + 1, length.out = 5))
+  sapply(1:4, function(q) {
+    idx <- br[q]:(br[q + 1] - 1)
+    if (length(idx) == 0) NA_real_ else mean(v[idx], na.rm = TRUE)
+  })
+}
+
+get_quartile_metrics <- function(pitch_df, int_df, t_start, t_end, pct) {
+  dur <- t_end - t_start
+  if (dur <= 0 || pct <= 0) {
+    na4 <- rep(NA_real_, 4)
+    return(list(F0_ini = na4, F0_fin = na4, Int_ini = na4, Int_fin = na4))
+  }
+  w       <- dur * pct / 100
+  ini_end <- t_start + w
+  fin_st  <- t_end   - w
+
+  F0_ini <- F0_fin <- Int_ini <- Int_fin <- rep(NA_real_, 4)
+
+  if (!is.null(pitch_df) && nrow(pitch_df) > 0) {
+    F0_ini <- quartile_means(pitch_df$f0,        pitch_df$time, t_start, ini_end)
+    F0_fin <- quartile_means(pitch_df$f0,        pitch_df$time, fin_st,  t_end)
+  }
+  if (!is.null(int_df) && nrow(int_df) > 0) {
+    Int_ini <- quartile_means(int_df$intensity, int_df$time,   t_start, ini_end)
+    Int_fin <- quartile_means(int_df$intensity, int_df$time,   fin_st,  t_end)
+  }
+  list(F0_ini = F0_ini, F0_fin = F0_fin, Int_ini = Int_ini, Int_fin = Int_fin)
+}
+
+quartile_col_names <- c(
+  paste0("F0_ini_q",  1:4),
+  paste0("F0_fin_q",  1:4),
+  paste0("Int_ini_q", 1:4),
+  paste0("Int_fin_q", 1:4)
+)
+
+# ============================================================
+# HELPERS GENERALES
+# ============================================================
+make_col_order <- function() {
+  c("speaker","start","end","label","contexto",
+    "n_palabras","palabras_por_seg","fonemas_por_seg",
+    "F0_mean","F0_median","F0_sd","F0_range_st","F0_delta_st",
+    "F0_final_delta_st","F0_final_pattern",
+    "Int_mean","Int_median","Int_sd",
+    quartile_col_names,
+    paste0("anot", 1:n_anot),
+    "observaciones")
+}
+
+make_select_from_def <- function(id, def) {
+  selectInput(id, def$label, choices = def$choices, width = "100%", multiple = TRUE)
+}
+
+ensure_annotation_cols <- function(df) {
+  for (i in seq_len(n_anot)) {
+    cn <- paste0("anot", i)
+    if (!cn %in% names(df)) df[[cn]] <- NA_character_
+  }
+  for (cn in quartile_col_names) {
+    if (!cn %in% names(df)) df[[cn]] <- NA_real_
+  }
+  if (!"observaciones" %in% names(df)) df$observaciones <- NA_character_
+  df
+}
+
+# ── i18n ──────────────────────────────────────────────────────
+.i18n_json <- system.file("i18n", "translation.json", package = "oraltags")
+i18n <- shiny.i18n::Translator$new(translation_json_path = .i18n_json)
+i18n$set_translation_language("es")
+I18N_DICT <- load_i18n_dict(.i18n_json)
+
+# ============================================================
+# UI
+# ============================================================
+ui <- fluidPage(
+  title = "Oraltags",
+  theme = shinythemes::shinytheme("united"),
+  useShinyjs(),
+  shiny.i18n::usei18n(i18n),
+
+  tags$head(tags$style(HTML("
+    body { background-color: #eef2f7; }
+    .app-footer { margin-top:10px; padding:8px 0 4px; font-size:11px;
+                  color:#9ca3af; text-align:center; }
+    .app-footer a { color:#9ca3af; text-decoration:underline; }
+    .app-container { max-width:1400px; margin:0 auto 20px auto; }
+    .navbar,.navbar-default { border-radius:0; }
+    h2,h3,h4,h5 { font-weight:600; color:#1f2933; }
+    .sidebar-card,.main-card,.annotations-card,.export-bar {
+      background-color:#ffffff; border-radius:12px;
+      box-shadow:0 6px 18px rgba(15,23,42,0.08);
+      padding:16px 18px; margin-bottom:16px; }
+    .sidebar-card { min-height:calc(100vh - 80px); overflow-y:auto;
+                    position:sticky; top:20px; }
+    .export-bar { border-top:2px solid #e5e7eb; }
+    .control-label { font-weight:600; color:#374151; }
+    .form-control,.selectize-input { border-radius:8px; }
+    .btn { border-radius:999px; font-weight:500; }
+    .btn-primary,.btn-success,.btn-info,.btn-danger,.btn-secondary { border:none; }
+    .tabbable>.nav-tabs { border-bottom:none; margin-bottom:10px; }
+    .nav-tabs>li>a { border-radius:999px !important; margin-right:4px; padding:6px 12px; }
+    .nav-tabs>li.active>a,.nav-tabs>li.active>a:focus,.nav-tabs>li.active>a:hover {
+      background-color:#2563eb; color:#ffffff !important; }
+    #table,#context_table { font-size:13px; }
+    .lang-select .form-group { margin-bottom:0; }
+    #lang { height:30px; padding:2px 6px; font-size:12px; }
+    #annotation_status { font-size:12px; color:#10b981; margin-top:6px; }
+    .anot-box { border:2px solid #e5e7eb; border-radius:10px; padding:12px 14px; background:#fafafa; }
+    #sequential_position { font-weight:500; color:#4b5563; margin-bottom:6px; }
+    .small-helper-text { font-size:11px; color:#6b7280; margin-top:4px; }
+    .export-title { letter-spacing:.05em; text-transform:uppercase;
+                    font-size:11px; color:#6b7280; margin-bottom:8px; }
+    .file-status-active { background:#f0fdf4; border:1px solid #86efac;
+      border-radius:8px; padding:8px 10px; margin-bottom:8px; }
+    .file-status-active .file-label { font-size:12px; color:#15803d; font-weight:600; }
+    .file-status-active .file-name  { font-size:13px; font-weight:500; color:#1f2937; }
+    .file-status-active .file-meta  { font-size:11px; color:#6b7280; }
+    .emo-row { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+    .emo-btn { font-size:26px; line-height:1; padding:6px 8px; border:2px solid #e5e7eb;
+               border-radius:10px; background:#fff; cursor:pointer; transition:.15s; }
+    .emo-btn:hover { border-color:#93c5fd; background:#eff6ff; }
+    .emo-btn.emo-selected { border-color:#2563eb; background:#dbeafe; }
+    .emo-label { font-size:10px; color:#6b7280; text-align:center; margin-top:2px; }
+  "))),
+
+  div(class = "app-container",
+
+    titlePanel(div(
+      style = "display:flex; align-items:center; justify-content:space-between;",
+      div(style = "display:flex; align-items:center;",
+        HTML('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="92" height="92" style="margin-right:10px;vertical-align:middle;" role="img" aria-label="Oraltags"><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="#e95420" stroke="#b5401a" stroke-width="3"/><rect x="28" y="16" width="44" height="24" rx="8" fill="#ffffff"/><polygon points="37,40 37,52 49,40" fill="#ffffff"/><g stroke="#e95420" stroke-width="3.5" stroke-linecap="round"><line x1="36" y1="23" x2="36" y2="33"/><line x1="43" y1="19" x2="43" y2="37"/><line x1="50" y1="21" x2="50" y2="35"/><line x1="57" y1="18" x2="57" y2="38"/><line x1="64" y1="24" x2="64" y2="32"/></g><text x="50" y="73" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="0.3" fill="#ffffff">Oraltags</text></svg>'),
+        span("", style = "font-size:12px; font-weight:600;")
+      ),
+      div(style = "display:flex; align-items:center; gap:10px;",
+        span(style = "font-size:12px; color:#6b7280;",
+             i18n$t("Etiquetador de datos orales · explorador prosódico")),
+        div(class = "lang-select",
+          selectInput("lang", NULL, choices = c("Español" = "es", "English" = "en"),
+                      selected = "es", width = "96px", selectize = FALSE))
+      )
+    )),
+
+    fluidRow(
+
+      # ====================== SIDEBAR ======================
+      column(3, div(class = "sidebar-card",
+
+        # ---- Carga de archivos (Estado A / Estado B) ----
+        uiOutput("sidebar_file_ui"),
+
+        # ---- Sección activa (solo cuando hay análisis cargado) ----
+        div(id = "sidebar_active_section",
+
+          hr(),
+
+          uiOutput("sidebar_video"),
+          uiOutput("sidebar_segment_info"),
+
+          fluidRow(
+            column(6, actionButton("play_segment", i18n$t("▶ Segmento"),
+                                   class = "btn-success btn-sm", style = "width:100%;")),
+            column(6, actionButton("play_with_context", i18n$t("▶ Contexto"),
+                                   class = "btn-info btn-sm", style = "width:100%;"))
+          ),
+          div(style = "display:flex; gap:6px; margin-top:6px;",
+            numericInput("context_before", i18n$t("Antes (s):"),
+                         value = 0, min = 0, max = 5, step = 0.5, width = "50%"),
+            numericInput("context_after",  i18n$t("Despues (s):"),
+                         value = 0, min = 0, max = 5, step = 0.5, width = "50%")
+          ),
+
+          hr(),
+
+          h5(i18n$t("Navegación secuencial"), style = "margin-top:0;"),
+          fluidRow(
+            column(6, actionButton("prev_row",i18n$t("<= Anterior"),
+                                   class = "btn-secondary btn-sm", style = "width:100%;")),
+            column(6, actionButton("next_row",i18n$t("Siguiente =>"),
+                                   class = "btn-secondary btn-sm", style = "width:100%;"))
+          ),
+          br(),
+          textOutput("sequential_position"),
+          numericInput("goto_row",i18n$t("Ir a fila:"), value = 1, min = 1, step = 1, width = "100%"),
+          actionButton("goto_row_btn",i18n$t("Ir"),
+                       class = "btn-secondary btn-sm", style = "width:100%; margin-top:5px;")
+        )
+      )),
+
+      # ====================== COLUMNA DERECHA ======================
+      column(9,
+
+        div(class = "main-card",
+          tabsetPanel(
+
+            # ====================== ANOTACIONES (primer tab) ======================
+            tabPanel(i18n$t("Anotaciones"), br(),
+
+              fluidRow(
+                column(10, uiOutput("annotation_tabs_ui")),
+                column(2, br(),
+                  actionButton("save_annotation",i18n$t("Guardar"),
+                               class = "btn-primary btn-sm", style = "width:100%;"),
+                  br(), br(),
+                  textOutput("annotation_status")
+                )
+              ),
+              br(),
+              textAreaInput("observaciones",i18n$t("Observaciones:"),
+                            placeholder = "Notas...", rows = 2, width = "100%")
+            ),
+
+            tabPanel(i18n$t("Contexto"), br(),
+              fluidRow(
+                column(4, textInput("edit_speaker", "Speaker:", width = "100%")),
+                column(6, textInput("edit_label", i18n$t("Label (texto):"), width = "100%")),
+                column(2, br(),
+                  actionButton("save_row_edit", i18n$t("Guardar fila"),
+                               class = "btn-primary btn-sm", style = "width:100%;"))
+              ),
+              fluidRow(
+                column(4, numericInput("context_rows",i18n$t("Filas de contexto (+-):" ),
+                                       value = 5, min = 1, max = 20, step = 1, width = "100%")),
+                column(4, br(),
+                  actionButton("toggle_ejemplo", i18n$t("Mostrar ejemplo_para_paper"),
+                               class = "btn-info btn-sm", style = "width:100%;")),
+                column(4, div(class = "small-helper-text", br(),
+                              i18n$t("El contexto se muestra en orden temporal con formato "),
+                              tags$code("speaker: texto")))
+              ),
+              hr(), DTOutput("context_table")
+            ),
+
+            tabPanel(i18n$t("Analisis fonetico"), br(),
+              tabsetPanel(type = "tabs",
+                tabPanel(i18n$t("Imágenes"), br(),
+                  fluidRow(column(12,
+                    actionButton("play_segment1",i18n$t("Reproducir segmento"),
+                                 icon = icon("play"), class = "btn-success btn-sm",
+                                 style = "margin-right:5px;"),
+                    actionButton("compute_all",i18n$t("Calcular F0/Int de todos los segmentos"),
+                                 class = "btn-danger btn-sm"),
+                    div(class = "small-helper-text",
+                        i18n$t("Calcula métricas acústicas para todas las filas.")),
+                    hr()
+                  )),
+                  br(),
+                  fluidRow(
+                    column(6, plotOutput("oscillo_plot",  height = 250)),
+                    column(6, plotOutput("spectro_plot",  height = 250))
+                  ),
+                  br(),
+                  plotOutput("pitch_plot", height = 300)
+                ),
+                tabPanel(i18n$t("Métricas"), br(),
+                  h5(i18n$t("Análisis prosódico de la fila actual")),
+                  verbatimTextOutput("metrics_display")
+                ),
+                tabPanel("Praatpicture", br(),
+                  if (HAS_PRAATPICTURE) {
+                    tagList(
+                      fluidRow(
+                        column(3, checkboxInput("pp_show_wave",  i18n$t("Oscilograma"), TRUE)),
+                        column(3, checkboxInput("pp_show_spec",  i18n$t("Espectrograma"), TRUE)),
+                        column(3, checkboxInput("pp_show_pitch", "F0", TRUE)),
+                        column(3, checkboxInput("pp_show_int",   i18n$t("Intensidad"), FALSE))
+                      ),
+                      actionButton("render_praatpic", i18n$t("Renderizar"),
+                                   class = "btn-info btn-sm", style = "margin-bottom:10px;"),
+                      plotOutput("praatpicture_plot", height = 500)
+                    )
+                  } else {
+                    div(
+                      class = "small-helper-text",
+                      style = "padding:20px;",
+                      tags$b(i18n$t("El paquete 'praatpicture' no está instalado.")),
+                      br(),
+                      i18n$t("Instálalo con: "),
+                      tags$code("install.packages('praatpicture')")
+                    )
+                  }
+                )
+              )
+            ),
+
+            # ====================== CONFIGURACIÓN ======================
+            tabPanel(i18n$t("Estadísticas"), br(),
+              tabsetPanel(type = "tabs",
+                tabPanel(i18n$t("Este archivo"), br(),
+                  tabsetPanel(type = "tabs",
+                    tabPanel(i18n$t("Barras"), br(),
+                      fluidRow(
+                        column(5,
+                          selectInput("stat_cat_var", i18n$t("Variable categórica:"),
+                                      choices = NULL, width = "100%")
+                        ),
+                        column(4,
+                          radioButtons("stat_bar_type", i18n$t("Mostrar como:"),
+                                       choiceNames = list(i18n$t("Absoluto"), i18n$t("Porcentaje")),
+                                       choiceValues = c("abs", "pct"),
+                                       inline = TRUE)
+                        ),
+                        column(3, br(),
+                          actionButton("stat_bar_update", i18n$t("Actualizar"),
+                                       class = "btn-primary btn-sm",
+                                       style = "width:100%;")
+                        )
+                      ),
+                      plotOutput("stat_barplot", height = 420)
+                      ,
+                      fluidRow(column(12,
+                        downloadButton("stat_barplot_png", "PNG", class = "btn-sm"),
+                        downloadButton("stat_barplot_pdf", "PDF", class = "btn-sm")
+                      ))
+                    ),
+                    tabPanel("Boxplots", br(),
+                      fluidRow(
+                        column(5,
+                          selectInput("stat_num_var", i18n$t("Variable numérica:"),
+                                      choices = NULL, width = "100%")
+                        ),
+                        column(4,
+                          selectInput("stat_group_var", i18n$t("Agrupar por (opcional):"),
+                                      choices = NULL, width = "100%")
+                        ),
+                        column(3, br(),
+                          actionButton("stat_box_update", i18n$t("Actualizar"),
+                                       class = "btn-primary btn-sm",
+                                       style = "width:100%;")
+                        )
+                      ),
+                      plotOutput("stat_boxplot", height = 380),
+                      fluidRow(column(12,
+                        downloadButton("stat_boxplot_png", "PNG", class = "btn-sm"),
+                        downloadButton("stat_boxplot_pdf", "PDF", class = "btn-sm")
+                      )),
+                      br(),
+                      verbatimTextOutput("stat_summary")
+                    )
+                  )
+                ),
+                tabPanel(i18n$t("Corpus completo"), br(),
+                  fluidRow(
+                    column(8, div(class = "small-helper-text",
+                      i18n$t("Visión global del corpus consolidado (analisis/analisis_todos.txt)."))),
+                    column(4, actionButton("corpus_refresh", i18n$t("Refrescar desde disco"),
+                                           class = "btn-info btn-sm", style = "width:100%;"))
+                  ),
+                  fileInput("corpus_file", i18n$t("(Opcional) Cargar otro consolidado:"),
+                            accept = c(".txt", ".tsv", ".csv"), width = "100%"),
+                  hr(),
+                  verbatimTextOutput("corpus_summary"),
+                  DTOutput("corpus_perfile"),
+                  hr(),
+                  h6(i18n$t("Descriptivos generales (variables numéricas)")),
+                  DTOutput("corpus_desc"),
+                  hr(),
+                  h6(i18n$t("Gráfico")),
+                  fluidRow(
+                    column(4, radioButtons("corpus_plot_type", i18n$t("Tipo:"),
+                                           choiceNames = list(i18n$t("Barras (frecuencias)"), "Boxplot"),
+                                           choiceValues = c("bar", "box"), inline = TRUE)),
+                    column(8,
+                      conditionalPanel("input.corpus_plot_type == 'bar'",
+                        fluidRow(
+                          column(6, selectInput("corpus_cat_var", i18n$t("Variable categórica:"),
+                                                choices = NULL, width = "100%")),
+                          column(6, radioButtons("corpus_bar_type", i18n$t("Mostrar como:"),
+                                                 choiceNames = list(i18n$t("Absoluto"), i18n$t("Porcentaje")),
+                                                 choiceValues = c("abs", "pct"), inline = TRUE))
+                        )
+                      ),
+                      conditionalPanel("input.corpus_plot_type == 'box'",
+                        fluidRow(
+                          column(6, selectInput("corpus_num_var", i18n$t("Variable numérica:"),
+                                                choices = NULL, width = "100%")),
+                          column(6, selectInput("corpus_group1", i18n$t("Agrupar gráfico por:"),
+                                                choices = NULL, width = "100%"))
+                        )
+                      )
+                    )
+                  ),
+                  plotOutput("corpus_plot", height = 420),
+                  fluidRow(column(12,
+                    downloadButton("corpus_plot_png", "PNG", class = "btn-sm"),
+                    downloadButton("corpus_plot_pdf", "PDF", class = "btn-sm")
+                  )),
+                  hr(),
+                  h6(i18n$t("Agrupar por hasta 4 variables (tabla cruzada de descriptivos)")),
+                  fluidRow(
+                    column(3, selectInput("corpus_g1", i18n$t("Grupo 1:"), choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g2", i18n$t("Grupo 2:"), choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g3", i18n$t("Grupo 3:"), choices = NULL, width = "100%")),
+                    column(3, selectInput("corpus_g4", i18n$t("Grupo 4:"), choices = NULL, width = "100%"))
+                  ),
+                  DTOutput("corpus_cross")
+                )
+              )
+            ),
+
+            tabPanel(i18n$t("Coincidencia"), br(),
+              h5(i18n$t("Acuerdo entre anotadores (jueces)")),
+              div(class = "small-helper-text",
+                  i18n$t("Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO corpus anotado por distintas personas. Se comparan los segmentos comunes (mismo start/end/label).")),
+              fileInput("coinc_files", i18n$t("Archivos de análisis (2–10):"),
+                        multiple = TRUE, accept = c(".txt", ".tsv", ".csv"),
+                        width = "100%"),
+              DTOutput("coinc_files_info"),
+              hr(),
+              fluidRow(
+                column(6, selectInput("coinc_vars", i18n$t("Variables a comparar:"),
+                                      choices = NULL, multiple = TRUE, width = "100%")),
+                column(6, selectInput("coinc_ord_vars",
+                                      i18n$t("Variables ordinales (kappa ponderado):"),
+                                      choices = NULL, multiple = TRUE, width = "100%"),
+                       div(class = "small-helper-text",
+                           i18n$t("Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); los niveles de texto se ordenan alfabéticamente.")))
+              ),
+              actionButton("coinc_run", i18n$t("Calcular acuerdo"),
+                           class = "btn-primary btn-sm"),
+              hr(),
+              verbatimTextOutput("coinc_summary"),
+              DTOutput("coinc_table"),
+              br(),
+              plotOutput("coinc_barplot", height = 420),
+              fluidRow(column(12,
+                downloadButton("coinc_barplot_png", "PNG", class = "btn-sm"),
+                downloadButton("coinc_barplot_pdf", "PDF", class = "btn-sm")
+              )),
+              br(),
+              fluidRow(
+                column(6, selectInput("coinc_confusion_var",
+                                      i18n$t("Matriz de confusión (solo 2 jueces):"),
+                                      choices = NULL, width = "100%"))
+              ),
+              verbatimTextOutput("coinc_confusion")
+            ),
+
+            tabPanel(i18n$t("Configuración"), br(),
+              h6(i18n$t("⚙️ Parámetros acústicos")),
+              fluidRow(
+                column(6, numericInput("quartile_pct",
+                           i18n$t("Porcentaje cuartiles (%):"),
+                           value = 20, min = 5, max = 50, step = 5, width = "100%")),
+                column(6, br(),
+                  actionButton("open_var_editor", i18n$t("Editar variables"),
+                               icon = icon("edit"), class = "btn-info btn-sm",
+                               style = "width:100%;"),
+                  br(), br(),
+                  actionButton("reset_var_defs", i18n$t("Restaurar por defecto"),
+                               class = "btn-danger btn-sm", style = "width:100%;")
+                )
+              ),
+              hr(),
+              h6(i18n$t("🎚️ Preferencias")),
+              fluidRow(
+                column(12,
+                  sliderInput("plot_font_scale", i18n$t("Tamaño de letra de gráficos:"),
+                              min = 0.7, max = 2, value = 1.6, step = 0.1, width = "100%")
+                )
+              ),
+              fluidRow(
+                column(12,
+                  checkboxInput("animo_enabled",
+                                i18n$t("Mostrar mensaje de ánimo al iniciar"), value = FALSE),
+                  textAreaInput("animo_custom", i18n$t("Tu propio mensaje (opcional):"),
+                                rows = 2, width = "100%",
+                                placeholder = "Si lo dejas vacío, se mostrará una frase al azar."),
+                  actionButton("save_prefs_btn", i18n$t("Guardar preferencias"),
+                               class = "btn-primary btn-sm")
+                )
+              )
+            )
+          )
+        )
+      )
+    ),
+
+    div(class = "app-footer",
+      HTML("&copy; 2026 Adrián Cabedo Nebot &middot;
+           <a href='https://www.gnu.org/licenses/gpl-3.0.html' target='_blank'>
+           GPL-3.0</a>")
+    )
+  )
+)
+
+# ============================================================
+# SERVER
+# ============================================================
+server <- function(input, output, session) {
+
+  `%||%` <- function(a, b) if (!is.null(a)) a else b
+
+  session_lang <- reactiveVal("es")
+
+  observeEvent(input$lang, {
+    if (identical(input$lang, session_lang())) return()
+    shiny.i18n::update_lang(input$lang, session)
+    session_lang(input$lang)
+    save_prefs(modifyList(load_prefs(PREFS_FILE), list(idioma = input$lang)), PREFS_FILE)
+  }, ignoreInit = TRUE)
+
+  # Cargar preferencias guardadas e inicializar controles + modal de bienvenida.
+  local({
+    prefs0 <- load_prefs(PREFS_FILE)
+    updateCheckboxInput(session, "animo_enabled", value = isTRUE(prefs0$animo_enabled))
+    updateTextAreaInput(session, "animo_custom",  value = prefs0$animo_custom %||% "")
+    updateSliderInput(session, "plot_font_scale",
+                      value = as.numeric(prefs0$plot_font_scale %||% 1))
+    if (isTRUE(prefs0$animo_enabled)) {
+      showModal(modalDialog(
+        title = "Bienvenido/a a Oraltags",
+        choose_message(prefs0$animo_custom, ANIMO_PRESETS),
+        easyClose = TRUE, footer = modalButton("Cerrar")
+      ))
+    }
+    lang0 <- if (identical(prefs0$idioma, "en")) "en" else "es"
+    session_lang(lang0)
+    updateSelectInput(session, "lang", selected = lang0)
+    if (lang0 == "en") shiny.i18n::update_lang("en", session)
+  })
+
+  video_temp_dir <- tempdir()
+  addResourcePath("tmpvideo", video_temp_dir)
+
+  # ---- Vídeo: cortar el clip del segmento (start–end) con ffmpeg, para
+  #      reproducirlo desde 0 (como el audio) sin depender de seek en el cliente ----
+  .find_ffmpeg <- function() {
+    f <- Sys.which("ffmpeg")
+    if (nzchar(f)) return(unname(f))
+    for (p in c("/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg",
+                path.expand("~/miniforge3/bin/ffmpeg"), path.expand("~/miniconda3/bin/ffmpeg"))) {
+      if (file.exists(p)) return(p)
+    }
+    ""
+  }
+  cut_video_clip <- function(input_mp4, start, end) {
+    ff <- .find_ffmpeg()
+    if (!nzchar(ff) || is.null(input_mp4) || !file.exists(input_mp4)) return(NULL)
+    start <- max(0, as.numeric(start)); dur <- max(0.1, as.numeric(end) - start)
+    fn  <- sprintf("clip_%s_%05d.mp4", format(Sys.time(), "%H%M%S"), round(runif(1) * 1e5))
+    out <- file.path(video_temp_dir, fn)
+    args <- c("-y", "-ss", sprintf("%.3f", start), "-i", input_mp4,
+              "-t", sprintf("%.3f", dur),
+              "-c:v", "libx264", "-preset", "veryfast", "-crf", "28",
+              "-c:a", "aac", "-movflags", "+faststart", "-loglevel", "error", out)
+    ok <- tryCatch(system2(ff, args, stdout = FALSE, stderr = FALSE), error = function(e) 1L)
+    if (!identical(as.integer(ok), 0L) || !file.exists(out)) return(NULL)
+    paste0("tmpvideo/", fn)
+  }
+
+  ensure_dirs()
+
+  # ---- Valores reactivos ----
+  rv <- reactiveValues(
+    df              = NULL,
+    df_full         = NULL,
+    audio_path      = NULL,
+    audio_cached    = NULL,
+    selected_segment= NULL,
+    pitch_data      = NULL,   # pitch para la gráfica del segmento actual
+    video_path      = NULL,
+    video_url       = NULL,
+    video_clip_url  = NULL,
+    video_clip_path = NULL,
+    is_video        = FALSE,
+    selected_start  = NULL,
+    selected_end    = NULL,
+    acoustic_done   = FALSE,
+    selected_row_index = NULL,
+    sequential_index   = 1,
+    current_filename   = NULL,
+    initial_backup_done= FALSE,
+    anot_defs         = load_etiquetas(),
+    praatpic_temp_wav = NULL,
+    analysis_scan_trigger = 0,
+    pending_tg_path       = NULL,
+    pending_tg_base       = NULL
+  )
+
+  autosave_status <- reactiveVal("")
+
+  # Ocultar sección activa hasta que se cargue un análisis
+  shinyjs::hide("sidebar_active_section")
+
+  output$annotation_status <- renderText(autosave_status())
+
+  # ============================================================
+  # EMOCIONES (anot27)
+  # ============================================================
+  emo_list <- list(
+    list(id = "neutral",  emoji = "\U0001f610", label = "Neutra"),
+    list(id = "joy",      emoji = "\U0001f604", label = "Alegría"),
+    list(id = "sadness",  emoji = "\U0001f622", label = "Tristeza"),
+    list(id = "fear",     emoji = "\U0001f628", label = "Miedo"),
+    list(id = "anger",    emoji = "\U0001f620", label = "Ira"),
+    list(id = "disgust",  emoji = "\U0001f922", label = "Asco"),
+    list(id = "surprise", emoji = "\U0001f632", label = "Sorpresa"),
+    list(id = "contempt", emoji = "\U0001f612", label = "Desprecio")
+  )
+  selected_emotion <- reactiveVal(NULL)
+
+  output$emotion_ui <- renderUI({
+    sel <- selected_emotion()
+    div(class = "emo-row",
+      lapply(emo_list, function(e) {
+        is_sel <- !is.null(sel) && sel == e$label
+        btn_class <- paste0("btn emo-btn", if (is_sel) " emo-selected" else "")
+        div(style = "text-align:center;",
+          tags$button(e$emoji,
+            id     = paste0("emo_btn_", e$id),
+            class  = btn_class,
+            onclick = sprintf(
+              "Shiny.setInputValue('emo_clicked', '%s', {priority: 'event'});",
+              e$label)
+          ),
+          div(class = "emo-label", e$label)
+        )
+      })
+    )
+  })
+
+  output$emotion_value_display <- renderUI({
+    sel <- selected_emotion()
+    lik <- if (!is.null(input$emotion_likert)) input$emotion_likert else 3L
+    val <- if (!is.null(sel)) sprintf("%s - %d", sel, lik) else "(sin selección)"
+    div(style = "margin-top:6px; font-size:13px; color:#374151;",
+      tags$b("Valor guardado: "), val)
+  })
+
+  write_emotion_to_anot27 <- function() {
+    sel <- selected_emotion()
+    if (is.null(sel) || is.null(rv$df_full) || is.null(rv$selected_row_index)) return()
+    i   <- rv$selected_row_index
+    lik <- if (!is.null(input$emotion_likert)) input$emotion_likert else 3L
+    rv$df_full$anot27[i] <- sprintf("%s - %d", sel, lik)
+    tryCatch(save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE),
+             error = function(e) NULL)
+    autosave_status(sprintf("✓ Emoción guardada (fila %d)", i))
+  }
+
+  observeEvent(input$emo_clicked, {
+    selected_emotion(input$emo_clicked)
+    write_emotion_to_anot27()
+  })
+
+  observeEvent(input$emotion_likert, {
+    if (!is.null(selected_emotion())) write_emotion_to_anot27()
+  }, ignoreInit = TRUE)
+
+  # Al cambiar de fila: sincronizar el estado de emociones desde anot27
+  observeEvent(rv$selected_row_index, {
+    req(rv$df_full, rv$selected_row_index)
+    val <- rv$df_full$anot27[rv$selected_row_index]
+    if (!is.na(val) && nzchar(val)) {
+      parts <- strsplit(val, "\\s*-\\s*")[[1]]
+      if (length(parts) >= 2) {
+        sel_lbl <- trimws(parts[1])
+        lik_val <- suppressWarnings(as.integer(trimws(parts[length(parts)])))
+        selected_emotion(sel_lbl)
+        if (!is.na(lik_val) && lik_val >= 1 && lik_val <= 5)
+          updateSliderInput(session, "emotion_likert", value = lik_val)
+      } else {
+        selected_emotion(trimws(val))
+      }
+    } else {
+      selected_emotion(NULL)
+      updateSliderInput(session, "emotion_likert", value = 3)
+    }
+  }, ignoreInit = TRUE)
+
+  # ============================================================
+  # SISTEMA DE CARGA DE ARCHIVOS
+  # ============================================================
+
+  scan_analysis_files <- function() {
+    force(rv$analysis_scan_trigger)
+    ensure_dirs()
+    files <- sort(list.files(ANALISIS_DIR, pattern = "^analisis_.*\\.txt$",
+                             full.names = FALSE))
+    files <- files[files != "analisis_todos.txt"]
+    if (length(files) == 0) return(c("(no hay análisis guardados)" = ""))
+    labels <- tools::file_path_sans_ext(sub("^analisis_", "", files))
+    setNames(files, labels)
+  }
+
+  # Muestras de ejemplo empaquetadas en inst/extdata/samples (audio + TextGrid)
+  samples_dir <- function() system.file("extdata", "samples", package = "oraltags")
+  sample_choices <- function() {
+    d <- samples_dir()
+    if (!nzchar(d)) return(c("(sin muestras)" = ""))
+    tg <- sort(list.files(d, pattern = "\\.TextGrid$", full.names = FALSE))
+    if (length(tg) == 0) return(c("(sin muestras)" = ""))
+    bases <- tools::file_path_sans_ext(tg)
+    setNames(bases, bases)
+  }
+
+  find_audio_for_base <- function(base) {
+    dir <- AUDIO_DIR
+    for (ext in c(".wav", ".WAV", ".mp3", ".mp4")) {
+      p <- file.path(dir, paste0(base, ext))
+      if (file.exists(p)) return(p)
+    }
+    NULL
+  }
+
+  activate_analysis <- function(df, filename_base, audio_path) {
+    withProgress(message = "Cargando análisis...", value = 0.3, {
+      tryCatch(load_audio(audio_path), error = function(e) {
+        showNotification(paste("Error audio:", e$message), type = "error")
+        stop(e)
+      })
+      df <- prepare_df(df)
+      rv$df_full          <- df
+      rv$df               <- df
+      rv$current_filename <- filename_base
+      rv$sequential_index <- 1
+      rv$acoustic_done    <- FALSE
+      incProgress(0.7)
+    })
+    shinyjs::show("sidebar_active_section")
+    rv$analysis_scan_trigger <- rv$analysis_scan_trigger + 1
+    showNotification(
+      sprintf("Análisis cargado: %d grupos entonativos.", nrow(df)),
+      type = "message", duration = 4)
+  }
+
+  # --- Estado A / Estado B ---
+  output$sidebar_file_ui <- renderUI({
+    if (is.null(rv$current_filename)) {
+      # Estado A: sin análisis
+      tagList(
+        h5(i18n$t("Abrir análisis"), style = "margin-top:0; margin-bottom:8px;"),
+        selectInput("existing_analysis", NULL,
+                    choices  = scan_analysis_files(),
+                    width    = "100%",
+                    selected = ""),
+        actionButton("open_existing", i18n$t("Abrir"),
+                     icon  = icon("folder-open"),
+                     class = "btn-primary btn-sm",
+                     style = "width:100%; margin-bottom:10px;"),
+        hr(),
+        h5(i18n$t("Probar con una muestra"), style = "margin-top:0; margin-bottom:8px;"),
+        p(style = "font-size:12px; color:#6b7280; margin-bottom:6px;",
+          i18n$t("¿No tienes material propio? Carga un ejemplo (audio + TextGrid).")),
+        selectInput("sample_choice", NULL,
+                    choices  = sample_choices(),
+                    width    = "100%"),
+        actionButton("load_sample", i18n$t("Cargar muestra de ejemplo"),
+                     icon  = icon("flask"),
+                     class = "btn-secondary btn-sm",
+                     style = "width:100%; margin-bottom:10px;"),
+        hr(),
+        p(style = "font-size:12px; color:#6b7280; margin-bottom:6px;",
+          "¿Primer uso con un archivo nuevo?"),
+        fileInput("new_tg_upload",
+                  "Subir TextGrid:",
+                  accept = c(".TextGrid", ".textgrid"),
+                  width  = "100%"),
+        fileInput("new_audio_upload",
+                  "Subir audio (si no está ya cargado):",
+                  accept = c(".wav", ".mp3"),
+                  width  = "100%"),
+        fileInput("new_video_upload",
+                  "Subir MP4:",
+                  accept = c(".mp4"),
+                  width  = "100%")
+      )
+    } else {
+      # Estado B: análisis activo
+      base <- tools::file_path_sans_ext(
+        sub("^analisis_", "", basename(rv$current_filename)))
+      n <- if (!is.null(rv$df_full)) nrow(rv$df_full) else 0
+      div(class = "file-status-active",
+        div(class = "file-label", "Análisis activo"),
+        div(class = "file-name",  base),
+        div(class = "file-meta",  sprintf("%d grupos entonativos", n)),
+        br(),
+        actionButton("change_analysis", i18n$t("Cambiar archivo"),
+                     icon  = icon("exchange-alt"),
+                     class = "btn-secondary btn-sm",
+                     style = "width:100%;")
+      )
+    }
+  })
+
+  # Cargar una muestra de ejemplo empaquetada (audio + TextGrid)
+  observeEvent(input$load_sample, {
+    base <- input$sample_choice
+    req(nzchar(base))
+    from    <- samples_dir()
+    wav_src <- file.path(from, paste0(base, ".wav"))
+    tg_src  <- file.path(from, paste0(base, ".TextGrid"))
+    if (!file.exists(wav_src) || !file.exists(tg_src)) {
+      showNotification(tr("Muestra no encontrada en el paquete.", session_lang(), I18N_DICT),
+                       type = "error"); return()
+    }
+    ensure_dirs()
+    # Copia el audio a la carpeta de datos para que quede localizable al reabrir
+    wav_dest <- file.path(AUDIO_DIR, paste0(base, ".wav"))
+    if (!file.exists(wav_dest)) file.copy(wav_src, wav_dest, overwrite = TRUE)
+    do_load_files(wav_dest, tg_src, paste0(base, ".TextGrid"))
+  })
+
+  # Abrir análisis existente (carga rápida)
+  observeEvent(input$open_existing, {
+    req(nzchar(input$existing_analysis))
+    path <- file.path(ANALISIS_DIR, input$existing_analysis)
+    if (!file.exists(path)) {
+      showNotification(tr("Archivo no encontrado.", session_lang(), I18N_DICT), type = "error"); return()
+    }
+    df <- tryCatch(
+      read.table(path, sep = "\t", header = TRUE, stringsAsFactors = FALSE,
+                 fileEncoding = "UTF-8", quote = "", na.strings = ""),
+      error = function(e) {
+        showNotification(paste("Error leyendo análisis:", e$message), type = "error")
+        NULL
+      })
+    if (is.null(df)) return()
+
+    base       <- tools::file_path_sans_ext(sub("^analisis_", "", basename(path)))
+    audio_path <- find_audio_for_base(base)
+    if (is.null(audio_path)) {
+      showNotification(
+        sprintf("Audio no encontrado para: %s (súbelo con el cargador de audio)", base),
+        type = "error"); return()
+    }
+    activate_analysis(df, basename(path), audio_path)
+  })
+
+  # Cambiar de archivo (vuelve a Estado A)
+  observeEvent(input$change_analysis, {
+    rv$current_filename <- NULL
+    rv$df_full          <- NULL
+    rv$df               <- NULL
+    rv$audio_cached     <- NULL
+    rv$audio_path       <- NULL
+    rv$sequential_index <- 1
+    rv$selected_row_index <- NULL
+    shinyjs::hide("sidebar_active_section")
+  })
+
+  # Procesar TextGrid pendiente (llamado desde new_tg_upload y new_audio_upload)
+  process_pending_tg <- function(tg_path, base, audio_path) {
+    analysis_file <- file.path(ANALISIS_DIR, paste0("analisis_", base, ".txt"))
+    if (file.exists(analysis_file)) {
+      rv$pending_tg_path <- tg_path
+      rv$pending_tg_base <- base
+      showModal(modalDialog(
+        title = "Análisis existente",
+        p(sprintf("Ya existe un análisis guardado para '%s'.", base)),
+        p("¿Quieres cargarlo (rápido) o regenerar los grupos entonativos desde el TextGrid?"),
+        footer = tagList(
+          actionButton("load_existing_from_tg", i18n$t("Cargar análisis guardado"),
+                       class = "btn-primary"),
+          actionButton("regen_from_tg", i18n$t("Regenerar GEs desde TextGrid"),
+                       class = "btn-warning"),
+          modalButton(i18n$t("Cancelar"))
+        )
+      ))
+      return()
+    }
+    tg <- tryCatch(tg.read(tg_path), error = function(e) NULL)
+    if (is.null(tg)) {
+      showNotification(tr("No se pudo leer el TextGrid.", session_lang(), I18N_DICT), type = "error"); return()
+    }
+    rv$pending_tg_path <- tg_path
+    rv$pending_tg_base <- base
+    if (is_mfa_textgrid(tg)) {
+      showModal(modalDialog(
+        title = "Generar grupos entonativos",
+        p("Se detectaron los tiers 'phones' y 'words'."),
+        p("Se generarán GEs automáticamente usando los siguientes umbrales:"),
+        fluidRow(
+          column(6, numericInput("ge_pause_min", i18n$t("Pausa mínima (s):"),
+                                 value = 0.3, min = 0.05, step = 0.05, width = "100%")),
+          column(6, numericInput("ge_f0_reset", i18n$t("Reset F0 mínimo (st):"),
+                                 value = 5, min = 1, step = 0.5, width = "100%"))
+        ),
+        p(style="font-size:11px;color:#6b7280;",
+          "Nota: el criterio de reset F0 se aplica en una versión futura."),
+        footer = tagList(
+          actionButton("ge_confirm", i18n$t("Generar GEs"), class = "btn-primary"),
+          modalButton(i18n$t("Cancelar"))
+        )
+      ))
+    } else {
+      # TextGrid genérico: cargar directamente
+      do_load_files(audio_path, tg_path, paste0(base, ".TextGrid"))
+      shinyjs::show("sidebar_active_section")
+      rv$analysis_scan_trigger <- rv$analysis_scan_trigger + 1
+    }
+  }
+
+  # Nuevo audio subido: copiar a la carpeta de audios y reanudar TG pendiente si lo hay
+  observeEvent(input$new_audio_upload, {
+    req(input$new_audio_upload)
+    dest_dir <- AUDIO_DIR
+    if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+    dest <- file.path(dest_dir, input$new_audio_upload$name)
+    file.copy(input$new_audio_upload$datapath, dest, overwrite = TRUE)
+    showNotification(sprintf("Audio guardado: %s", input$new_audio_upload$name),
+                     type = "message", duration = 3)
+    # Si hay un TextGrid pendiente esperando este audio, procesarlo ahora
+    if (!is.null(rv$pending_tg_path) && !is.null(rv$pending_tg_base)) {
+      base_audio <- tools::file_path_sans_ext(input$new_audio_upload$name)
+      if (base_audio == rv$pending_tg_base) {
+        process_pending_tg(rv$pending_tg_path, rv$pending_tg_base, dest)
+      }
+    }
+  })
+
+  # Nuevo MP4 subido (vídeo + audio): mismo flujo que el audio; load_audio detecta mp4
+  observeEvent(input$new_video_upload, {
+    req(input$new_video_upload)
+    dest_dir <- AUDIO_DIR
+    if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+    dest <- file.path(dest_dir, input$new_video_upload$name)
+    file.copy(input$new_video_upload$datapath, dest, overwrite = TRUE)
+    showNotification(sprintf("MP4 guardado: %s", input$new_video_upload$name),
+                     type = "message", duration = 3)
+    if (!is.null(rv$pending_tg_path) && !is.null(rv$pending_tg_base)) {
+      base_video <- tools::file_path_sans_ext(input$new_video_upload$name)
+      if (base_video == rv$pending_tg_base) {
+        process_pending_tg(rv$pending_tg_path, rv$pending_tg_base, dest)
+      }
+    }
+  })
+
+  # Nuevo TextGrid subido
+  observeEvent(input$new_tg_upload, {
+    req(input$new_tg_upload)
+    base       <- tools::file_path_sans_ext(input$new_tg_upload$name)
+    audio_path <- find_audio_for_base(base)
+    if (is.null(audio_path)) {
+      # Guardar TG pendiente; el observer de audio lo retomará
+      rv$pending_tg_path <- input$new_tg_upload$datapath
+      rv$pending_tg_base <- base
+      showNotification(
+        sprintf("TextGrid guardado. Ahora sube el audio '%s'.", base),
+        type = "warning", duration = 8)
+      return()
+    }
+    process_pending_tg(input$new_tg_upload$datapath, base, audio_path)
+  })
+
+  # Cargar análisis guardado (desde modal)
+  observeEvent(input$load_existing_from_tg, {
+    removeModal()
+    req(rv$pending_tg_base)
+    base          <- rv$pending_tg_base
+    analysis_file <- file.path(ANALISIS_DIR, paste0("analisis_", base, ".txt"))
+    audio_path    <- find_audio_for_base(base)
+    df <- tryCatch(
+      read.table(analysis_file, sep = "\t", header = TRUE, stringsAsFactors = FALSE,
+                 fileEncoding = "UTF-8", quote = "", na.strings = ""),
+      error = function(e) { showNotification(paste("Error:", e$message), type="error"); NULL })
+    if (!is.null(df) && !is.null(audio_path))
+      activate_analysis(df, paste0("analisis_", base, ".txt"), audio_path)
+  })
+
+  # Regenerar GEs desde TextGrid (desde modal, sin análisis previo)
+  observeEvent(input$regen_from_tg, {
+    removeModal()
+    req(rv$pending_tg_path, rv$pending_tg_base)
+    base       <- rv$pending_tg_base
+    audio_path <- find_audio_for_base(base)
+    tg <- tryCatch(tg.read(rv$pending_tg_path), error = function(e) NULL)
+    if (is.null(tg) || is.null(audio_path)) {
+      showNotification(tr("Error al leer TextGrid o audio no encontrado.", session_lang(), I18N_DICT), type="error")
+      return()
+    }
+    if (is_mfa_textgrid(tg)) {
+      showModal(modalDialog(
+        title = "Regenerar grupos entonativos",
+        fluidRow(
+          column(6, numericInput("ge_pause_min", i18n$t("Pausa mínima (s):"),
+                                 value = 0.3, min = 0.05, step = 0.05, width = "100%")),
+          column(6, numericInput("ge_f0_reset",  i18n$t("Reset F0 mínimo (st):"),
+                                 value = 5, min = 1, step = 0.5, width = "100%"))
+        ),
+        footer = tagList(
+          actionButton("ge_confirm", i18n$t("Generar GEs"), class = "btn-primary"),
+          modalButton(i18n$t("Cancelar"))
+        )
+      ))
+    } else {
+      do_load_files(audio_path, rv$pending_tg_path, paste0(base, ".TextGrid"))
+      shinyjs::show("sidebar_active_section")
+      rv$analysis_scan_trigger <- rv$analysis_scan_trigger + 1
+    }
+  })
+
+  # Confirmar generación de GEs
+  observeEvent(input$ge_confirm, {
+    removeModal()
+    req(rv$pending_tg_path, rv$pending_tg_base)
+    base       <- rv$pending_tg_base
+    audio_path <- find_audio_for_base(base)
+    pause_min  <- if (!is.null(input$ge_pause_min)) input$ge_pause_min else 0.3
+    tg <- tryCatch(tg.read(rv$pending_tg_path), error = function(e) NULL)
+    if (is.null(tg) || is.null(audio_path)) {
+      showNotification(tr("Error al leer TextGrid.", session_lang(), I18N_DICT), type = "error"); return()
+    }
+    withProgress(message = "Generando grupos entonativos...", value = 0.3, {
+      df <- parse_textgrid(tg, mfa_mode = TRUE, pause_min = pause_min)
+      if (is.null(df)) {
+        showNotification(tr("No se generaron GEs. Revisa los tiers del TextGrid.", session_lang(), I18N_DICT),
+                         type = "error"); return()
+      }
+      df <- prepare_df(df)
+      incProgress(0.4)
+      tryCatch(load_audio(audio_path), error = function(e) {
+        showNotification(paste("Error audio:", e$message), type = "error"); stop(e)
+      })
+      rv$df_full          <- df
+      rv$df               <- df
+      rv$current_filename <- paste0(base, ".TextGrid")
+      rv$sequential_index <- 1
+      rv$acoustic_done    <- FALSE
+      tryCatch(
+        save_analysis_file(df, rv$current_filename, make_backup_copy = FALSE),
+        error = function(e) NULL)
+      incProgress(0.3)
+    })
+    shinyjs::show("sidebar_active_section")
+    rv$analysis_scan_trigger <- rv$analysis_scan_trigger + 1
+    showNotification(
+      sprintf("GEs generados: %d grupos entonativos guardados.", nrow(rv$df_full)),
+      type = "message", duration = 5)
+  })
+
+  # ============================================================
+  # UI DINÁMICA: panel de anotaciones
+  # ============================================================
+  output$annotation_tabs_ui <- renderUI({
+    defs <- rv$anot_defs
+    lang <- session_lang()   # re-renderiza el formulario al cambiar de idioma
+    mk <- function(id) make_select_from_def(id, defs[[id]])
+
+    div(class = "anot-box",
+    tabsetPanel(type = "pills",
+      tabPanel(tr("Estructura", lang, I18N_DICT),
+        fluidRow(
+          column(4, mk("anot1"), mk("anot2")),
+          column(4, mk("anot3"), mk("anot4")),
+          column(4, mk("anot5"), mk("anot6"))
+        ),
+        fluidRow(column(6, mk("anot7")), column(6, mk("anot8")))
+      ),
+      tabPanel(tr("Pragmática", lang, I18N_DICT),
+        fluidRow(
+          column(4, mk("anot9"),  mk("anot10")),
+          column(4, mk("anot11"), mk("anot12")),
+          column(4, mk("anot13"), mk("anot14"))
+        ),
+        fluidRow(column(6, mk("anot15")), column(6, mk("anot16"))),
+        fluidRow(column(6, mk("anot17")))
+      ),
+      tabPanel(tr("Discurso e interaccion", lang, I18N_DICT),
+        fluidRow(
+          column(4, mk("anot18"), mk("anot19")),
+          column(4, mk("anot20"), mk("anot21")),
+          column(4, mk("anot22"), mk("anot23"))
+        ),
+        fluidRow(column(6, mk("anot24")), column(6, mk("anot25")))
+      ),
+      tabPanel(tr("Paralinguistico / no verbal", lang, I18N_DICT),
+        fluidRow(
+          column(4, mk("anot26")),
+          column(4, mk("anot28"), mk("anot29")),
+          column(4, mk("anot30"))
+        ),
+        br(),
+        fluidRow(
+          column(6, mk("anot31"), mk("anot32")),
+          column(6, mk("anot33"))
+        )
+      ),
+      tabPanel(tr("Emociones", lang, I18N_DICT),
+        br(),
+        h6("Tono emocional (Ekman)"),
+        uiOutput("emotion_ui"),
+        sliderInput("emotion_likert", "Intensidad:", min = 1, max = 5,
+                    value = 3, step = 1, width = "55%", ticks = TRUE),
+        uiOutput("emotion_value_display")
+      )
+    ) # end tabsetPanel
+    ) # end div.anot-box
+  })
+
+  # ============================================================
+  # EDITOR DE VARIABLES
+  # ============================================================
+  observeEvent(input$open_var_editor, {
+    defs <- rv$anot_defs
+    # Construir UI del modal dinámicamente
+    rows <- lapply(names(defs), function(id) {
+      def <- defs[[id]]
+      ch_str <- paste(def$choices[def$choices != ""], collapse = "\n")
+      fluidRow(
+        column(1, tags$b(id)),
+        column(4, textInput(paste0("ve_label_", id), "Etiqueta:",
+                            value = def$label, width = "100%")),
+        column(7, textAreaInput(paste0("ve_choices_", id),
+                                "Categorias (una por linea):",
+                                value = ch_str, rows = 3, width = "100%"))
+      )
+    })
+
+    showModal(modalDialog(
+      title   = "Editor de variables de anotacion",
+      size    = "l",
+      easyClose = FALSE,
+      div(style = "max-height:60vh; overflow-y:auto;", tagList(rows)),
+      footer  = tagList(
+        actionButton("ve_save",   i18n$t("Guardar cambios"), class = "btn-primary"),
+        actionButton("ve_cancel", i18n$t("Cancelar"),        class = "btn-default")
+      )
+    ))
+  })
+
+  observeEvent(input$ve_cancel, removeModal())
+
+  observeEvent(input$ve_save, {
+    new_defs <- rv$anot_defs
+    for (id in names(new_defs)) {
+      lbl_val <- input[[paste0("ve_label_", id)]]
+      ch_val  <- input[[paste0("ve_choices_", id)]]
+      if (!is.null(lbl_val) && nzchar(trimws(lbl_val))) {
+        new_defs[[id]]$label <- trimws(lbl_val)
+      }
+      if (!is.null(ch_val)) {
+        ch_lines <- strsplit(ch_val, "\n", fixed = TRUE)[[1]]
+        ch_clean <- trimws(ch_lines)
+        ch_clean <- ch_clean[nzchar(ch_clean)]
+        new_defs[[id]]$choices <- c("", ch_clean)
+      }
+    }
+    rv$anot_defs <- new_defs
+    save_etiquetas(new_defs)
+    removeModal()
+    showNotification(tr("Variables actualizadas y guardadas.", session_lang(), I18N_DICT), type = "message", duration = 3)
+  })
+
+  observeEvent(input$reset_var_defs, {
+    rv$anot_defs <- anot_defs_default
+    if (file.exists(ETIQ_FILE)) file.remove(ETIQ_FILE)
+    showNotification(tr("Variables restauradas a los valores por defecto.", session_lang(), I18N_DICT), type = "message", duration = 3)
+  })
+
+  # ============================================================
+  # ============================================================
+  # FUNCIONES INTERNAS
+  # ============================================================
+
+  play_sound <- function(path) {
+    os <- Sys.info()[["sysname"]]
+    path <- normalizePath(path, winslash = "\\", mustWork = FALSE)
+    if (os == "Darwin") {
+      system2("afplay", shQuote(path), wait = FALSE)
+    } else if (os == "Windows") {
+      shell(sprintf("powershell -c (New-Object Media.SoundPlayer %s).PlaySync();",
+                    shQuote(path)), wait = FALSE)
+    } else {
+      ok <- try(system2("aplay",  shQuote(path), wait = FALSE), silent = TRUE)
+      if (inherits(ok, "try-error"))
+        try(system2("paplay", shQuote(path), wait = FALSE), silent = TRUE)
+    }
+  }
+
+  get_analysis_filename <- function(original_filename) {
+    base_name <- tools::file_path_sans_ext(basename(original_filename))
+    base_name <- sub("^analisis_", "", base_name)   # evitar doble prefijo
+    ensure_dirs()
+    file.path(ANALISIS_DIR, paste0("analisis_", base_name, ".txt"))
+  }
+
+  make_backup <- function(file_path) {
+    if (!file.exists(file_path)) return(NULL)
+    ts   <- format(Sys.time(), "%Y%m%d_%H%M%S")
+    base <- basename(file_path)
+    bk   <- file.path(BACKUP_DIR,
+                      paste0(tools::file_path_sans_ext(base), "_backup_", ts,
+                             ".", tools::file_ext(base)))
+    file.copy(file_path, bk, overwrite = TRUE)
+    bk
+  }
+
+  save_analysis_file <- function(df, filename, make_backup_copy = FALSE) {
+    analysis_file <- get_analysis_filename(filename)
+    if (make_backup_copy && file.exists(analysis_file)) {
+      bp <- make_backup(analysis_file)
+      message("Backup: ", bp)
+    }
+    write.table(df, analysis_file, sep = "\t", row.names = FALSE,
+                quote = FALSE, na = "", fileEncoding = "UTF-8")
+    update_consolidated_file(df, filename)
+    analysis_file
+  }
+
+  update_consolidated_file <- function(df, filename) {
+    ensure_dirs()
+    cf <- file.path(ANALISIS_DIR, "analisis_todos.txt")
+    df_with <- df
+    df_with$filename <- basename(filename)
+    if (file.exists(cf)) {
+      existing <- tryCatch(
+        read.table(cf, sep = "\t", header = TRUE, stringsAsFactors = FALSE,
+                   fileEncoding = "UTF-8", quote = "", na.strings = ""),
+        error = function(e) NULL
+      )
+      if (!is.null(existing)) {
+        existing <- existing[existing$filename != basename(filename), ]
+        if (nrow(existing) > 0) {
+          all_cols <- union(names(existing), names(df_with))
+          for (cn in setdiff(all_cols, names(existing))) existing[[cn]] <- NA
+          for (cn in setdiff(all_cols, names(df_with)))  df_with[[cn]]  <- NA
+          existing <- existing[, all_cols, drop = FALSE]
+          df_with  <- df_with[,  all_cols, drop = FALSE]
+          df_with  <- rbind(existing, df_with)
+        }
+      }
+    }
+    write.table(df_with, cf, sep = "\t", row.names = FALSE,
+                quote = FALSE, na = "", fileEncoding = "UTF-8")
+  }
+
+  load_previous_analysis <- function(filename) {
+    af <- get_analysis_filename(filename)
+    if (!file.exists(af)) return(NULL)
+    tryCatch(
+      read.table(af, sep = "\t", header = TRUE, stringsAsFactors = FALSE,
+                 fileEncoding = "UTF-8", quote = "", na.strings = ""),
+      error = function(e) { message("Error cargando análisis previo: ", e$message); NULL }
+    )
+  }
+
+  # ---- compute_measures (wrassp/seewave) ----
+  compute_measures <- function(row_index) {
+    df <- rv$df_full
+    req(df, rv$audio_cached)
+
+    start_t <- as.numeric(df$start[row_index])
+    end_t   <- as.numeric(df$end[row_index])
+    if (is.na(start_t) || is.na(end_t) || end_t <= start_t) return(NULL)
+
+    pct <- if (is.null(input$quartile_pct) || is.na(input$quartile_pct))
+             20 else input$quartile_pct
+
+    tryCatch({
+        # --- R: wrassp/ksvF0 ---
+        wave_full <- rv$audio_cached
+        fs  <- wave_full@samp.rate
+        seg <- seewave::cutw(wave_full, from = start_t, to = end_t, output = "Wave", f = fs)
+        tmp <- tempfile(fileext = ".wav")
+        tuneR::writeWave(seg, filename = tmp)
+        on.exit(unlink(tmp), add = TRUE)
+
+        # F0
+        f0_obj <- try(wrassp::ksvF0(tmp, toFile = FALSE), silent = TRUE)
+        F0 <- F0_median <- F0_sd <- F0_range_st <-
+          F0_delta_st <- F0_final_delta_st <- NA_real_
+        F0_final_pattern <- NA_character_
+        f0_times <- f0_vals <- numeric(0)
+
+        if (!inherits(f0_obj, "try-error")) {
+          f0_raw   <- f0_obj$F0
+          f0_times_all <- seq(attr(f0_obj, "startTime"),
+                              by = attr(f0_obj, "sampleRate")^-1,
+                              length.out = length(f0_raw))
+          sel     <- f0_raw > 0
+          f0_vals  <- f0_raw[sel]
+          f0_times <- f0_times_all[sel]
+
+          if (length(f0_vals) > 0) {
+            F0        <- mean(f0_vals,   na.rm = TRUE)
+            F0_median <- median(f0_vals, na.rm = TRUE)
+            F0_sd     <- if (length(f0_vals) > 1) sd(f0_vals, na.rm = TRUE) else NA_real_
+            if (length(f0_vals) > 1) {
+              # rango sobre percentiles 10–90 para excluir outliers
+              f0_filt <- f0_vals[f0_vals >= quantile(f0_vals, 0.10) &
+                                 f0_vals <= quantile(f0_vals, 0.90)]
+              if (length(f0_filt) >= 2) {
+                f0_min <- min(f0_filt); f0_max <- max(f0_filt)
+              } else {
+                f0_min <- min(f0_vals);  f0_max <- max(f0_vals)
+              }
+              if (f0_min > 0 && f0_max > 0) F0_range_st <- 12 * log2(f0_max / f0_min)
+              f0_s <- f0_vals[1]; f0_e <- f0_vals[length(f0_vals)]
+              if (f0_s > 0 && f0_e > 0) F0_delta_st <- 12 * log2(f0_e / f0_s)
+              dur    <- f0_times_all[length(f0_times_all)] - f0_times_all[1]
+              fin_st <- f0_times_all[length(f0_times_all)] - dur * 0.2
+              sel_fin <- f0_times >= fin_st
+              fin_f0  <- f0_vals[sel_fin]
+              if (sum(sel_fin) >= 4) {
+                n  <- length(fin_f0)
+                br <- round(seq(1, n + 1, length.out = 5))
+                qs <- sapply(1:4, function(q) mean(fin_f0[br[q]:(br[q+1]-1)], na.rm = TRUE))
+                if (all(!is.na(qs) & qs > 0)) {
+                  F0_final_delta_st <- 12 * log2(qs[4] / qs[1])
+                  ds <- 12 * log2(qs[2:4] / qs[1:3])
+                  if (all(is.finite(ds))) {
+                    cd <- ifelse(ds > 0.5, "A", ifelse(ds < -0.5, "D", "P"))
+                    F0_final_pattern <- paste0(cd, collapse = "")
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        # Intensidad
+        rms_obj <- try(wrassp::rmsana(tmp, toFile = FALSE), silent = TRUE)
+        Int <- Int_median <- Int_sd <- NA_real_
+        in_vals <- in_times <- numeric(0)
+        if (!inherits(rms_obj, "try-error")) {
+          rms_raw <- rms_obj$rms
+          sel_r   <- rms_raw > 0
+          if (any(sel_r)) {
+            in_vals    <- rms_raw[sel_r]
+            in_db      <- 10 * log10(in_vals^2 + 1e-10)
+            Int        <- mean(in_db,   na.rm = TRUE)
+            Int_median <- median(in_db, na.rm = TRUE)
+            Int_sd     <- if (length(in_db) > 1) sd(in_db, na.rm = TRUE) else NA_real_
+          }
+        }
+
+        # Cuartiles con datos wrassp (tiempos relativos al segmento)
+        qm <- get_quartile_metrics(
+          pitch_df = if (length(f0_vals) > 0)
+                       data.frame(time = f0_times, f0 = f0_vals)
+                     else NULL,
+          int_df   = if (length(in_vals) > 0)
+                       data.frame(time = seq_along(in_vals) * 0.01,
+                                  intensity = 10 * log10(in_vals^2 + 1e-10))
+                     else NULL,
+          t_start  = 0, t_end = end_t - start_t, pct = pct
+        )
+
+      list(
+        F0               = F0,
+        F0_median        = F0_median,
+        F0_sd            = F0_sd,
+        Int              = Int,
+        Int_median       = Int_median,
+        Int_sd           = Int_sd,
+        F0_range_st      = F0_range_st,
+        F0_delta_st      = F0_delta_st,
+        F0_final_delta_st= F0_final_delta_st,
+        F0_final_pattern = F0_final_pattern,
+        F0_ini_q1 = qm$F0_ini[1], F0_ini_q2 = qm$F0_ini[2],
+        F0_ini_q3 = qm$F0_ini[3], F0_ini_q4 = qm$F0_ini[4],
+        F0_fin_q1 = qm$F0_fin[1], F0_fin_q2 = qm$F0_fin[2],
+        F0_fin_q3 = qm$F0_fin[3], F0_fin_q4 = qm$F0_fin[4],
+        Int_ini_q1= qm$Int_ini[1],Int_ini_q2= qm$Int_ini[2],
+        Int_ini_q3= qm$Int_ini[3],Int_ini_q4= qm$Int_ini[4],
+        Int_fin_q1= qm$Int_fin[1],Int_fin_q2= qm$Int_fin[2],
+        Int_fin_q3= qm$Int_fin[3],Int_fin_q4= qm$Int_fin[4]
+      )
+    }, error = function(e) {
+      showNotification(paste("Error en compute_measures:", e$message), type = "error")
+      NULL
+    })
+  }
+
+  # ============================================================
+  # PROCESAMIENTO DE TEXTGRID
+  # ============================================================
+
+  # Detecta si el TextGrid es de MFA (tiers "words" y "phones")
+  is_mfa_textgrid <- function(tg) {
+    tier_names <- sapply(seq_len(tg.getNumberOfTiers(tg)), function(i) {
+      tryCatch(tg.getTierName(tg, i), error = function(e) "")
+    })
+    any(grepl("words", tier_names, ignore.case = TRUE)) &&
+      any(grepl("phones", tier_names, ignore.case = TRUE))
+  }
+
+  # Construye intonational phrases desde tier de palabras
+  build_ips_from_words_tier <- function(tg, words_tier_idx,
+                                         pause_min = 0.15,
+                                         speaker_label = "IP") {
+    n <- tg.getNumberOfIntervals(tg, words_tier_idx)
+    ips <- list()
+    ip_start <- NULL; ip_end <- NULL; ip_words <- character(0)
+
+    flush_ip <- function() {
+      if (!is.null(ip_start) && length(ip_words) > 0) {
+        ips[[length(ips) + 1]] <<- list(
+          start = ip_start, end = ip_end,
+          label = paste(ip_words, collapse = " ")
+        )
+      }
+    }
+
+    for (j in seq_len(n)) {
+      lbl <- trimws(tg.getLabel(tg, words_tier_idx, j))
+      ts  <- tg.getIntervalStartTime(tg, words_tier_idx, j)
+      te  <- tg.getIntervalEndTime(tg, words_tier_idx, j)
+      dur <- te - ts
+
+      if (!nzchar(lbl) || lbl %in% c("sp","<eps>","SIL","sil","<SIL>")) {
+        # pausa: terminar IP si es suficientemente larga
+        if (dur >= pause_min) {
+          flush_ip()
+          ip_start <- NULL; ip_end <- NULL; ip_words <- character(0)
+        } else {
+          # pausa corta: no cortar
+        }
+      } else {
+        if (is.null(ip_start)) ip_start <- ts
+        ip_end  <- te
+        ip_words <- c(ip_words, lbl)
+      }
+    }
+    flush_ip()
+
+    if (length(ips) == 0) return(NULL)
+
+    data.frame(
+      speaker = rep(speaker_label, length(ips)),
+      start   = sapply(ips, `[[`, "start"),
+      end     = sapply(ips, `[[`, "end"),
+      label   = sapply(ips, `[[`, "label"),
+      stringsAsFactors = FALSE
+    )
+  }
+
+  # Parsear TextGrid genérico → data.frame
+  parse_textgrid <- function(tg, mfa_mode = FALSE, pause_min = 0.15) {
+    nTiers <- tg.getNumberOfTiers(tg)
+    tier_names <- sapply(seq_len(nTiers), function(i) {
+      nm <- tryCatch(tg.getTierName(tg, i), error = function(e) paste0("Tier_", i))
+      if (is.null(nm) || !nzchar(nm)) paste0("Tier_", i) else as.character(nm)
+    })
+
+    if (mfa_mode && is_mfa_textgrid(tg)) {
+      # Agrupar tiers por hablante y extraer tier de words
+      words_idx <- which(grepl("words", tier_names, ignore.case = TRUE))
+      all_ip_dfs <- lapply(words_idx, function(wi) {
+        spk <- sub("(_words|_WORDS)$", "", tier_names[wi], ignore.case = TRUE)
+        if (!tg.isIntervalTier(tg, wi)) return(NULL)
+        build_ips_from_words_tier(tg, wi, pause_min = pause_min,
+                                  speaker_label = if (nzchar(spk)) spk else "IP")
+      })
+      all_ip_dfs <- Filter(Negate(is.null), all_ip_dfs)
+      if (length(all_ip_dfs) == 0) return(NULL)
+      return(do.call(rbind, all_ip_dfs))
+    }
+
+    # Modo por hablante: cada tier = un hablante
+    all_tiers <- lapply(seq_len(nTiers), function(ti) {
+      if (!tg.isIntervalTier(tg, ti)) return(NULL)
+      n <- tg.getNumberOfIntervals(tg, ti)
+      data.frame(
+        speaker = rep(tier_names[ti], n),
+        start   = sapply(seq_len(n), function(i) tg.getIntervalStartTime(tg, ti, i)),
+        end     = sapply(seq_len(n), function(i) tg.getIntervalEndTime(tg, ti, i)),
+        label   = sapply(seq_len(n), function(i) tg.getLabel(tg, ti, i)),
+        stringsAsFactors = FALSE
+      )
+    })
+    all_tiers <- Filter(Negate(is.null), all_tiers)
+    if (length(all_tiers) == 0) return(NULL)
+    do.call(rbind, all_tiers)
+  }
+
+  # ============================================================
+  # PREPARAR DATA FRAME DESDE DATOS CRUDOS
+  # ============================================================
+  prepare_df <- function(df) {
+    # columnas base
+    base_cols <- c("F0_mean","F0_median","F0_sd","Int_mean","Int_median","Int_sd",
+                   "F0_range_st","F0_delta_st","F0_final_delta_st","F0_final_pattern",
+                   "n_palabras","palabras_por_seg","fonemas_por_seg")
+    for (cn in base_cols) {
+      if (!cn %in% names(df))
+        df[[cn]] <- if (cn == "F0_final_pattern") NA_character_ else NA_real_
+    }
+
+    # cuartiles
+    for (cn in quartile_col_names) {
+      if (!cn %in% names(df)) df[[cn]] <- NA_real_
+    }
+
+    # anotaciones
+    for (i in seq_len(n_anot)) {
+      cn <- paste0("anot", i)
+      if (!cn %in% names(df)) df[[cn]] <- NA_character_
+    }
+    if (!"observaciones" %in% names(df)) df$observaciones <- NA_character_
+
+    # filtrar etiquetas vacías y ordenar
+    if ("label" %in% names(df))
+      df <- df[!is.na(df$label) & nzchar(trimws(df$label)), ]
+    if ("start" %in% names(df))
+      df <- df[order(df$start, na.last = TRUE), ]
+
+    # palabras, fonemas y velocidad
+    for (i in seq_len(nrow(df))) {
+      if (!is.na(df$label[i]) && nzchar(trimws(df$label[i]))) {
+        words <- strsplit(trimws(df$label[i]), "\\s+")[[1]]
+        df$n_palabras[i] <- length(words[nzchar(words)])
+        dur <- df$end[i] - df$start[i]
+        if (!is.na(dur) && dur > 0) {
+          df$palabras_por_seg[i] <- df$n_palabras[i] / dur
+          nfonemas <- nchar(gsub("[[:space:][:punct:]]", "", df$label[i]))
+          if (nfonemas > 0) df$fonemas_por_seg[i] <- nfonemas / dur
+        }
+      }
+    }
+
+    # contexto ±5 (helper en R/contexto.R)
+    df <- recompute_contexto(df, window = 5)
+
+    # reordenar columnas
+    col_ord <- make_col_order()
+    df[, col_ord[col_ord %in% names(df)]]
+  }
+
+  # Restaurar análisis previo en un df nuevo
+  restore_previous <- function(df, previous_data) {
+    if (is.null(previous_data)) return(df)
+    metric_cols <- c("F0_mean","F0_median","F0_sd","Int_mean","Int_median","Int_sd",
+                     "F0_range_st","F0_delta_st","F0_final_delta_st","F0_final_pattern",
+                     quartile_col_names)
+    for (i in seq_len(nrow(df))) {
+      mi <- which(
+        abs(previous_data$start - df$start[i]) < 0.001 &
+        abs(previous_data$end   - df$end[i])   < 0.001 &
+        previous_data$label == df$label[i]
+      )
+      if (length(mi) == 0) next
+      mi <- mi[1]
+      for (mc in metric_cols) {
+        if (mc %in% names(previous_data) && !is.na(previous_data[[mc]][mi]))
+          df[[mc]][i] <- previous_data[[mc]][mi]
+      }
+      for (j in seq_len(n_anot)) {
+        cn <- paste0("anot", j)
+        if (cn %in% names(previous_data) &&
+            !is.na(previous_data[[cn]][mi]) &&
+            nzchar(previous_data[[cn]][mi]))
+          df[[cn]][i] <- previous_data[[cn]][mi]
+      }
+      if ("observaciones" %in% names(previous_data) &&
+          !is.na(previous_data$observaciones[mi]))
+        df$observaciones[i] <- previous_data$observaciones[mi]
+    }
+    df
+  }
+
+  # Cargar audio (ruta o subido)
+  load_audio <- function(path, is_mp4 = FALSE) {
+    ext <- tolower(tools::file_ext(path))
+    tmp_wav <- tempfile(fileext = ".wav")
+    if (ext %in% c("mp3","mp4")) {
+      av::av_audio_convert(path, tmp_wav, format = "wav")
+      rv$audio_path   <- tmp_wav
+      rv$audio_cached <- readWave(tmp_wav)
+    } else {
+      rv$audio_path   <- path
+      rv$audio_cached <- readWave(path)
+    }
+    if (ext == "mp4") {
+      vf <- paste0("video_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".mp4")
+      vd <- file.path(video_temp_dir, vf)
+      file.copy(path, vd, overwrite = TRUE)
+      rv$video_path <- vd; rv$video_url <- paste0("tmpvideo/", vf); rv$is_video <- TRUE
+    } else {
+      rv$video_path <- NULL; rv$video_url <- NULL; rv$is_video <- FALSE
+    }
+  }
+
+  # Pipeline completo de carga
+  do_load_files <- function(audio_path, trans_path, trans_name) {
+    t_start <- Sys.time()
+    withProgress(message = "Cargando archivos...", value = 0, {
+
+      incProgress(0.1, detail = "Audio...")
+      tryCatch(
+        load_audio(audio_path),
+        error = function(e) {
+          showNotification(paste("Error audio:", e$message), type = "error"); return()
+        }
+      )
+
+      incProgress(0.3, detail = "Transcripcion...")
+      df <- NULL
+      tryCatch({
+        ext <- tolower(tools::file_ext(trans_path))
+        if (ext %in% c("csv","txt")) {
+          df <- read.table(trans_path, header = TRUE,
+                           sep = if (ext == "csv") "," else "\t",
+                           stringsAsFactors = FALSE)
+        } else if (ext == "textgrid") {
+          tg <- tg.read(trans_path)
+          df <- parse_textgrid(tg, mfa_mode = is_mfa_textgrid(tg), pause_min = 0.3)
+        }
+      }, error = function(e) {
+        showNotification(paste("Error transcripción:", e$message), type = "error")
+      })
+      if (is.null(df)) return()
+
+      incProgress(0.55, detail = "Procesando columnas...")
+      df <- prepare_df(df)
+
+      incProgress(0.75, detail = "Restaurando análisis previo...")
+      rv$current_filename <- trans_name
+      prev <- load_previous_analysis(trans_name)
+      if (!is.null(prev)) {
+        df <- restore_previous(df, prev)
+        showNotification(sprintf("Análisis previo restaurado: %d filas", nrow(prev)),
+                         type = "message", duration = 4)
+      }
+
+      incProgress(0.9, detail = "Guardando...")
+      rv$df_full <- df
+      rv$df      <- df
+      rv$acoustic_done   <- FALSE
+      rv$sequential_index<- 1
+
+      bk <- !rv$initial_backup_done
+      tryCatch({
+        save_analysis_file(df, trans_name, make_backup_copy = bk)
+        if (bk) rv$initial_backup_done <- TRUE
+      }, error = function(e)
+        showNotification(paste("Error guardando:", e$message), type = "warning"))
+
+
+      incProgress(1, detail = "Completado")
+    })
+
+    elapsed <- as.numeric(difftime(Sys.time(), t_start, units = "secs"))
+    if (!is.null(rv$audio_cached)) {
+      showNotification(
+        sprintf("Cargado en %.1f s | Audio: %.1f s | %d filas",
+                elapsed,
+                length(rv$audio_cached@left) / rv$audio_cached@samp.rate,
+                nrow(rv$df_full)),
+        type = "message", duration = 6
+      )
+    }
+  }
+
+
+  # ============================================================
+  # VISTA REACTIVA (fila actual)
+  # ============================================================
+  df_to_display <- reactive({
+    req(rv$df_full)
+    idx <- max(1, min(rv$sequential_index, nrow(rv$df_full)))
+    row <- rv$df_full[idx, , drop = FALSE]
+    data.frame(Fila = idx, speaker = row$speaker, label = row$label,
+               contexto = row$contexto, stringsAsFactors = FALSE)
+  })
+
+  observe({ rv$df <- df_to_display() })
+
+  # ============================================================
+  # NAVEGACIÓN
+  # ============================================================
+  observeEvent(input$next_row, {
+    req(rv$df_full)
+    if (rv$sequential_index < nrow(rv$df_full))
+      rv$sequential_index <- rv$sequential_index + 1
+    else showNotification(tr("Última fila.", session_lang(), I18N_DICT), type = "warning", duration = 2)
+  })
+  observeEvent(input$prev_row, {
+    req(rv$df_full)
+    if (rv$sequential_index > 1)
+      rv$sequential_index <- rv$sequential_index - 1
+    else showNotification(tr("Primera fila.", session_lang(), I18N_DICT), type = "warning", duration = 2)
+  })
+  observeEvent(input$goto_row_btn, {
+    req(rv$df_full)
+    f <- as.integer(input$goto_row)
+    if (is.na(f) || f < 1 || f > nrow(rv$df_full)) {
+      showNotification(sprintf("Fila entre 1 y %d.", nrow(rv$df_full)), type = "warning")
+    } else {
+      rv$sequential_index <- f
+    }
+  })
+
+  output$sequential_position <- renderText({
+    req(rv$df_full)
+    sprintf("Fila %d de %d", rv$sequential_index, nrow(rv$df_full))
+  })
+
+  output$sidebar_segment_info <- renderUI({
+    req(rv$df_full, rv$selected_row_index)
+    i   <- rv$selected_row_index
+    row <- rv$df_full[i, , drop = FALSE]
+    spk <- if (!is.null(row$speaker) && !is.na(row$speaker)) as.character(row$speaker) else "—"
+    lbl <- if (!is.null(row$label)   && !is.na(row$label))   as.character(row$label)   else "—"
+    div(
+      style = paste("background:#f1f5f9; border-left:3px solid #2563eb;",
+                    "border-radius:6px; padding:8px 10px; margin-bottom:10px;",
+                    "font-size:13px; line-height:1.6;"),
+      div(tags$span(style = "color:#6b7280; font-weight:600;", "Speaker: "),
+          tags$span(style = "color:#2563eb; font-weight:500;", spk)),
+      div(tags$span(style = "color:#6b7280; font-weight:600;", "Label: "),
+          tags$span(style = "color:#374151; font-style:italic;", lbl))
+    )
+  })
+
+  # ============================================================
+  # TABLA PRINCIPAL
+  # ============================================================
+  output$table <- renderDT({
+    req(rv$df)
+    ctx_idx <- which(names(rv$df) == "contexto") - 1L
+    col_defs <- if (length(ctx_idx) > 0 && !isTRUE(input$show_contexto))
+      list(list(targets = ctx_idx, visible = FALSE))
+    else
+      list()
+    datatable(rv$df, selection = "single", editable = TRUE,
+              extensions = "Buttons",
+              options = dt_with_buttons(list(pageLength = 20, scrollX = TRUE,
+                                             columnDefs = col_defs)),
+              rownames = FALSE)
+  }, server = TRUE)
+
+  proxy <- dataTableProxy("table")
+
+  observeEvent(input$table_cell_edit, {
+    info <- input$table_cell_edit
+    rv$df[info$row, info$col] <- info$value
+  })
+
+  # ============================================================
+  # TABLA DE CONTEXTO
+  # ============================================================
+
+  # --- Contexto: editar la fila activa y guardar ---
+  observeEvent(rv$selected_row_index, {
+    req(rv$df_full, rv$selected_row_index)
+    idx <- rv$selected_row_index
+    updateTextInput(session, "edit_speaker", value = rv$df_full$speaker[idx] %||% "")
+    updateTextInput(session, "edit_label",   value = rv$df_full$label[idx]   %||% "")
+  })
+
+  observeEvent(input$save_row_edit, {
+    req(rv$df_full, rv$selected_row_index)
+    idx <- rv$selected_row_index
+    rv$df_full$speaker[idx] <- input$edit_speaker %||% ""
+    rv$df_full$label[idx]   <- input$edit_label   %||% ""
+    rv$df_full <- recompute_contexto(rv$df_full, window = 5)
+    tryCatch({
+      save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE)
+      showNotification(tr("Fila guardada", session_lang(), I18N_DICT), type = "message")
+    }, error = function(e) showNotification(paste("Error al guardar:", e$message), type = "error"))
+  })
+
+  # --- Contexto: mostrar/ocultar columna ejemplo_para_paper ---
+  show_ejemplo <- reactiveVal(FALSE)
+  observeEvent(input$toggle_ejemplo, {
+    show_ejemplo(!show_ejemplo())
+    updateActionButton(session, "toggle_ejemplo",
+      label = if (show_ejemplo()) i18n$t("Ocultar ejemplo_para_paper") else i18n$t("Mostrar ejemplo_para_paper"))
+  })
+
+  output$context_table <- renderDT({
+    req(rv$df_full, rv$selected_row_index, input$context_rows)
+    idx    <- rv$selected_row_index
+    nc     <- input$context_rows
+    filas  <- max(1, idx - nc):min(nrow(rv$df_full), idx + nc)
+    corpus <- corpus_base_name(rv$current_filename %||% "")
+    cita   <- format_cita(corpus, rv$df_full$start[idx], rv$df_full$end[idx])
+    ctx_df <- data.frame(
+      Fila     = filas,
+      speaker  = rv$df_full$speaker[filas],
+      label    = rv$df_full$label[filas],
+      ejemplo_para_paper = paste0(rv$df_full$contexto[filas], " ", cita),
+      es_actual= (filas == idx),
+      stringsAsFactors = FALSE
+    )
+    # es_actual (índice 4) siempre oculta; ejemplo_para_paper (índice 3) oculta salvo toggle
+    hidden <- if (show_ejemplo()) 4 else c(3, 4)
+    datatable(ctx_df,
+      extensions = "Buttons",
+      options = dt_with_buttons(list(pageLength = 2 * nc + 1, scrollX = TRUE,
+                     searching = FALSE, paging = FALSE,
+                     columnDefs = list(list(targets = hidden, visible = FALSE)))),
+      rownames = FALSE
+    ) %>% formatStyle("es_actual", target = "row",
+                      backgroundColor = styleEqual(c(TRUE,FALSE), c("#ffffcc","white")))
+  }, server = FALSE)
+
+  # ============================================================
+  # OBSERVER PRINCIPAL: cambio de fila seleccionada
+  # ============================================================
+  observe({
+    req(rv$df_full, rv$audio_cached, rv$sequential_index)
+    i <- rv$sequential_index
+    if (i < 1 || i > nrow(rv$df_full)) return()
+
+    rv$selected_row_index <- i
+    start_t <- as.numeric(rv$df_full$start[i])
+    end_t   <- as.numeric(rv$df_full$end[i])
+    rv$selected_start <- start_t
+    rv$selected_end   <- end_t
+
+    if (!is.na(start_t) && !is.na(end_t) && end_t > start_t) {
+      tryCatch({
+        wave_full <- rv$audio_cached
+        fs  <- wave_full@samp.rate
+        seg <- seewave::cutw(wave_full, from = start_t, to = end_t, output = "Wave", f = fs)
+        rv$selected_segment <- seg
+        rv$praatpic_temp_wav <- NULL  # invalidar caché praatpicture
+
+        # Pitch para la gráfica (siempre con ksvF0 para rapidez)
+        tmp <- tempfile(fileext = ".wav")
+        tuneR::writeWave(seg, filename = tmp)
+        f0_obj <- try(wrassp::ksvF0(tmp, toFile = FALSE), silent = TRUE)
+        unlink(tmp)
+        if (!inherits(f0_obj, "try-error")) {
+          fv <- f0_obj$F0
+          ft <- seq(attr(f0_obj,"startTime"), by = attr(f0_obj,"sampleRate")^-1,
+                    length.out = length(fv))
+          pd <- data.frame(time = ft, freq = fv)
+          pd <- pd[pd$freq > 0 & pd$freq < 600 & is.finite(pd$freq), ]
+          rv$pitch_data <- if (nrow(pd) > 0) pd else NULL
+        } else rv$pitch_data <- NULL
+      }, error = function(e) message("Error al extraer segmento: ", e$message))
+    }
+
+    # Calcular métricas si faltan
+    if (is.na(rv$df_full$F0_mean[i]) || is.na(rv$df_full$Int_mean[i])) {
+      res <- compute_measures(i)
+      if (!is.null(res)) {
+        rv$df_full$F0_mean[i]            <- res$F0
+        rv$df_full$F0_median[i]          <- res$F0_median
+        rv$df_full$F0_sd[i]             <- res$F0_sd
+        rv$df_full$Int_mean[i]           <- res$Int
+        rv$df_full$Int_median[i]         <- res$Int_median
+        rv$df_full$Int_sd[i]            <- res$Int_sd
+        rv$df_full$F0_range_st[i]        <- res$F0_range_st
+        rv$df_full$F0_delta_st[i]        <- res$F0_delta_st
+        rv$df_full$F0_final_delta_st[i]  <- res$F0_final_delta_st
+        rv$df_full$F0_final_pattern[i]   <- res$F0_final_pattern
+        for (cn in quartile_col_names)
+          rv$df_full[[cn]][i] <- res[[cn]]
+        if (!is.null(rv$current_filename))
+          tryCatch(save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE),
+                   error = function(e) NULL)
+        rv$df <- df_to_display()
+        replaceData(proxy, rv$df, resetPaging = FALSE, rownames = FALSE)
+      }
+    }
+
+    # Cargar anotaciones en los inputs (anot27 se gestiona desde el tab Emociones)
+    for (id in anot_ids_auto) {
+      val <- rv$df_full[[id]][i]
+      sel <- if (is.na(val) || !nzchar(val)) character(0) else
+               unlist(strsplit(val, ";\\s*"))
+      updateSelectInput(session, id, selected = sel)
+    }
+    updateTextAreaInput(session, "observaciones",
+                        value = ifelse(is.na(rv$df_full$observaciones[i]), "",
+                                       rv$df_full$observaciones[i]))
+  })
+
+  # ============================================================
+  # GUARDAR ANOTACIONES
+  # ============================================================
+  observeEvent(input$save_annotation, {
+    req(rv$df_full, rv$selected_row_index, rv$current_filename)
+    i <- rv$selected_row_index
+    if (is.null(i) || is.na(i) || i < 1 || i > nrow(rv$df_full)) {
+      showNotification(tr("No hay fila válida seleccionada.", session_lang(), I18N_DICT), type = "error"); return()
+    }
+    for (id in anot_ids_auto) {
+      val <- input[[id]]
+      rv$df_full[[id]][i] <- if (is.null(val) || length(val) == 0) NA_character_ else
+                               paste(val, collapse = "; ")
+    }
+    rv$df_full$observaciones[i] <- if (is.null(input$observaciones) ||
+                                        !nzchar(input$observaciones)) NA_character_ else
+                                    input$observaciones
+
+    tryCatch({
+      save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE)
+    }, error = function(e) {
+      showNotification(paste("Error guardando:", e$message), type = "error"); return()
+    })
+
+    rv$df <- df_to_display()
+    replaceData(proxy, rv$df, resetPaging = FALSE, rownames = FALSE)
+    autosave_status(sprintf("Guardado (fila %d)", i))
+    showNotification(tr("Anotaciones guardadas.", session_lang(), I18N_DICT), type = "message", duration = 2)
+  })
+
+  # ============================================================
+  # AUTO-GUARDADO AL CAMBIAR ANOTACIONES
+  # ============================================================
+  # anot27 se gestiona aparte desde el tab Emociones; excluirlo del autosave
+  anot_ids_auto <- setdiff(paste0("anot", seq_len(n_anot)), "anot27")
+
+  anot_inputs_r <- reactive({
+    vals <- lapply(anot_ids_auto, function(id) input[[id]])
+    names(vals) <- anot_ids_auto
+    vals$observaciones <- input$observaciones
+    vals
+  })
+
+  anot_inputs_debounced <- debounce(anot_inputs_r, 600)
+
+  observeEvent(anot_inputs_debounced(), {
+    req(rv$df_full, rv$selected_row_index, rv$current_filename)
+    i <- rv$selected_row_index
+    if (is.null(i) || is.na(i) || i < 1 || i > nrow(rv$df_full)) return()
+
+    for (id in anot_ids_auto) {
+      val <- input[[id]]
+      rv$df_full[[id]][i] <- if (is.null(val) || length(val) == 0) NA_character_ else
+                               paste(val, collapse = "; ")
+    }
+    rv$df_full$observaciones[i] <- if (is.null(input$observaciones) ||
+                                        !nzchar(input$observaciones)) NA_character_ else
+                                    input$observaciones
+
+    tryCatch(
+      save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE),
+      error = function(e) NULL
+    )
+    rv$df <- df_to_display()
+    replaceData(proxy, rv$df, resetPaging = FALSE, rownames = FALSE)
+    autosave_status(sprintf("✓ Auto-guardado (fila %d)", i))
+  }, ignoreInit = TRUE)
+
+  # ============================================================
+  # CALCULAR TODAS LAS FILAS
+  # ============================================================
+  observeEvent(input$compute_all, {
+    req(rv$df_full, rv$audio_cached)
+
+    n_rows    <- nrow(rv$df_full)
+    t_start_g <- Sys.time()
+    withProgress(message = "Calculando métricas...", value = 0, {
+      for (i in seq_len(n_rows)) {
+        res <- compute_measures(i)
+        if (!is.null(res)) {
+          rv$df_full$F0_mean[i]           <- res$F0
+          rv$df_full$F0_median[i]         <- res$F0_median
+          rv$df_full$F0_sd[i]            <- res$F0_sd
+          rv$df_full$Int_mean[i]          <- res$Int
+          rv$df_full$Int_median[i]        <- res$Int_median
+          rv$df_full$Int_sd[i]           <- res$Int_sd
+          rv$df_full$F0_range_st[i]       <- res$F0_range_st
+          rv$df_full$F0_delta_st[i]       <- res$F0_delta_st
+          rv$df_full$F0_final_delta_st[i] <- res$F0_final_delta_st
+          rv$df_full$F0_final_pattern[i]  <- res$F0_final_pattern
+          for (cn in quartile_col_names)
+            rv$df_full[[cn]][i] <- res[[cn]]
+        }
+        incProgress(1/n_rows, detail = sprintf("Fila %d/%d", i, n_rows))
+      }
+    })
+    rv$df <- df_to_display()
+    replaceData(proxy, rv$df, resetPaging = FALSE, rownames = FALSE)
+    if (!is.null(rv$current_filename))
+      tryCatch(save_analysis_file(rv$df_full, rv$current_filename, make_backup_copy = FALSE),
+               error = function(e) showNotification(paste("Error guardando:", e$message), type = "error"))
+    elapsed <- as.numeric(difftime(Sys.time(), t_start_g, units = "secs"))
+    showNotification(
+      sprintf("Completado en %.1f min. F0: %d/%d, Int: %d/%d",
+              elapsed/60, sum(!is.na(rv$df_full$F0_mean)), n_rows,
+              sum(!is.na(rv$df_full$Int_mean)), n_rows),
+      type = "message", duration = 6)
+  })
+
+  # ============================================================
+  # MÉTRICAS
+  # ============================================================
+  output$metrics_display <- renderPrint({
+    req(rv$df_full, rv$selected_row_index)
+    i <- rv$selected_row_index
+    r <- rv$df_full[i, , drop = FALSE]
+    cat("===================================================\n")
+    cat("  ANALISIS PROSODICO - Fila", i, "\n")
+    cat("===================================================\n\n")
+    cat("SEGMENTO:\n")
+    cat("  Hablante:", r$speaker, "\n")
+    cat("  Inicio:",  sprintf("%.3f s", r$start), "\n")
+    cat("  Fin:",     sprintf("%.3f s", r$end), "\n")
+    cat("  Duracion:",sprintf("%.3f s", r$end - r$start), "\n")
+    cat("  Etiqueta:", r$label, "\n\n")
+    # Pausas anterior y posterior
+    df_all <- rv$df_full
+    pausa_ant <- pausa_post <- NA_real_
+    if (i > 1)            pausa_ant  <- as.numeric(r$start) - as.numeric(df_all$end[i - 1])
+    if (i < nrow(df_all)) pausa_post <- as.numeric(df_all$start[i + 1]) - as.numeric(r$end)
+    fmt_pausa <- function(p) if (!is.na(p) && p >= 0) sprintf("%.3f s", p) else "N/A"
+    cat("PAUSAS:\n")
+    cat("  Anterior: ",  fmt_pausa(pausa_ant),  "\n")
+    cat("  Posterior:",  fmt_pausa(pausa_post), "\n\n")
+
+    cat("TEXTO Y VELOCIDAD:\n")
+    cat("  Palabras:",  ifelse(is.na(r$n_palabras), "N/A", r$n_palabras), "\n")
+    cat("  Vel. pal/s:", if (!is.na(r$palabras_por_seg)) sprintf("%.2f pal/s", r$palabras_por_seg) else "N/A", "\n")
+    cat("  Vel. fon/s:", if (!is.na(r$fonemas_por_seg))  sprintf("%.2f fon/s", r$fonemas_por_seg)  else "N/A", "\n\n")
+
+    cat("F0:\n")
+    cat("  Media:",       if (!is.na(r$F0_mean))           sprintf("%.1f Hz",  r$F0_mean)           else "N/A", "\n")
+    cat("  Mediana:",     if (!is.na(r$F0_median))         sprintf("%.1f Hz",  r$F0_median)         else "N/A", "\n")
+    cat("  SD:",          if (!is.na(r$F0_sd))             sprintf("%.1f Hz",  r$F0_sd)             else "N/A", "\n")
+    cat("  Rango(p10-90):", if (!is.na(r$F0_range_st))    sprintf("%.2f st",  r$F0_range_st)       else "N/A", "\n")
+    cat("  Inflexion:",   if (!is.na(r$F0_delta_st))       sprintf("%.2f st",  r$F0_delta_st)       else "N/A", "\n")
+    cat("  Tonema(20%):", if (!is.na(r$F0_final_delta_st)) sprintf("%.2f st",  r$F0_final_delta_st) else "N/A", "\n")
+    cat("  Patron:",      if (!is.na(r$F0_final_pattern))  as.character(r$F0_final_pattern)         else "N/A", "\n\n")
+
+    cat("INTENSIDAD:\n")
+    cat("  Media:",   if (!is.na(r$Int_mean))   sprintf("%.1f dB", r$Int_mean)   else "N/A", "\n")
+    cat("  Mediana:", if (!is.na(r$Int_median)) sprintf("%.1f dB", r$Int_median) else "N/A", "\n")
+    cat("  SD:",      if (!is.na(r$Int_sd))     sprintf("%.1f dB", r$Int_sd)     else "N/A", "\n\n")
+    # Cuartiles
+    pct <- if (is.null(input$quartile_pct)) 20 else input$quartile_pct
+    cat(sprintf("CUARTILES (%d%% inicial):\n", pct))
+    cat(sprintf("  F0:  Q1=%.1f  Q2=%.1f  Q3=%.1f  Q4=%.1f Hz\n",
+                ifelse(is.na(r$F0_ini_q1),0,r$F0_ini_q1), ifelse(is.na(r$F0_ini_q2),0,r$F0_ini_q2),
+                ifelse(is.na(r$F0_ini_q3),0,r$F0_ini_q3), ifelse(is.na(r$F0_ini_q4),0,r$F0_ini_q4)))
+    cat(sprintf("  Int: Q1=%.1f  Q2=%.1f  Q3=%.1f  Q4=%.1f dB\n",
+                ifelse(is.na(r$Int_ini_q1),0,r$Int_ini_q1), ifelse(is.na(r$Int_ini_q2),0,r$Int_ini_q2),
+                ifelse(is.na(r$Int_ini_q3),0,r$Int_ini_q3), ifelse(is.na(r$Int_ini_q4),0,r$Int_ini_q4)))
+    cat(sprintf("CUARTILES (%d%% final):\n", pct))
+    cat(sprintf("  F0:  Q1=%.1f  Q2=%.1f  Q3=%.1f  Q4=%.1f Hz\n",
+                ifelse(is.na(r$F0_fin_q1),0,r$F0_fin_q1), ifelse(is.na(r$F0_fin_q2),0,r$F0_fin_q2),
+                ifelse(is.na(r$F0_fin_q3),0,r$F0_fin_q3), ifelse(is.na(r$F0_fin_q4),0,r$F0_fin_q4)))
+    cat(sprintf("  Int: Q1=%.1f  Q2=%.1f  Q3=%.1f  Q4=%.1f dB\n",
+                ifelse(is.na(r$Int_fin_q1),0,r$Int_fin_q1), ifelse(is.na(r$Int_fin_q2),0,r$Int_fin_q2),
+                ifelse(is.na(r$Int_fin_q3),0,r$Int_fin_q3), ifelse(is.na(r$Int_fin_q4),0,r$Int_fin_q4)))
+    cat("\nANOTACIONES:\n")
+    any_anot <- FALSE
+    for (j in seq_len(n_anot)) {
+      cn  <- paste0("anot", j)
+      val <- r[[cn]]
+      if (!is.na(val) && nzchar(trimws(val))) {
+        lbl <- rv$anot_defs[[cn]]$label
+        cat(sprintf("  [%s] %s: %s\n", cn, lbl, val))
+        any_anot <- TRUE
+      }
+    }
+    if (!any_anot) cat("  (sin anotaciones)\n")
+    if (!is.na(r$observaciones) && nzchar(trimws(r$observaciones)))
+      cat("\nOBSERVACIONES:\n ", gsub("\n","\n  ", r$observaciones), "\n")
+    cat("===================================================\n")
+  })
+
+  # ============================================================
+  # GRÁFICAS
+  # ============================================================
+  # Al cambiar de segmento, cortar su clip de vídeo (si hay vídeo cargado)
+  observeEvent(rv$selected_row_index, {
+    if (!isTRUE(rv$is_video) || is.null(rv$video_path) ||
+        is.null(rv$df_full) || is.null(rv$selected_row_index)) {
+      rv$video_clip_url <- NULL; return()
+    }
+    idx <- rv$selected_row_index
+    s <- suppressWarnings(as.numeric(rv$df_full$start[idx]))
+    e <- suppressWarnings(as.numeric(rv$df_full$end[idx]))
+    if (is.na(s) || is.na(e)) { rv$video_clip_url <- NULL; return() }
+    old <- rv$video_clip_path
+    url <- cut_video_clip(rv$video_path, s, e)
+    rv$video_clip_url  <- url
+    rv$video_clip_path <- if (is.null(url)) NULL else file.path(video_temp_dir, basename(url))
+    if (!is.null(old) && file.exists(old)) try(unlink(old), silent = TRUE)
+  })
+
+  output$sidebar_video <- renderUI({
+    if (!isTRUE(rv$is_video)) return(NULL)
+    if (!is.null(rv$video_clip_url)) {
+      # Clip cortado al segmento: se reproduce desde 0 (sin seek), como el audio
+      tags$video(src = rv$video_clip_url, width = "100%", height = "180px",
+                 controls = "controls", preload = "auto",
+                 style = "border-radius:6px; margin-bottom:8px; background:#000;",
+                 "Tu navegador no soporta video.")
+    } else if (!is.null(rv$video_url) && !is.null(rv$selected_start)) {
+      # Fallback (sin ffmpeg): vídeo completo + seek al inicio del segmento
+      vid_id <- paste0("vid_", round(runif(1) * 1e5))
+      tagList(
+        tags$video(id = vid_id, width = "100%", height = "180px",
+                   controls = "controls", preload = "auto",
+                   style = "border-radius:6px; margin-bottom:8px; background:#000;",
+                   tags$source(src = rv$video_url, type = "video/mp4"),
+                   "Tu navegador no soporta video."),
+        tags$script(HTML(sprintf(
+          "(function(){var v=document.getElementById('%s');
+           if(v){v.load();v.onloadedmetadata=function(){
+             if(Number.isFinite(%f)) v.currentTime=%f;
+           };}})();",
+          vid_id, round(rv$selected_start,3), round(rv$selected_start,3)
+        )))
+      )
+    } else NULL
+  })
+
+  # Escala global del tamaño de letra de los gráficos (deslizador de Configuración).
+  gcex <- reactive({
+    s <- suppressWarnings(as.numeric(input$plot_font_scale %||% 1))
+    if (is.na(s) || s <= 0) 1 else s
+  })
+
+  # Registra descargas PNG (300 ppp) y PDF (vectorial) para un gráfico.
+  add_plot_download <- function(output, id, draw_fun, basename) {
+    output[[paste0(id, "_png")]] <- downloadHandler(
+      filename = function() plot_filename(basename, "png"),
+      content  = function(file) {
+        grDevices::png(file, width = 9, height = 6, units = "in", res = 300)
+        on.exit(grDevices::dev.off()); draw_fun()
+      })
+    output[[paste0(id, "_pdf")]] <- downloadHandler(
+      filename = function() plot_filename(basename, "pdf"),
+      content  = function(file) {
+        grDevices::pdf(file, width = 9, height = 6)
+        on.exit(grDevices::dev.off()); draw_fun()
+      })
+  }
+
+  output$oscillo_plot <- renderPlot({
+    req(rv$selected_segment)
+    g <- gcex()
+    seewave::oscillo(rv$selected_segment, f = rv$selected_segment@samp.rate,
+                     k = 1, colwave = "steelblue", cexlab = g, cexaxis = g)
+    title("Oscilograma", cex.main = g)
+  })
+
+  output$spectro_plot <- renderPlot({
+    req(rv$selected_segment)
+    seg <- rv$selected_segment
+    if (!inherits(seg, "Wave")) { plot.new(); text(0.5,0.5,"No Wave"); return() }
+    fs <- seg@samp.rate; n <- length(seg@left)
+    if (n < 32) { plot.new(); text(0.5,0.5,"Segmento muy corto"); return() }
+    wl <- min(256L, n)
+    g <- gcex()
+    tryCatch(
+      seewave::spectro(seg, f = fs, wl = wl, ovlp = 85, osc = FALSE, scale = TRUE,
+                       cexlab = g, cexaxis = g),
+      error = function(e) { plot.new(); text(0.5,0.5, paste("Error:", e$message)) }
+    )
+    title("Espectrograma", cex.main = g)
+  })
+
+  output$pitch_plot <- renderPlot({
+    g <- gcex()
+    if (is.null(rv$pitch_data) || nrow(rv$pitch_data) == 0) {
+      plot.new(); title("Curva melodica (F0)", cex.main = g)
+      text(0.5, 0.5, "Sin valores de F0 detectados", cex = 1.2 * g, col = "gray50")
+      return()
+    }
+    plot(rv$pitch_data$time, rv$pitch_data$freq, type = "b", pch = 19,
+         col = "dodgerblue3", lwd = 2, cex = 1.2,
+         xlab = "Tiempo (s)", ylab = "Frecuencia (Hz)",
+         cex.lab = g, cex.axis = g, cex.main = g,
+         main = sprintf("Curva melodica (F0) – %d puntos", nrow(rv$pitch_data)))
+    grid(col = "gray80", lwd = 1)
+  })
+
+  # ============================================================
+  # PRAATPICTURE
+  # ============================================================
+  observeEvent(input$render_praatpic, {
+    req(HAS_PRAATPICTURE, rv$selected_segment)
+    tmp <- tempfile(fileext = ".wav")
+    tuneR::writeWave(rv$selected_segment, filename = tmp)
+    rv$praatpic_temp_wav <- tmp
+  })
+
+  output$praatpicture_plot <- renderPlot({
+    req(HAS_PRAATPICTURE, rv$praatpic_temp_wav)
+    req(file.exists(rv$praatpic_temp_wav))
+
+    # Construir qué paneles mostrar
+    what <- c()
+    if (isTRUE(input$pp_show_wave))  what <- c(what, "sound")
+    if (isTRUE(input$pp_show_spec))  what <- c(what, "spectrogram")
+    if (isTRUE(input$pp_show_pitch)) what <- c(what, "pitch")
+    if (isTRUE(input$pp_show_int))   what <- c(what, "intensity")
+    if (length(what) == 0) what <- "sound"
+
+    # Proporciones iguales que sumen 100
+    n_frames <- length(what)
+    base_p   <- floor(100 / n_frames)
+    prop     <- rep(base_p, n_frames)
+    prop[n_frames] <- 100 - sum(prop[-n_frames])
+
+    tryCatch(
+      praatpicture::praatpicture(rv$praatpic_temp_wav,
+                                 frames     = what,
+                                 proportion = prop),
+      error = function(e) {
+        plot.new()
+        text(0.5, 0.5, paste("Error praatpicture:", e$message), col = "red", cex = 0.9)
+      }
+    )
+  })
+
+  # ============================================================
+  # REPRODUCCIÓN DE AUDIO
+  # ============================================================
+  play_row_audio <- function(context_before = 0, context_after = 0) {
+    req(rv$df_full, rv$selected_row_index, rv$audio_cached)
+    i <- rv$selected_row_index
+    if (is.null(i) || i < 1 || i > nrow(rv$df_full)) {
+      showNotification(tr("Sin fila válida.", session_lang(), I18N_DICT), type = "error"); return()
+    }
+    start_t <- as.numeric(rv$df_full$start[i])
+    end_t   <- as.numeric(rv$df_full$end[i])
+    if (is.na(start_t) || is.na(end_t)) {
+      showNotification(tr("Tiempos inválidos.", session_lang(), I18N_DICT), type = "error"); return()
+    }
+    wave_full <- rv$audio_cached
+    total_dur <- length(wave_full@left) / wave_full@samp.rate
+    s0 <- max(0, start_t - context_before)
+    e0 <- min(total_dur, end_t + context_after)
+    fs  <- wave_full@samp.rate
+    seg <- seewave::cutw(wave_full, from = s0, to = e0, output = "Wave", f = fs)
+    tmp <- tempfile(fileext = ".wav")
+    tuneR::writeWave(seg, filename = tmp)
+    play_sound(tmp)
+    showNotification(sprintf("Reproduciendo %.2f s", e0 - s0),
+                     type = "message", duration = 2)
+  }
+
+  observeEvent(input$play_segment,   play_row_audio())
+  observeEvent(input$play_segment1,  play_row_audio())
+  observeEvent(input$play_with_context, {
+    cb <- if (is.null(input$context_before) || is.na(input$context_before)) 0 else input$context_before
+    ca <- if (is.null(input$context_after)  || is.na(input$context_after))  0 else input$context_after
+    play_row_audio(context_before = cb, context_after = ca)
+  })
+
+  # ============================================================
+  # EXPORTACIÓN
+  # ============================================================
+
+  # ============================================================
+  # ESTADÍSTICAS
+  # ============================================================
+
+  # Columnas numéricas disponibles para boxplot
+  stat_num_cols <- c(
+    "F0_mean","F0_median","F0_sd","F0_range_st","F0_delta_st","F0_final_delta_st",
+    "Int_mean","Int_median","Int_sd",
+    "n_palabras","palabras_por_seg","fonemas_por_seg"
+  )
+
+  # Helper: etiqueta legible para columnas
+  stat_col_label <- function(cn) {
+    map <- c(
+      F0_mean = "F0 media (Hz)", F0_median = "F0 mediana (Hz)", F0_sd = "F0 SD (Hz)",
+      F0_range_st = "Rango F0 (st)", F0_delta_st = "Inflexión F0 (st)",
+      F0_final_delta_st = "Tonema delta (st)",
+      Int_mean = "Intensidad media (dB)", Int_median = "Intensidad mediana (dB)",
+      Int_sd = "Intensidad SD (dB)",
+      n_palabras = "N.º palabras", palabras_por_seg = "Palabras/s",
+      fonemas_por_seg = "Fonemas/s"
+    )
+    if (cn %in% names(map)) map[[cn]] else cn
+  }
+
+  # Actualizar selectores cuando cambia df_full
+  # Columnas nominales "de análisis" (no anotadas a mano) seleccionables en Estadísticas:
+  # el archivo de origen y el patrón melódico (tonema), que se computa automáticamente.
+  stat_extra_nominal <- c(filename = "Archivo",
+                          F0_final_pattern = "Patrón melódico (tonema)")
+
+  # Añade a 'ch' las columnas de stat_extra_nominal presentes con >=2 valores distintos.
+  add_extra_nominal <- function(ch, df) {
+    for (cn in names(stat_extra_nominal)) {
+      if (!cn %in% names(df)) next
+      vals <- na.omit(df[[cn]]); vals <- vals[nzchar(vals)]
+      if (length(unique(vals)) >= 2)
+        ch <- c(ch, setNames(cn, stat_extra_nominal[[cn]]))
+    }
+    ch
+  }
+
+  observe({
+    req(rv$df_full)
+    df <- rv$df_full
+
+    # Variables categóricas: speaker + archivo/patrón + anotaciones con >=2 valores distintos
+    cat_choices <- c()
+    if ("speaker" %in% names(df) && length(unique(na.omit(df$speaker))) >= 2)
+      cat_choices <- c(cat_choices, c("Hablante" = "speaker"))
+    cat_choices <- add_extra_nominal(cat_choices, df)
+    for (j in seq_len(n_anot)) {
+      cn  <- paste0("anot", j)
+      if (!cn %in% names(df)) next
+      vals <- na.omit(df[[cn]])
+      vals <- vals[nzchar(vals)]
+      if (length(unique(vals)) >= 2) {
+        lbl <- if (!is.null(rv$anot_defs[[cn]])) rv$anot_defs[[cn]]$label else cn
+        lbl <- sub(":$", "", trimws(lbl))
+        cat_choices <- c(cat_choices, setNames(cn, lbl))
+      }
+    }
+    if (length(cat_choices) == 0) cat_choices <- c("(sin datos)" = "")
+    updateSelectInput(session, "stat_cat_var", choices = cat_choices)
+
+    # Variables numéricas con datos
+    num_choices <- sapply(stat_num_cols, function(cn) {
+      cn %in% names(df) && sum(!is.na(df[[cn]])) >= 2
+    })
+    num_avail <- stat_num_cols[num_choices]
+    num_labels <- setNames(num_avail, sapply(num_avail, stat_col_label))
+    if (length(num_labels) == 0) num_labels <- c("(sin datos)" = "")
+    updateSelectInput(session, "stat_num_var", choices = num_labels)
+
+    # Grupo (para boxplot): speaker + anotaciones categóricas con pocos niveles
+    grp_choices <- c("(sin agrupación)" = "")
+    if ("speaker" %in% names(df) && length(unique(na.omit(df$speaker))) >= 2)
+      grp_choices <- c(grp_choices, c("Hablante" = "speaker"))
+    grp_choices <- add_extra_nominal(grp_choices, df)
+    for (j in seq_len(n_anot)) {
+      cn  <- paste0("anot", j)
+      if (!cn %in% names(df)) next
+      vals <- na.omit(df[[cn]]); vals <- vals[nzchar(vals)]
+      n_lev <- length(unique(vals))
+      if (n_lev >= 2 && n_lev <= 10) {
+        lbl <- if (!is.null(rv$anot_defs[[cn]])) rv$anot_defs[[cn]]$label else cn
+        lbl <- sub(":$", "", trimws(lbl))
+        grp_choices <- c(grp_choices, setNames(cn, lbl))
+      }
+    }
+    updateSelectInput(session, "stat_group_var", choices = grp_choices)
+  })
+
+  # --- Gráfico de barras ---
+  # Barplot horizontal con margen izquierdo ajustado a la etiqueta más larga,
+  # para que las categorías con nombres largos no se corten. 'fmt' formatea
+  # el valor que se escribe al final de cada barra.
+  draw_freq_barh <- function(tbl, main, axlab, g, fmt) {
+    tbl <- rev(tbl)                                  # la barra mayor arriba
+    leftmar <- min(2 + max(nchar(names(tbl)), 1) * 0.45, 28)
+    par(mar = c(4.5, leftmar, 3, 1))
+    bp <- barplot(tbl, horiz = TRUE, las = 1, col = "#3b82f6", border = "white",
+                  main = main, xlab = axlab, xlim = c(0, max(tbl) * 1.12),
+                  cex.names = 0.8 * g, cex.axis = 0.9 * g, cex.main = g, cex.lab = g)
+    text(tbl + max(tbl) * 0.01, bp, labels = fmt(tbl), cex = 0.75 * g, adj = c(0, 0.5))
+  }
+
+  draw_stat_barplot <- function() {
+    g <- gcex()
+    req(rv$df_full, nzchar(input$stat_cat_var %||% ""))
+    cn   <- input$stat_cat_var
+    df   <- rv$df_full
+    if (!cn %in% names(df)) return(NULL)
+    tbl <- freq_table(df[[cn]])
+    if (length(tbl) == 0) { plot.new(); text(.5,.5,"Sin datos"); return() }
+    if (input$stat_bar_type == "pct") {
+      tbl <- tbl / sum(tbl) * 100; ylab <- "Porcentaje (%)"
+      fmt <- function(x) sprintf("%.1f%%", x)
+    } else {
+      ylab <- "Frecuencia (n)"; fmt <- function(x) as.character(x)
+    }
+    lbl <- if (!is.null(rv$anot_defs[[cn]])) sub(":$","",rv$anot_defs[[cn]]$label)
+           else if (cn %in% names(stat_extra_nominal)) stat_extra_nominal[[cn]]
+           else cn
+    draw_freq_barh(tbl, lbl, ylab, g, fmt)
+  }
+  output$stat_barplot <- renderPlot({ input$stat_bar_update; draw_stat_barplot() })
+  add_plot_download(output, "stat_barplot", draw_stat_barplot, "barras")
+
+  # --- Boxplot ---
+  draw_stat_boxplot <- function() {
+    g <- gcex()
+    req(rv$df_full, nzchar(input$stat_num_var %||% ""))
+    cn  <- input$stat_num_var
+    grp <- input$stat_group_var
+    df  <- rv$df_full
+    if (!cn %in% names(df)) return(NULL)
+    lbl <- stat_col_label(cn)
+    if (!is.null(grp) && nzchar(grp) && grp %in% names(df)) {
+      df2   <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
+      grp_v <- factor(df2[[grp]])
+      par(mar = c(9, 5, 3, 1))
+      boxplot(df2[[cn]] ~ grp_v, col = "#93c5fd", border = "#1d4ed8",
+              main = lbl, ylab = lbl, xlab = "", las = 2,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g, outline = FALSE)
+      stripchart(df2[[cn]] ~ grp_v, vertical = TRUE, method = "jitter",
+                 add = TRUE, pch = 20, col = "#1d4ed880", cex = 0.6 * g)
+    } else {
+      vals <- na.omit(df[[cn]])
+      par(mar = c(3, 5, 3, 1))
+      boxplot(vals, col = "#93c5fd", border = "#1d4ed8",
+              main = lbl, ylab = lbl, outline = FALSE, horizontal = FALSE,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g)
+      stripchart(vals, vertical = TRUE, method = "jitter",
+                 add = TRUE, pch = 20, col = "#1d4ed880", cex = 0.7 * g)
+    }
+  }
+  output$stat_boxplot <- renderPlot({ input$stat_box_update; draw_stat_boxplot() })
+  add_plot_download(output, "stat_boxplot", draw_stat_boxplot, "boxplot")
+
+  output$stat_summary <- renderPrint({
+    input$stat_box_update
+    req(rv$df_full, nzchar(input$stat_num_var %||% ""))
+    cn  <- input$stat_num_var
+    df  <- rv$df_full
+    if (!cn %in% names(df)) return(invisible(NULL))
+    grp <- input$stat_group_var
+
+    fmt <- function(x) if (is.na(x)) "N/A" else sprintf("%.4g", x)
+
+    print_stats <- function(vals, titulo = NULL) {
+      vals <- na.omit(vals)
+      if (!is.null(titulo)) cat(sprintf("\n── %s (n=%d) ──\n", titulo, length(vals)))
+      else cat(sprintf("n = %d\n", length(vals)))
+      cat(sprintf("  Mínimo:    %s\n", fmt(min(vals))))
+      cat(sprintf("  Máximo:    %s\n", fmt(max(vals))))
+      cat(sprintf("  Mediana:   %s\n", fmt(median(vals))))
+      cat(sprintf("  Media:     %s\n", fmt(mean(vals))))
+      cat(sprintf("  Asimetría: %s\n", fmt(stat_skewness(vals))))
+      cat(sprintf("  Curtosis:  %s  (exceso)\n", fmt(stat_kurtosis(vals))))
+    }
+
+    lbl <- stat_col_label(cn)
+    cat("===", lbl, "===\n")
+    if (!is.null(grp) && nzchar(grp) && grp %in% names(df)) {
+      df2  <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
+      levs <- sort(unique(df2[[grp]]))
+      for (lv in levs) print_stats(df2[[cn]][df2[[grp]] == lv], titulo = lv)
+      cat("\n── TOTAL ──\n"); print_stats(df2[[cn]])
+    } else {
+      print_stats(df[[cn]])
+    }
+  })
+
+  # ====================== COINCIDENCIA (acuerdo entre jueces) ======================
+  coinc_raw <- reactive({
+    req(input$coinc_files)
+    fi <- input$coinc_files
+    if (nrow(fi) > 10) {
+      showNotification(tr("Más de 10 archivos: se usan los 10 primeros.", session_lang(), I18N_DICT), type = "warning")
+      fi <- fi[1:10, ]
+    }
+    dfs <- lapply(seq_len(nrow(fi)), function(i)
+      tryCatch(read_analysis_file(fi$datapath[i]), error = function(e) NULL))
+    names(dfs) <- tools::file_path_sans_ext(fi$name)
+    dfs[!vapply(dfs, is.null, logical(1))]
+  })
+
+  output$coinc_files_info <- renderDT({
+    dfs <- coinc_raw()
+    req(length(dfs) >= 1)
+    data.frame(Archivo = names(dfs),
+               Filas = vapply(dfs, nrow, integer(1)),
+               check.names = FALSE)
+  }, extensions = "Buttons", options = dt_with_buttons(list(dom = "t")), rownames = FALSE, server = FALSE)
+
+  coinc_var_label <- function(cn) {
+    if (!is.null(rv$anot_defs[[cn]])) sub(":$", "", trimws(rv$anot_defs[[cn]]$label)) else cn
+  }
+
+  observeEvent(coinc_raw(), {
+    dfs <- coinc_raw()
+    if (length(dfs) < 2) return()
+    anot_cols <- paste0("anot", seq_len(n_anot))
+    avail <- Filter(function(cn) {
+      all(vapply(dfs, function(d) cn %in% names(d), logical(1))) &&
+        sum(vapply(dfs, function(d)
+          sum(nzchar(trimws(ifelse(is.na(d[[cn]]), "", as.character(d[[cn]]))))),
+          integer(1))) >= 2
+    }, anot_cols)
+    choices <- setNames(avail, vapply(avail, coinc_var_label, character(1)))
+    updateSelectInput(session, "coinc_vars", choices = choices, selected = avail)
+    updateSelectInput(session, "coinc_ord_vars", choices = choices)
+  })
+
+  coinc_results <- eventReactive(input$coinc_run, {
+    dfs <- coinc_raw()
+    validate(need(length(dfs) >= 2, "Sube al menos 2 archivos."))
+    vars <- input$coinc_vars
+    validate(need(length(vars) >= 1, "Selecciona al menos una variable."))
+    ord <- input$coinc_ord_vars %||% character(0)
+    rows <- lapply(vars, function(v) {
+      mat <- build_rater_matrix(dfs, v)
+      if (is.null(mat)) return(NULL)
+      r <- compute_agreement_for_var(mat, ordinal = v %in% ord)
+      data.frame(
+        Variable = coinc_var_label(v), n = r$n,
+        `% acuerdo` = round(r$pct, 1),
+        `Cohen kappa` = round(r$cohen, 3),
+        `Fleiss kappa` = round(r$fleiss, 3),
+        `kappa parejas` = round(r$mean_pairwise, 3),
+        `Krippendorff alpha` = round(r$krippendorff, 3),
+        Interpretacion = r$interpretation,
+        Ponderado = if (!isTRUE(r$weighted)) "" else if (length(dfs) == 2) "sí" else "sí (solo parejas)",
+        check.names = FALSE, stringsAsFactors = FALSE)
+    })
+    rows <- rows[!vapply(rows, is.null, logical(1))]
+    n_match <- {
+      m1 <- if (length(vars)) build_rater_matrix(dfs, vars[1]) else NULL
+      if (is.null(m1)) 0L else nrow(m1)
+    }
+    list(table = if (length(rows)) do.call(rbind, rows) else NULL,
+         n_raters = length(dfs), n_match = n_match, vars_used = vars)
+  })
+
+  output$coinc_summary <- renderPrint({
+    res <- coinc_results()
+    cat(sprintf("Jueces: %d\n", res$n_raters))
+    cat(sprintf("Filas (segmentos) comunes emparejados: %d\n", res$n_match))
+    if (!is.null(res$table)) {
+      kcol <- if (res$n_raters == 2) res$table[["Cohen kappa"]] else res$table[["Fleiss kappa"]]
+      cat(sprintf("Variables comparadas: %d | kappa medio: %.3f\n",
+                  nrow(res$table), mean(kcol, na.rm = TRUE)))
+    }
+  })
+
+  output$coinc_table <- renderDT({
+    res <- coinc_results()
+    validate(need(!is.null(res$table), "Sin segmentos comunes entre los archivos."))
+    res$table
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE, server = FALSE)
+
+  draw_coinc_barplot <- function() {
+    g <- gcex()
+    res <- coinc_results()
+    req(!is.null(res$table))
+    kcol <- if (res$n_raters == 2) "Cohen kappa" else "Fleiss kappa"
+    vals <- res$table[[kcol]]; names(vals) <- res$table$Variable
+    vals <- vals[!is.na(vals)]
+    if (length(vals) == 0) { plot.new(); text(.5, .5, "Sin datos"); return() }
+    vals <- rev(sort(vals, decreasing = TRUE))      # mayor arriba (barras horizontales)
+    leftmar <- min(2 + max(nchar(names(vals)), 1) * 0.45, 28)
+    par(mar = c(4.5, leftmar, 3, 1))
+    barplot(vals, horiz = TRUE, las = 1, col = "#3b82f6", border = "white",
+            xlim = c(min(0, min(vals)) * 1.1, 1),
+            main = sprintf("%s por variable", kcol), xlab = "kappa",
+            cex.names = 0.8 * g, cex.axis = g, cex.main = g, cex.lab = g)
+    abline(v = c(0.4, 0.6, 0.8), col = "#9ca3af", lty = 3)
+  }
+  output$coinc_barplot <- renderPlot({ draw_coinc_barplot() })
+  add_plot_download(output, "coinc_barplot", draw_coinc_barplot, "coincidencia_kappa")
+
+  observeEvent(coinc_results(), {
+    res <- coinc_results()
+    if (res$n_raters == 2 && !is.null(res$table)) {
+      vars <- res$vars_used
+      ch <- setNames(vars, vapply(vars, coinc_var_label, character(1)))
+      updateSelectInput(session, "coinc_confusion_var", choices = ch)
+    } else {
+      updateSelectInput(session, "coinc_confusion_var",
+                        choices = c("(solo con 2 jueces)" = ""))
+    }
+  })
+
+  output$coinc_confusion <- renderPrint({
+    res <- coinc_results()
+    req(res$n_raters == 2, nzchar(input$coinc_confusion_var %||% ""))
+    mat <- build_rater_matrix(coinc_raw(), input$coinc_confusion_var)
+    req(!is.null(mat))
+    cmat <- mat[stats::complete.cases(mat), , drop = FALSE]
+    cat("Matriz de confusión (juez 1 filas × juez 2 columnas):\n\n")
+    print(table(juez1 = cmat[, 1], juez2 = cmat[, 2]))
+  })
+
+  # ====================== CORPUS (visión global) ======================
+  corpus_df <- reactive({
+    input$corpus_refresh
+    if (!is.null(input$corpus_file)) {
+      return(tryCatch(read_analysis_file(input$corpus_file$datapath),
+                      error = function(e) NULL))
+    }
+    cf <- file.path(ANALISIS_DIR, "analisis_todos.txt")
+    if (!file.exists(cf)) return(NULL)
+    tryCatch(read_analysis_file(cf), error = function(e) NULL)
+  })
+
+  # Refrescar limpia el archivo subido para volver al consolidado en disco
+  observeEvent(input$corpus_refresh, {
+    shinyjs::reset("corpus_file")
+  })
+
+  corpus_num_avail <- reactive({
+    df <- corpus_df(); req(df)
+    stat_num_cols[vapply(stat_num_cols, function(cn)
+      cn %in% names(df) && sum(!is.na(suppressWarnings(as.numeric(df[[cn]])))) >= 1,
+      logical(1))]
+  })
+
+  corpus_group_choices <- reactive({
+    df <- corpus_df(); req(df)
+    ch <- c("(ninguno)" = "")
+    if ("filename" %in% names(df)) ch <- c(ch, c("Archivo" = "filename"))
+    if ("speaker" %in% names(df))  ch <- c(ch, c("Hablante" = "speaker"))
+    for (j in seq_len(n_anot)) {
+      cn <- paste0("anot", j)
+      if (!cn %in% names(df)) next
+      vals <- df[[cn]]; vals <- vals[!is.na(vals) & nzchar(vals)]
+      n_lev <- length(unique(vals))
+      if (n_lev >= 2 && n_lev <= 30) {
+        lbl <- if (!is.null(rv$anot_defs[[cn]])) sub(":$", "", trimws(rv$anot_defs[[cn]]$label)) else cn
+        ch <- c(ch, setNames(cn, lbl))
+      }
+    }
+    ch
+  })
+
+  observeEvent(corpus_df(), {
+    nums <- corpus_num_avail()
+    num_ch <- setNames(nums, vapply(nums, stat_col_label, character(1)))
+    if (length(num_ch) == 0) num_ch <- c("(sin datos)" = "")
+    updateSelectInput(session, "corpus_num_var", choices = num_ch)
+    gch <- corpus_group_choices()
+    for (id in c("corpus_group1", "corpus_g1", "corpus_g2", "corpus_g3", "corpus_g4"))
+      updateSelectInput(session, id, choices = gch)
+    cat_ch <- gch[nzchar(gch)]   # variables nominales (sin la opción vacía)
+    if (length(cat_ch) == 0) cat_ch <- c("(sin datos)" = "")
+    updateSelectInput(session, "corpus_cat_var", choices = cat_ch)
+  })
+
+  output$corpus_summary <- renderPrint({
+    df <- corpus_df()
+    validate(need(!is.null(df), "No se encontró analisis_todos.txt. Genera análisis o sube un archivo."))
+    s <- corpus_file_summary(df)
+    cat(sprintf("Archivos (corpus): %s\n",
+                if (is.na(s$n_files)) "N/D (sin columna filename)" else s$n_files))
+    cat(sprintf("Filas totales: %d\n", s$n_rows))
+    cat(sprintf("Variables (columnas): %d\n", s$n_vars))
+  })
+
+  output$corpus_perfile <- renderDT({
+    df <- corpus_df(); req(df)
+    s <- corpus_file_summary(df)
+    req(!is.null(s$per_file))
+    s$per_file[order(-s$per_file$n_filas), ]
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 10, dom = "tip")), rownames = FALSE, server = FALSE)
+
+  output$corpus_desc <- renderDT({
+    df <- corpus_df(); req(df)
+    nums <- corpus_num_avail()
+    validate(need(length(nums) >= 1, "Sin variables numéricas con datos."))
+    rows <- lapply(nums, function(cn) {
+      d <- describe_numeric(df, cn)
+      d$grupo <- stat_col_label(cn)
+      names(d)[1] <- "Variable"
+      d
+    })
+    out <- do.call(rbind, rows)
+    num_cols <- setdiff(names(out), "Variable")
+    out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
+    out
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 15, dom = "tip")), rownames = FALSE, server = FALSE)
+
+  draw_corpus_plot <- function() {
+    g <- gcex()
+    df <- corpus_df(); req(df)
+    # --- Barras: frecuencias (abs/%) de una variable nominal en todo el corpus ---
+    if (identical(input$corpus_plot_type, "bar")) {
+      cv <- input$corpus_cat_var
+      if (is.null(cv) || !nzchar(cv) || !cv %in% names(df)) {
+        plot.new(); text(.5, .5, "Selecciona una variable categórica"); return(invisible())
+      }
+      tbl <- freq_table(df[[cv]])
+      if (length(tbl) == 0) { plot.new(); text(.5, .5, "Sin datos"); return(invisible()) }
+      if (identical(input$corpus_bar_type, "pct")) {
+        tbl <- tbl / sum(tbl) * 100; ylab <- "Porcentaje (%)"
+        fmt <- function(x) sprintf("%.1f%%", x)
+      } else {
+        ylab <- "Frecuencia (n)"; fmt <- function(x) as.character(x)
+      }
+      lbl <- if (cv == "filename") "Archivo"
+             else if (cv == "speaker") "Hablante"
+             else if (!is.null(rv$anot_defs[[cv]])) sub(":$", "", trimws(rv$anot_defs[[cv]]$label))
+             else cv
+      draw_freq_barh(tbl, lbl, ylab, g, fmt)
+      return(invisible())
+    }
+    # --- Boxplot de una variable numérica (opcionalmente por grupo) ---
+    req(nzchar(input$corpus_num_var %||% ""))
+    cn <- input$corpus_num_var
+    if (!cn %in% names(df)) return(NULL)
+    df[[cn]] <- suppressWarnings(as.numeric(df[[cn]]))
+    grp <- input$corpus_group1
+    lbl <- stat_col_label(cn)
+    has_grp <- !is.null(grp) && nzchar(grp) && grp %in% names(df)
+    if (has_grp) {
+      d2 <- df[!is.na(df[[cn]]) & !is.na(df[[grp]]) & nzchar(df[[grp]]), ]
+      par(mar = c(10, 5, 3, 1))
+      boxplot(d2[[cn]] ~ factor(d2[[grp]]), col = "#93c5fd", border = "#1d4ed8",
+              main = lbl, ylab = lbl, xlab = "", las = 2,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g, outline = FALSE)
+    } else {
+      par(mar = c(3, 5, 3, 1))
+      boxplot(na.omit(df[[cn]]), col = "#93c5fd", border = "#1d4ed8",
+              main = lbl, ylab = lbl, outline = FALSE,
+              cex.axis = 0.8 * g, cex.main = g, cex.lab = g)
+    }
+  }
+  output$corpus_plot <- renderPlot({ draw_corpus_plot() })
+  add_plot_download(output, "corpus_plot", draw_corpus_plot, "corpus")
+
+  output$corpus_cross <- renderDT({
+    df <- corpus_df(); req(df, nzchar(input$corpus_num_var %||% ""))
+    cn <- input$corpus_num_var
+    grps <- unique(Filter(nzchar, c(input$corpus_g1, input$corpus_g2,
+                                    input$corpus_g3, input$corpus_g4)))
+    out <- describe_numeric(df, cn, grps)
+    num_cols <- setdiff(names(out), "grupo")
+    out[num_cols] <- lapply(out[num_cols], function(x) round(x, 3))
+    out
+  }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE, server = FALSE)
+
+  observeEvent(input$save_prefs_btn, {
+    save_prefs(modifyList(load_prefs(PREFS_FILE),
+                          list(animo_enabled  = isTRUE(input$animo_enabled),
+                               animo_custom   = input$animo_custom %||% "",
+                               plot_font_scale = as.numeric(input$plot_font_scale %||% 1))),
+               PREFS_FILE)
+    showNotification(tr("Preferencias guardadas", session_lang(), I18N_DICT), type = "message")
+  })
+
+}
+
+shinyApp(ui, server)

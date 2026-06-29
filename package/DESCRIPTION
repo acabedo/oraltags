@@ -1,0 +1,32 @@
+Package: oraltags
+Type: Package
+Title: Etiquetador de Corpus Oral con Análisis Prosódico y Acuerdo entre Jueces
+Version: 0.1.0
+Authors@R: person("Adrián", "Cabedo", role = c("aut", "cre"),
+                  email = "cabedoadrian@gmail.com")
+Description: Aplicación Shiny para etiquetar corpus oral a partir de audio y
+    TextGrids, con análisis prosódico (F0, intensidad, velocidad de habla),
+    descriptivos de corpus y cálculo del acuerdo entre jueces (kappa de Cohen
+    y alfa de Krippendorff). Se lanza con run_app() y guarda los datos del
+    usuario en la carpeta estándar del sistema (tools::R_user_dir). Incluye
+    muestras de audio y TextGrid para probar la aplicación.
+License: GPL-3
+Encoding: UTF-8
+Imports:
+    shiny,
+    DT,
+    tuneR,
+    shinyjs,
+    shinythemes,
+    seewave,
+    wrassp,
+    av,
+    rPraat,
+    shiny.i18n,
+    jsonlite,
+    tools
+Suggests:
+    praatpicture,
+    irr
+SystemRequirements: ffmpeg (opcional, para conversión de vídeo/audio)
+Config/roxygen2/version: 8.0.0
