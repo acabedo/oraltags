@@ -1050,17 +1050,17 @@ server <- function(input, output, session) {
                      style = "width:100%; margin-bottom:10px;"),
         hr(),
         p(style = "font-size:12px; color:#6b7280; margin-bottom:6px;",
-          "¿Primer uso con un archivo nuevo?"),
+          i18n$t("¿Primer uso con un archivo nuevo?")),
         fileInput("new_tg_upload",
-                  "Subir TextGrid:",
+                  i18n$t("Subir TextGrid:"),
                   accept = c(".TextGrid", ".textgrid"),
                   width  = "100%"),
         fileInput("new_audio_upload",
-                  "Subir audio (si no está en www/audios):",
+                  i18n$t("Subir audio (si no está en www/audios):"),
                   accept = c(".wav", ".mp3"),
                   width  = "100%"),
         fileInput("new_video_upload",
-                  "Subir MP4:",
+                  i18n$t("Subir MP4:"),
                   accept = c(".mp4"),
                   width  = "100%")
       )
@@ -1070,9 +1070,9 @@ server <- function(input, output, session) {
         sub("^analisis_", "", basename(rv$current_filename)))
       n <- if (!is.null(rv$df_full)) nrow(rv$df_full) else 0
       div(class = "file-status-active",
-        div(class = "file-label", "Análisis activo"),
+        div(class = "file-label", i18n$t("Análisis activo")),
         div(class = "file-name",  base),
-        div(class = "file-meta",  sprintf("%d grupos entonativos", n)),
+        div(class = "file-meta",  sprintf(i18n$t("%d grupos entonativos"), n)),
         br(),
         actionButton("change_analysis", i18n$t("Cambiar archivo"),
                      icon  = icon("exchange-alt"),
@@ -1434,8 +1434,22 @@ server <- function(input, output, session) {
   # FUNCIONES INTERNAS
   # ============================================================
 
+  # Duplica un WAV mono a estéreo: algunos reproductores (p. ej. afplay en
+  # macOS) emiten el audio mono solo por el canal izquierdo.
+  ensure_stereo_wav <- function(path) {
+    if (tolower(tools::file_ext(path)) != "wav") return(path)
+    w <- tryCatch(tuneR::readWave(path), error = function(e) NULL)
+    if (is.null(w) || isTRUE(w@stereo)) return(path)
+    st <- tuneR::Wave(left = w@left, right = w@left,
+                      samp.rate = w@samp.rate, bit = w@bit, pcm = w@pcm)
+    out <- tempfile(fileext = ".wav")
+    tuneR::writeWave(st, out)
+    out
+  }
+
   play_sound <- function(path) {
     os <- Sys.info()[["sysname"]]
+    path <- ensure_stereo_wav(path)
     path <- normalizePath(path, winslash = "\\", mustWork = FALSE)
     if (os == "Darwin") {
       system2("afplay", shQuote(path), wait = FALSE)

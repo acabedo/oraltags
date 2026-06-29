@@ -107,6 +107,16 @@
     { "es": "Instálalo con: ", "en": "Install it with: " },
     { "es": "Visión global del corpus consolidado (analisis/analisis_todos.txt).", "en": "Global overview of the consolidated corpus (analisis/analisis_todos.txt)." },
     { "es": "Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO corpus anotado por distintas personas. Se comparan los segmentos comunes (mismo start/end/label).", "en": "Upload 2 to 10 analysis files (analisis_*.txt) of the SAME corpus annotated by different people. Common segments are compared (same start/end/label)." },
-    { "es": "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); los niveles de texto se ordenan alfabéticamente.", "en": "For ordinals, levels should be numeric (e.g. 1–5); text levels are sorted alphabetically." }
+    { "es": "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); los niveles de texto se ordenan alfabéticamente.", "en": "For ordinals, levels should be numeric (e.g. 1–5); text levels are sorted alphabetically." },
+    { "es": "¿Primer uso con un archivo nuevo?", "en": "First time with a new file?" },
+    { "es": "Subir TextGrid:", "en": "Upload TextGrid:" },
+    { "es": "Subir MP4:", "en": "Upload MP4:" },
+    { "es": "Subir audio (si no está ya cargado):", "en": "Upload audio (if not already loaded):" },
+    { "es": "Subir audio (si no está en www/audios):", "en": "Upload audio (if not in www/audios):" },
+    { "es": "Análisis activo", "en": "Active analysis" },
+    { "es": "%d grupos entonativos", "en": "%d intonation groups" },
+    { "es": "Probar con una muestra", "en": "Try a sample" },
+    { "es": "Cargar muestra de ejemplo", "en": "Load sample" },
+    { "es": "¿No tienes material propio? Carga un ejemplo (audio + TextGrid).", "en": "No material of your own? Load an example (audio + TextGrid)." }
   ]
 }
