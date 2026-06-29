@@ -1,6 +1,6 @@
 # Oraltags. Oral data tagger — v2.0
 
-**🌐 Idioma / Language:** [English](README.md) · **Español**
+**🌐 Idioma / Language:** [🇬🇧 English](README.md) · 🇪🇸 **Español**
 
 > *Oraltags — explorador prosódico de datos orales*
 
