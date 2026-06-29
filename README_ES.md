@@ -6,6 +6,10 @@
 
 Aplicación Shiny en R para la anotación lingüística y el análisis acústico de corpus orales. Permite cargar audio y transcripción, navegar grupo entonativo a grupo entonativo, calcular automáticamente métricas prosódicas, anotar con categorías totalmente configurables y explorar los resultados con tablas, figuras tipo Praat y gráficos estadísticos.
 
+> **⚡ Instalación rápida (recomendada):** en R, ejecuta
+> `remotes::install_github("acabedo/oraltags", subdir = "package")`
+> y después `oraltags::run_app()`. Las dependencias se instalan solas y se incluyen tres muestras de audio + TextGrid para probarlo al instante. Todos los detalles en [Instalación y uso](#instalación-y-uso).
+
 ![Pantalla inicial del etiquetador](imgs/1_etiquetador_pantalla_inicial.png)
 
 ---
@@ -108,7 +112,7 @@ Cada variable de anotación (`anot1`, `anot2`, …) tiene una etiqueta editable 
 ## Requisitos
 
 - R ≥ 4.1
-- Paquetes R:
+- Paquetes R — **si instalas con la Opción A de abajo (`install_github`) se instalan solos**, así que puedes saltarte este paso. Solo necesitas instalarlos a mano si ejecutas la app desde el código fuente (Opción B):
 
 ```r
 install.packages(c(
@@ -125,27 +129,49 @@ install.packages(c(
 
 ## Instalación y uso
 
+### Opción A — Instalar como paquete de R (recomendada)
+
+La vía más fácil. Instala directamente desde GitHub; todos los paquetes de R necesarios se instalan solos:
+
 ```r
-# Clonar el repositorio y situarse en la carpeta
-setwd("ruta/a/etiquetador_oral")
+# install.packages("remotes")   # si aún no lo tienes
+remotes::install_github("acabedo/oraltags", subdir = "package")
 
 # Lanzar la aplicación
-shiny::runApp("etiquetador.R")
+oraltags::run_app()
 ```
 
-### Organización de archivos
+No hace falta clonar el repositorio ni fijar un directorio de trabajo. Tus datos —análisis guardados, copias de seguridad, preferencias y el audio que cargues— se guardan en una carpeta estándar por usuario (`tools::R_user_dir("oraltags", "data")`), de modo que nunca se escribe nada dentro del paquete instalado.
+
+**Pruébalo con las muestras incluidas:** el paquete trae **tres ejemplos de audio + TextGrid**. En el panel lateral de archivos, elige una en **«Cargar muestra de ejemplo»** y pulsa el botón: puedes explorar todas las funciones sin aportar material propio.
+
+> Opcional: instala `ffmpeg` (binario externo, no un paquete de R) para el recorte exacto del vídeo por segmento con MP4. La app funciona igual sin él; ver *Requisitos*.
+
+### Opción B — Ejecutar desde el código fuente (clonar)
+
+Si prefieres trabajar directamente con el script, clona el repositorio y, desde R dentro de la carpeta del repo:
+
+```r
+# Instala primero los paquetes de R (ver Requisitos) y luego:
+source("etiquetador_oral.R")   # o ábrelo en RStudio y pulsa "Run App"
+```
+
+En este modo, las carpetas de trabajo (`config/`, `analisis/`, `backup/`, `www/audios/`) viven dentro del repositorio.
+
+### Organización de archivos (versión de código fuente)
 
 ```
-etiquetador_oral/
-├── etiquetador.R            # Código principal de la app
+oraltags/
+├── etiquetador_oral.R       # Código principal de la app (Shiny en un solo archivo)
+├── package/                 # Paquete de R instalable (Opción A): oraltags::run_app()
+├── R/                       # Funciones auxiliares puras
 ├── imgs/                    # Capturas de ejemplo (este README)
+├── samples/                 # Pares de ejemplo audio + TextGrid
 ├── www/
 │   └── audios/              # Pares precargados (mismo nombre base)
-│       ├── entrevista1.mp3
-│       └── entrevista1.csv
+├── config/                  # Esquema de etiquetas personalizado y preferencias
 ├── backup/                  # Backups automáticos (se crea al cargar datos)
-├── analisis_<nombre>.txt    # Análisis individual por corpus (generado automáticamente)
-└── analisis_todos.txt       # Consolidado de todos los corpus (generado automáticamente)
+└── analisis/                # Análisis por corpus + consolidado analisis_todos.txt
 ```
 
 ### Formato de la transcripción (CSV / TXT)
