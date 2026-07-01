@@ -18,6 +18,31 @@ tr <- function(key, lang, dict) {
   if (is.na(en) || !nzchar(en)) key else en
 }
 
+# Traducción SOLO visual de un valor de anotación almacenado (canónico en es)
+# al idioma activo. Soporta selección múltiple separada por "; " y el formato
+# de anot27 ("Etiqueta - N"). El almacenamiento nunca cambia: esto solo se usa
+# para mostrar en tablas y para la exportación CSV.
+tr_anot_value <- function(v, lang, dict) {
+  if (is.null(v) || length(v) != 1L || is.na(v) || !nzchar(v)) return(v)
+  parts <- strsplit(v, ";\\s*")[[1]]
+  out <- vapply(parts, function(p) {
+    m <- regmatches(p, regexec("^(.*?)(\\s-\\s[0-9]+)\\s*$", p))[[1]]
+    if (length(m) == 3L) paste0(tr(m[2], lang, dict), m[3]) else tr(p, lang, dict)
+  }, character(1), USE.NAMES = FALSE)
+  paste(out, collapse = "; ")
+}
+
+# Copia de df con las columnas de anotación (anot1, anot2, …) traducidas al
+# idioma activo. Con lang == "es" es un no-op (tr() devuelve la clave).
+tr_df_categories <- function(df, lang, dict) {
+  if (is.null(df) || !nrow(df)) return(df)
+  cols <- grep("^anot[0-9]+$", names(df), value = TRUE)
+  for (cn in cols)
+    df[[cn]] <- vapply(as.character(df[[cn]]), tr_anot_value, character(1),
+                       lang = lang, dict = dict, USE.NAMES = FALSE)
+  df
+}
+
 i18n_used_keys <- function(code_path) {
   code <- paste(readLines(code_path, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
   pat <- '(?:i18n\\$t|\\btr)\\(\\s*"((?:[^"\\\\]|\\\\.)*)"'  # \btr evita casar attr(, substr(…

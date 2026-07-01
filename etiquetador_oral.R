@@ -512,7 +512,10 @@ ui <- fluidPage(
           textOutput("sequential_position"),
           numericInput("goto_row",i18n$t("Ir a fila:"), value = 1, min = 1, step = 1, width = "100%"),
           actionButton("goto_row_btn",i18n$t("Ir"),
-                       class = "btn-secondary btn-sm", style = "width:100%; margin-top:5px;")
+                       class = "btn-secondary btn-sm", style = "width:100%; margin-top:5px;"),
+          hr(),
+          downloadButton("download_analysis_csv", i18n$t("Descargar CSV"),
+                         class = "btn-success btn-sm", style = "width:100%;")
         )
       )),
 
@@ -734,6 +737,17 @@ ui <- fluidPage(
               fileInput("coinc_files", i18n$t("Archivos de análisis (2–10):"),
                         multiple = TRUE, accept = c(".txt", ".tsv", ".csv"),
                         width = "100%"),
+              actionButton("coinc_load_sample",
+                           i18n$t("Cargar análisis de muestra (jueces)"),
+                           class = "btn-info btn-sm"),
+              tags$details(class = "small-helper-text", style = "margin-top:8px;",
+                tags$summary(style = "cursor:pointer; font-weight:600;",
+                             i18n$t("¿Cómo funciona la coincidencia? (ejemplo con 3 jueces)")),
+                tags$p(i18n$t("Los análisis de muestra son 3 anotaciones simuladas de 3 jueces sobre el MISMO fragmento (muestra_1). Sirven de modelo para tu propio estudio de fiabilidad entre anotadores.")),
+                tags$p(i18n$t("Cada juez guarda su archivo TSV analisis_*.txt (aquí: analisis_juez1.txt, analisis_juez2.txt, analisis_juez3.txt). Todos parten del mismo audio y TextGrid, por lo que comparten los mismos segmentos.")),
+                tags$p(i18n$t("La app empareja los segmentos comunes por inicio, fin y etiqueta (start/end/label). Sobre esos segmentos compara cada variable anotada y calcula el % de acuerdo y los coeficientes kappa de Cohen/Fleiss y alfa de Krippendorff.")),
+                tags$p(i18n$t("Para replicarlo con tus datos: cada anotador abre la misma muestra, anota de forma independiente y guarda su analisis_*.txt; después súbelos aquí (2–10 archivos)."))
+              ),
               DTOutput("coinc_files_info"),
               hr(),
               fluidRow(
@@ -1389,22 +1403,27 @@ server <- function(input, output, session) {
   # ============================================================
   observeEvent(input$open_var_editor, {
     defs <- rv$anot_defs
-    # Construir UI del modal dinámicamente
+    lang <- session_lang()
+    # Construir UI del modal dinámicamente. Se muestran las etiquetas/categorías
+    # en el idioma activo (traducción visual); el guardado conserva la clave
+    # canónica salvo en los campos que el usuario modifique (ver ve_save).
     rows <- lapply(names(defs), function(id) {
       def <- defs[[id]]
-      ch_str <- paste(def$choices[def$choices != ""], collapse = "\n")
+      ch  <- def$choices[def$choices != ""]
+      ch_disp <- vapply(ch, tr, character(1), lang = lang, dict = I18N_DICT, USE.NAMES = FALSE)
       fluidRow(
         column(1, tags$b(id)),
-        column(4, textInput(paste0("ve_label_", id), "Etiqueta:",
-                            value = def$label, width = "100%")),
+        column(4, textInput(paste0("ve_label_", id), tr("Etiqueta:", lang, I18N_DICT),
+                            value = tr(def$label, lang, I18N_DICT), width = "100%")),
         column(7, textAreaInput(paste0("ve_choices_", id),
-                                "Categorias (una por linea):",
-                                value = ch_str, rows = 3, width = "100%"))
+                                tr("Categorias (una por linea):", lang, I18N_DICT),
+                                value = paste(ch_disp, collapse = "\n"),
+                                rows = 3, width = "100%"))
       )
     })
 
     showModal(modalDialog(
-      title   = "Editor de variables de anotacion",
+      title   = tr("Editor de variables de anotacion", lang, I18N_DICT),
       size    = "l",
       easyClose = FALSE,
       div(style = "max-height:60vh; overflow-y:auto;", tagList(rows)),
@@ -1419,17 +1438,30 @@ server <- function(input, output, session) {
 
   observeEvent(input$ve_save, {
     new_defs <- rv$anot_defs
+    lang <- session_lang()
     for (id in names(new_defs)) {
       lbl_val <- input[[paste0("ve_label_", id)]]
       ch_val  <- input[[paste0("ve_choices_", id)]]
+      # Etiqueta: si el texto coincide con la traducción del valor canónico
+      # (no se ha tocado), se conserva la clave canónica; si cambió, se guarda
+      # tal cual (idioma-independiente para categorías por defecto es imposible
+      # de reconstruir sin ambigüedad, así que el texto editado pasa a ser clave).
       if (!is.null(lbl_val) && nzchar(trimws(lbl_val))) {
-        new_defs[[id]]$label <- trimws(lbl_val)
+        cur <- new_defs[[id]]$label
+        if (!identical(trimws(lbl_val), tr(cur, lang, I18N_DICT)))
+          new_defs[[id]]$label <- trimws(lbl_val)
       }
       if (!is.null(ch_val)) {
-        ch_lines <- strsplit(ch_val, "\n", fixed = TRUE)[[1]]
-        ch_clean <- trimws(ch_lines)
-        ch_clean <- ch_clean[nzchar(ch_clean)]
-        new_defs[[id]]$choices <- c("", ch_clean)
+        cur_ch  <- new_defs[[id]]$choices[new_defs[[id]]$choices != ""]
+        cur_disp <- paste(vapply(cur_ch, tr, character(1),
+                                 lang = lang, dict = I18N_DICT, USE.NAMES = FALSE),
+                          collapse = "\n")
+        if (!identical(trimws(ch_val), trimws(cur_disp))) {
+          ch_lines <- strsplit(ch_val, "\n", fixed = TRUE)[[1]]
+          ch_clean <- trimws(ch_lines)
+          ch_clean <- ch_clean[nzchar(ch_clean)]
+          new_defs[[id]]$choices <- c("", ch_clean)
+        }
       }
     }
     rv$anot_defs <- new_defs
@@ -1966,6 +1998,26 @@ server <- function(input, output, session) {
   })
 
   observe({ rv$df <- df_to_display() })
+
+  # ============================================================
+  # DESCARGA DEL ANÁLISIS EN CSV (en el idioma activo)
+  # ============================================================
+  # Exporta el análisis completo (todas las columnas, incluidas anot1..33)
+  # con las categorías traducidas al idioma de la interfaz. El archivo interno
+  # de trabajo sigue en la clave canónica (es); esto solo afecta a la descarga.
+  output$download_analysis_csv <- downloadHandler(
+    filename = function() {
+      base <- if (!is.null(rv$current_filename))
+        tools::file_path_sans_ext(basename(rv$current_filename)) else "analisis"
+      plot_filename(base, "csv")
+    },
+    content = function(file) {
+      df <- rv$df_full
+      if (is.null(df) || !nrow(df)) { writeLines("", file); return() }
+      df <- tr_df_categories(df, session_lang(), I18N_DICT)
+      write.csv(df, file, row.names = FALSE, fileEncoding = "UTF-8", na = "")
+    }
+  )
 
   # ============================================================
   # NAVEGACIÓN
@@ -2739,17 +2791,44 @@ server <- function(input, output, session) {
   })
 
   # ====================== COINCIDENCIA (acuerdo entre jueces) ======================
-  coinc_raw <- reactive({
-    req(input$coinc_files)
-    fi <- input$coinc_files
-    if (nrow(fi) > 10) {
-      showNotification(tr("Más de 10 archivos: se usan los 10 primeros.", session_lang(), I18N_DICT), type = "warning")
-      fi <- fi[1:10, ]
+  # Análisis de muestra: 3 jueces simulados sobre muestra_1 (carpeta jueces/).
+  coinc_sample <- reactiveVal(NULL)
+
+  jueces_sample_files <- function() {
+    base <- file.path(APP_DIR, "jueces")
+    fs <- file.path(base, paste0("juez", 1:3), paste0("analisis_juez", 1:3, ".txt"))
+    fs[file.exists(fs)]
+  }
+
+  observeEvent(input$coinc_load_sample, {
+    fs <- jueces_sample_files()
+    if (length(fs) < 2) {
+      showNotification(tr("No se encontraron los análisis de muestra de jueces.", session_lang(), I18N_DICT), type = "error"); return()
     }
-    dfs <- lapply(seq_len(nrow(fi)), function(i)
-      tryCatch(read_analysis_file(fi$datapath[i]), error = function(e) NULL))
-    names(dfs) <- tools::file_path_sans_ext(fi$name)
-    dfs[!vapply(dfs, is.null, logical(1))]
+    dfs <- lapply(fs, function(f) tryCatch(read_analysis_file(f), error = function(e) NULL))
+    names(dfs) <- tools::file_path_sans_ext(basename(fs))
+    dfs <- dfs[!vapply(dfs, is.null, logical(1))]
+    coinc_sample(dfs)
+    showNotification(sprintf(tr("Cargados %d análisis de muestra (jueces).", session_lang(), I18N_DICT),
+                             length(dfs)), type = "message")
+  })
+
+  coinc_raw <- reactive({
+    fi <- input$coinc_files
+    # Los archivos subidos tienen prioridad; si no hay, se usan los de muestra.
+    if (!is.null(fi) && nrow(fi) >= 1) {
+      if (nrow(fi) > 10) {
+        showNotification(tr("Más de 10 archivos: se usan los 10 primeros.", session_lang(), I18N_DICT), type = "warning")
+        fi <- fi[1:10, ]
+      }
+      dfs <- lapply(seq_len(nrow(fi)), function(i)
+        tryCatch(read_analysis_file(fi$datapath[i]), error = function(e) NULL))
+      names(dfs) <- tools::file_path_sans_ext(fi$name)
+      return(dfs[!vapply(dfs, is.null, logical(1))])
+    }
+    smp <- coinc_sample()
+    req(!is.null(smp))
+    smp
   })
 
   output$coinc_files_info <- renderDT({

@@ -1307,6 +1307,54 @@
     {
       "es": "(sin selección)",
       "en": "(no selection)"
+    },
+    {
+      "es": "Descargar CSV",
+      "en": "Download CSV"
+    },
+    {
+      "es": "Etiqueta:",
+      "en": "Label:"
+    },
+    {
+      "es": "Categorias (una por linea):",
+      "en": "Categories (one per line):"
+    },
+    {
+      "es": "Editor de variables de anotacion",
+      "en": "Annotation variables editor"
+    },
+    {
+      "es": "Cargar análisis de muestra (jueces)",
+      "en": "Load sample analyses (judges)"
+    },
+    {
+      "es": "¿Cómo funciona la coincidencia? (ejemplo con 3 jueces)",
+      "en": "How does agreement work? (example with 3 judges)"
+    },
+    {
+      "es": "Los análisis de muestra son 3 anotaciones simuladas de 3 jueces sobre el MISMO fragmento (muestra_1). Sirven de modelo para tu propio estudio de fiabilidad entre anotadores.",
+      "en": "The sample analyses are 3 simulated annotations by 3 judges of the SAME fragment (muestra_1). They serve as a model for your own inter-annotator reliability study."
+    },
+    {
+      "es": "Cada juez guarda su archivo TSV analisis_*.txt (aquí: analisis_juez1.txt, analisis_juez2.txt, analisis_juez3.txt). Todos parten del mismo audio y TextGrid, por lo que comparten los mismos segmentos.",
+      "en": "Each judge saves their TSV file analisis_*.txt (here: analisis_juez1.txt, analisis_juez2.txt, analisis_juez3.txt). All start from the same audio and TextGrid, so they share the same segments."
+    },
+    {
+      "es": "La app empareja los segmentos comunes por inicio, fin y etiqueta (start/end/label). Sobre esos segmentos compara cada variable anotada y calcula el % de acuerdo y los coeficientes kappa de Cohen/Fleiss y alfa de Krippendorff.",
+      "en": "The app matches common segments by start, end and label (start/end/label). Over those segments it compares each annotated variable and computes the % agreement and Cohen/Fleiss kappa and Krippendorff's alpha coefficients."
+    },
+    {
+      "es": "Para replicarlo con tus datos: cada anotador abre la misma muestra, anota de forma independiente y guarda su analisis_*.txt; después súbelos aquí (2–10 archivos).",
+      "en": "To replicate it with your data: each annotator opens the same sample, annotates independently and saves their analisis_*.txt; then upload them here (2–10 files)."
+    },
+    {
+      "es": "No se encontraron los análisis de muestra de jueces.",
+      "en": "Sample judge analyses were not found."
+    },
+    {
+      "es": "Cargados %d análisis de muestra (jueces).",
+      "en": "Loaded %d sample analyses (judges)."
     }
   ]
 }
