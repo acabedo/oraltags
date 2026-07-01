@@ -752,8 +752,14 @@ ui <- fluidPage(
               )),
               br(),
               fluidRow(
-                column(6, selectInput("coinc_confusion_var",
-                                      i18n$t("Matriz de confusión (solo 2 jueces):"),
+                column(4, selectInput("coinc_confusion_var",
+                                      i18n$t("Matriz de confusión — variable:"),
+                                      choices = NULL, width = "100%")),
+                column(4, selectInput("coinc_confusion_j1",
+                                      i18n$t("Juez (filas):"),
+                                      choices = NULL, width = "100%")),
+                column(4, selectInput("coinc_confusion_j2",
+                                      i18n$t("Juez (columnas):"),
                                       choices = NULL, width = "100%"))
               ),
               verbatimTextOutput("coinc_confusion")
@@ -2863,7 +2869,8 @@ server <- function(input, output, session) {
   }, extensions = "Buttons", options = dt_with_buttons(list(dom = "t")), rownames = FALSE, server = FALSE)
 
   coinc_var_label <- function(cn) {
-    if (!is.null(rv$anot_defs[[cn]])) sub(":$", "", trimws(rv$anot_defs[[cn]]$label)) else cn
+    if (is.null(rv$anot_defs[[cn]])) return(cn)
+    sub(":$", "", trimws(tr(rv$anot_defs[[cn]]$label, session_lang(), I18N_DICT)))
   }
 
   observeEvent(coinc_raw(), {
@@ -2883,9 +2890,9 @@ server <- function(input, output, session) {
 
   coinc_results <- eventReactive(input$coinc_run, {
     dfs <- coinc_raw()
-    validate(need(length(dfs) >= 2, "Sube al menos 2 archivos."))
+    validate(need(length(dfs) >= 2, tr("Sube al menos 2 archivos.", session_lang(), I18N_DICT)))
     vars <- input$coinc_vars
-    validate(need(length(vars) >= 1, "Selecciona al menos una variable."))
+    validate(need(length(vars) >= 1, tr("Selecciona al menos una variable.", session_lang(), I18N_DICT)))
     ord <- input$coinc_ord_vars %||% character(0)
     rows <- lapply(vars, function(v) {
       mat <- build_rater_matrix(dfs, v)
@@ -2913,19 +2920,28 @@ server <- function(input, output, session) {
 
   output$coinc_summary <- renderPrint({
     res <- coinc_results()
-    cat(sprintf("Jueces: %d\n", res$n_raters))
-    cat(sprintf("Filas (segmentos) comunes emparejados: %d\n", res$n_match))
+    lang <- session_lang()
+    cat(sprintf(tr("Jueces: %d", lang, I18N_DICT), res$n_raters), "\n")
+    cat(sprintf(tr("Filas (segmentos) comunes emparejados: %d", lang, I18N_DICT), res$n_match), "\n")
     if (!is.null(res$table)) {
       kcol <- if (res$n_raters == 2) res$table[["Cohen kappa"]] else res$table[["Fleiss kappa"]]
-      cat(sprintf("Variables comparadas: %d | kappa medio: %.3f\n",
-                  nrow(res$table), mean(kcol, na.rm = TRUE)))
+      cat(sprintf(tr("Variables comparadas: %d | kappa medio: %.3f", lang, I18N_DICT),
+                  nrow(res$table), mean(kcol, na.rm = TRUE)), "\n")
     }
   })
 
   output$coinc_table <- renderDT({
     res <- coinc_results()
-    validate(need(!is.null(res$table), "Sin segmentos comunes entre los archivos."))
-    res$table
+    lang <- session_lang()
+    validate(need(!is.null(res$table), tr("Sin segmentos comunes entre los archivos.", lang, I18N_DICT)))
+    tb <- res$table
+    # traducir valores de texto (la columna Variable ya viene traducida por coinc_var_label)
+    tb$Interpretacion <- vapply(tb$Interpretacion, tr, character(1),
+                                lang = lang, dict = I18N_DICT, USE.NAMES = FALSE)
+    tb$Ponderado <- vapply(tb$Ponderado, function(x) if (nzchar(x)) tr(x, lang, I18N_DICT) else x,
+                           character(1), USE.NAMES = FALSE)
+    names(tb) <- vapply(names(tb), tr, character(1), lang = lang, dict = I18N_DICT, USE.NAMES = FALSE)
+    tb
   }, extensions = "Buttons", options = dt_with_buttons(list(pageLength = 25, dom = "tip")), rownames = FALSE, server = FALSE)
 
   draw_coinc_barplot <- function() {
@@ -2935,39 +2951,57 @@ server <- function(input, output, session) {
     kcol <- if (res$n_raters == 2) "Cohen kappa" else "Fleiss kappa"
     vals <- res$table[[kcol]]; names(vals) <- res$table$Variable
     vals <- vals[!is.na(vals)]
-    if (length(vals) == 0) { plot.new(); text(.5, .5, "Sin datos"); return() }
+    if (length(vals) == 0) { plot.new(); text(.5, .5, tr("Sin datos", session_lang(), I18N_DICT)); return() }
     vals <- rev(sort(vals, decreasing = TRUE))      # mayor arriba (barras horizontales)
     leftmar <- min(2 + max(nchar(names(vals)), 1) * 0.45, 28)
     par(mar = c(4.5, leftmar, 3, 1))
     barplot(vals, horiz = TRUE, las = 1, col = "#3b82f6", border = "white",
             xlim = c(min(0, min(vals)) * 1.1, 1),
-            main = sprintf("%s por variable", kcol), xlab = "kappa",
+            main = sprintf(tr("%s por variable", session_lang(), I18N_DICT), kcol), xlab = "kappa",
             cex.names = 0.8 * g, cex.axis = g, cex.main = g, cex.lab = g)
     abline(v = c(0.4, 0.6, 0.8), col = "#9ca3af", lty = 3)
   }
   output$coinc_barplot <- renderPlot({ draw_coinc_barplot() })
   add_plot_download(output, "coinc_barplot", draw_coinc_barplot, "coincidencia_kappa")
 
+  # Pareja de jueces para la matriz de confusión: se puede elegir cualquier
+  # par entre los N jueces cargados (no solo cuando hay exactamente 2).
+  observeEvent(coinc_raw(), {
+    jn <- names(coinc_raw())
+    if (length(jn) < 2) return()
+    updateSelectInput(session, "coinc_confusion_j1", choices = jn, selected = jn[1])
+    updateSelectInput(session, "coinc_confusion_j2", choices = jn, selected = jn[2])
+  })
+
   observeEvent(coinc_results(), {
     res <- coinc_results()
-    if (res$n_raters == 2 && !is.null(res$table)) {
+    if (!is.null(res$table)) {
       vars <- res$vars_used
       ch <- setNames(vars, vapply(vars, coinc_var_label, character(1)))
       updateSelectInput(session, "coinc_confusion_var", choices = ch)
-    } else {
-      updateSelectInput(session, "coinc_confusion_var",
-                        choices = c("(solo con 2 jueces)" = ""))
     }
   })
 
   output$coinc_confusion <- renderPrint({
-    res <- coinc_results()
-    req(res$n_raters == 2, nzchar(input$coinc_confusion_var %||% ""))
-    mat <- build_rater_matrix(coinc_raw(), input$coinc_confusion_var)
+    dfs <- coinc_raw()
+    lang <- session_lang()
+    req(length(dfs) >= 2)
+    v  <- input$coinc_confusion_var %||% ""
+    j1 <- input$coinc_confusion_j1  %||% ""
+    j2 <- input$coinc_confusion_j2  %||% ""
+    req(nzchar(v), nzchar(j1), nzchar(j2), j1 %in% names(dfs), j2 %in% names(dfs))
+    validate(need(j1 != j2, tr("Elige dos jueces distintos.", lang, I18N_DICT)))
+    mat <- build_rater_matrix(dfs[c(j1, j2)], v)
     req(!is.null(mat))
     cmat <- mat[stats::complete.cases(mat), , drop = FALSE]
-    cat("Matriz de confusión (juez 1 filas × juez 2 columnas):\n\n")
-    print(table(juez1 = cmat[, 1], juez2 = cmat[, 2]))
+    tbl <- table(cmat[, 1], cmat[, 2])
+    rownames(tbl) <- vapply(rownames(tbl), tr_anot_value, character(1),
+                            lang = lang, dict = I18N_DICT, USE.NAMES = FALSE)
+    colnames(tbl) <- vapply(colnames(tbl), tr_anot_value, character(1),
+                            lang = lang, dict = I18N_DICT, USE.NAMES = FALSE)
+    names(dimnames(tbl)) <- c(j1, j2)
+    cat(sprintf(tr("Matriz de confusión (%s filas × %s columnas):", lang, I18N_DICT), j1, j2), "\n\n")
+    print(tbl)
   })
 
   # ====================== CORPUS (visión global) ======================

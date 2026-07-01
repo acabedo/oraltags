@@ -1355,6 +1355,110 @@
     {
       "es": "Cargados %d análisis de muestra (jueces).",
       "en": "Loaded %d sample analyses (judges)."
+    },
+    {
+      "es": "N/D",
+      "en": "N/A"
+    },
+    {
+      "es": "Pobre",
+      "en": "Poor"
+    },
+    {
+      "es": "Leve",
+      "en": "Slight"
+    },
+    {
+      "es": "Aceptable",
+      "en": "Fair"
+    },
+    {
+      "es": "Moderado",
+      "en": "Moderate"
+    },
+    {
+      "es": "Considerable",
+      "en": "Substantial"
+    },
+    {
+      "es": "Casi perfecto",
+      "en": "Almost perfect"
+    },
+    {
+      "es": "sí",
+      "en": "yes"
+    },
+    {
+      "es": "sí (solo parejas)",
+      "en": "yes (pairwise only)"
+    },
+    {
+      "es": "% acuerdo",
+      "en": "% agreement"
+    },
+    {
+      "es": "kappa parejas",
+      "en": "pairwise kappa"
+    },
+    {
+      "es": "Interpretacion",
+      "en": "Interpretation"
+    },
+    {
+      "es": "Ponderado",
+      "en": "Weighted"
+    },
+    {
+      "es": "Jueces: %d",
+      "en": "Judges: %d"
+    },
+    {
+      "es": "Filas (segmentos) comunes emparejados: %d",
+      "en": "Common matched rows (segments): %d"
+    },
+    {
+      "es": "Variables comparadas: %d | kappa medio: %.3f",
+      "en": "Variables compared: %d | mean kappa: %.3f"
+    },
+    {
+      "es": "%s por variable",
+      "en": "%s by variable"
+    },
+    {
+      "es": "Sin datos",
+      "en": "No data"
+    },
+    {
+      "es": "Matriz de confusión (%s filas × %s columnas):",
+      "en": "Confusion matrix (%s rows × %s columns):"
+    },
+    {
+      "es": "Sin segmentos comunes entre los archivos.",
+      "en": "No common segments among the files."
+    },
+    {
+      "es": "Sube al menos 2 archivos.",
+      "en": "Upload at least 2 files."
+    },
+    {
+      "es": "Selecciona al menos una variable.",
+      "en": "Select at least one variable."
+    },
+    {
+      "es": "Elige dos jueces distintos.",
+      "en": "Choose two different judges."
+    },
+    {
+      "es": "Matriz de confusión — variable:",
+      "en": "Confusion matrix — variable:"
+    },
+    {
+      "es": "Juez (filas):",
+      "en": "Judge (rows):"
+    },
+    {
+      "es": "Juez (columnas):",
+      "en": "Judge (columns):"
     }
   ]
 }
