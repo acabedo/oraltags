@@ -1,122 +1,1312 @@
 {
-  "languages": ["es", "en"],
+  "languages": [
+    "es",
+    "en"
+  ],
   "translation": [
-    { "es": "Etiquetador de datos orales · explorador prosódico", "en": "Oral data tagger · prosody explorer" },
-    { "es": "Anotaciones", "en": "Annotations" },
-    { "es": "Contexto", "en": "Context" },
-    { "es": "Analisis fonetico", "en": "Phonetic analysis" },
-    { "es": "Estadísticas", "en": "Statistics" },
-    { "es": "Coincidencia", "en": "Agreement" },
-    { "es": "Configuración", "en": "Settings" },
-    { "es": "Imágenes", "en": "Images" },
-    { "es": "Métricas", "en": "Metrics" },
-    { "es": "Este archivo", "en": "This file" },
-    { "es": "Corpus completo", "en": "Full corpus" },
-    { "es": "Barras", "en": "Bars" },
-    { "es": "▶ Contexto", "en": "▶ Context" },
-    { "es": "▶ Segmento", "en": "▶ Segment" },
-    { "es": "<= Anterior", "en": "<= Previous" },
-    { "es": "Siguiente =>", "en": "Next =>" },
-    { "es": "Abrir", "en": "Open" },
-    { "es": "Actualizar", "en": "Update" },
-    { "es": "Calcular acuerdo", "en": "Compute agreement" },
-    { "es": "Calcular F0/Int de todos los segmentos", "en": "Compute F0/Int for all segments" },
-    { "es": "Cambiar archivo", "en": "Change file" },
-    { "es": "Cancelar", "en": "Cancel" },
-    { "es": "Cargar análisis guardado", "en": "Load saved analysis" },
-    { "es": "Editar variables", "en": "Edit variables" },
-    { "es": "Generar GEs", "en": "Generate IGs" },
-    { "es": "Guardar", "en": "Save" },
-    { "es": "Guardar cambios", "en": "Save changes" },
-    { "es": "Guardar fila", "en": "Save row" },
-    { "es": "Guardar preferencias", "en": "Save preferences" },
-    { "es": "Ir", "en": "Go" },
-    { "es": "Mostrar ejemplo_para_paper", "en": "Show ejemplo_para_paper" },
-    { "es": "Ocultar ejemplo_para_paper", "en": "Hide ejemplo_para_paper" },
-    { "es": "Refrescar desde disco", "en": "Refresh from disk" },
-    { "es": "Regenerar GEs desde TextGrid", "en": "Regenerate IGs from TextGrid" },
-    { "es": "Renderizar", "en": "Render" },
-    { "es": "Reproducir segmento", "en": "Play segment" },
-    { "es": "Restaurar por defecto", "en": "Restore defaults" },
-    { "es": "⚙️ Parámetros acústicos", "en": "⚙️ Acoustic parameters" },
-    { "es": "🎚️ Preferencias", "en": "🎚️ Preferences" },
-    { "es": "Abrir análisis", "en": "Open analysis" },
-    { "es": "Acuerdo entre anotadores (jueces)", "en": "Agreement between annotators (judges)" },
-    { "es": "Agrupar por hasta 4 variables (tabla cruzada de descriptivos)", "en": "Group by up to 4 variables (cross descriptives table)" },
-    { "es": "Análisis prosódico de la fila actual", "en": "Prosodic analysis of the current row" },
-    { "es": "Descriptivos generales (variables numéricas)", "en": "General descriptives (numeric variables)" },
-    { "es": "Gráfico", "en": "Chart" },
-    { "es": "Navegación secuencial", "en": "Sequential navigation" },
-    { "es": "(Opcional) Cargar otro consolidado:", "en": "(Optional) Load another consolidated file:" },
-    { "es": "Agrupar gráfico por:", "en": "Group chart by:" },
-    { "es": "Agrupar por (opcional):", "en": "Group by (optional):" },
-    { "es": "Antes (s):", "en": "Before (s):" },
-    { "es": "Despues (s):", "en": "After (s):" },
-    { "es": "Archivos de análisis (2–10):", "en": "Analysis files (2–10):" },
-    { "es": "Filas de contexto (+-):", "en": "Context rows (±):" },
-    { "es": "Grupo 1:", "en": "Group 1:" },
-    { "es": "Grupo 2:", "en": "Group 2:" },
-    { "es": "Grupo 3:", "en": "Group 3:" },
-    { "es": "Grupo 4:", "en": "Group 4:" },
-    { "es": "Intensidad", "en": "Intensity" },
-    { "es": "Oscilograma", "en": "Oscillogram" },
-    { "es": "Espectrograma", "en": "Spectrogram" },
-    { "es": "Ir a fila:", "en": "Go to row:" },
-    { "es": "Label (texto):", "en": "Label (text):" },
-    { "es": "Observaciones:", "en": "Notes:" },
-    { "es": "Pausa mínima (s):", "en": "Minimum pause (s):" },
-    { "es": "Reset F0 mínimo (st):", "en": "F0 reset minimum (st):" },
-    { "es": "Tu propio mensaje (opcional):", "en": "Your own message (optional):" },
-    { "es": "Variable categórica:", "en": "Categorical variable:" },
-    { "es": "Variable numérica:", "en": "Numeric variable:" },
-    { "es": "Variables a comparar:", "en": "Variables to compare:" },
-    { "es": "Variables ordinales (kappa ponderado):", "en": "Ordinal variables (weighted kappa):" },
-    { "es": "Porcentaje cuartiles (%):", "en": "Quartile percentage (%):" },
-    { "es": "Mostrar como:", "en": "Show as:" },
-    { "es": "Tamaño de letra de gráficos:", "en": "Chart font size:" },
-    { "es": "Mostrar mensaje de ánimo al iniciar", "en": "Show an encouraging message at startup" },
-    { "es": "Fila guardada", "en": "Row saved" },
-    { "es": "Preferencias guardadas", "en": "Preferences saved" },
-    { "es": "Anotaciones guardadas.", "en": "Annotations saved." },
-    { "es": "Archivo no encontrado.", "en": "File not found." },
-    { "es": "Error al leer TextGrid o audio no encontrado.", "en": "Error reading TextGrid or audio not found." },
-    { "es": "Error al leer TextGrid.", "en": "Error reading TextGrid." },
-    { "es": "Más de 10 archivos: se usan los 10 primeros.", "en": "More than 10 files: only the first 10 are used." },
-    { "es": "No hay fila válida seleccionada.", "en": "No valid row selected." },
-    { "es": "No se generaron GEs. Revisa los tiers del TextGrid.", "en": "No IGs generated. Check the TextGrid tiers." },
-    { "es": "No se pudo leer el TextGrid.", "en": "Could not read the TextGrid." },
-    { "es": "Primera fila.", "en": "First row." },
-    { "es": "Sin fila válida.", "en": "No valid row." },
-    { "es": "Tiempos inválidos.", "en": "Invalid times." },
-    { "es": "Última fila.", "en": "Last row." },
-    { "es": "Variables actualizadas y guardadas.", "en": "Variables updated and saved." },
-    { "es": "Variables restauradas a los valores por defecto.", "en": "Variables restored to defaults." },
-    { "es": "Tipo:", "en": "Type:" },
-    { "es": "Absoluto", "en": "Absolute" },
-    { "es": "Porcentaje", "en": "Percentage" },
-    { "es": "Barras (frecuencias)", "en": "Bars (frequencies)" },
-    { "es": "Matriz de confusión (solo 2 jueces):", "en": "Confusion matrix (only 2 judges):" },
-    { "es": "Estructura", "en": "Structure" },
-    { "es": "Pragmática", "en": "Pragmatics" },
-    { "es": "Discurso e interaccion", "en": "Discourse and interaction" },
-    { "es": "Paralinguistico / no verbal", "en": "Paralinguistic / non-verbal" },
-    { "es": "Emociones", "en": "Emotions" },
-    { "es": "El contexto se muestra en orden temporal con formato ", "en": "The context is shown in temporal order with the format " },
-    { "es": "Calcula métricas acústicas para todas las filas.", "en": "Computes acoustic metrics for all rows." },
-    { "es": "El paquete 'praatpicture' no está instalado.", "en": "The 'praatpicture' package is not installed." },
-    { "es": "Instálalo con: ", "en": "Install it with: " },
-    { "es": "Visión global del corpus consolidado (analisis/analisis_todos.txt).", "en": "Global overview of the consolidated corpus (analisis/analisis_todos.txt)." },
-    { "es": "Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO corpus anotado por distintas personas. Se comparan los segmentos comunes (mismo start/end/label).", "en": "Upload 2 to 10 analysis files (analisis_*.txt) of the SAME corpus annotated by different people. Common segments are compared (same start/end/label)." },
-    { "es": "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); los niveles de texto se ordenan alfabéticamente.", "en": "For ordinals, levels should be numeric (e.g. 1–5); text levels are sorted alphabetically." },
-    { "es": "¿Primer uso con un archivo nuevo?", "en": "First time with a new file?" },
-    { "es": "Subir TextGrid:", "en": "Upload TextGrid:" },
-    { "es": "Subir MP4:", "en": "Upload MP4:" },
-    { "es": "Subir audio (si no está ya cargado):", "en": "Upload audio (if not already loaded):" },
-    { "es": "Subir audio (si no está en www/audios):", "en": "Upload audio (if not in www/audios):" },
-    { "es": "Análisis activo", "en": "Active analysis" },
-    { "es": "%d grupos entonativos", "en": "%d intonation groups" },
-    { "es": "Probar con una muestra", "en": "Try a sample" },
-    { "es": "Cargar muestra de ejemplo", "en": "Load sample" },
-    { "es": "¿No tienes material propio? Carga un ejemplo (audio + TextGrid).", "en": "No material of your own? Load an example (audio + TextGrid)." }
+    {
+      "es": "Etiquetador de datos orales · explorador prosódico",
+      "en": "Oral data tagger · prosody explorer"
+    },
+    {
+      "es": "Anotaciones",
+      "en": "Annotations"
+    },
+    {
+      "es": "Contexto",
+      "en": "Context"
+    },
+    {
+      "es": "Analisis fonetico",
+      "en": "Phonetic analysis"
+    },
+    {
+      "es": "Estadísticas",
+      "en": "Statistics"
+    },
+    {
+      "es": "Coincidencia",
+      "en": "Agreement"
+    },
+    {
+      "es": "Configuración",
+      "en": "Settings"
+    },
+    {
+      "es": "Imágenes",
+      "en": "Images"
+    },
+    {
+      "es": "Métricas",
+      "en": "Metrics"
+    },
+    {
+      "es": "Este archivo",
+      "en": "This file"
+    },
+    {
+      "es": "Corpus completo",
+      "en": "Full corpus"
+    },
+    {
+      "es": "Barras",
+      "en": "Bars"
+    },
+    {
+      "es": "▶ Contexto",
+      "en": "▶ Context"
+    },
+    {
+      "es": "▶ Segmento",
+      "en": "▶ Segment"
+    },
+    {
+      "es": "<= Anterior",
+      "en": "<= Previous"
+    },
+    {
+      "es": "Siguiente =>",
+      "en": "Next =>"
+    },
+    {
+      "es": "Abrir",
+      "en": "Open"
+    },
+    {
+      "es": "Actualizar",
+      "en": "Update"
+    },
+    {
+      "es": "Calcular acuerdo",
+      "en": "Compute agreement"
+    },
+    {
+      "es": "Calcular F0/Int de todos los segmentos",
+      "en": "Compute F0/Int for all segments"
+    },
+    {
+      "es": "Cambiar archivo",
+      "en": "Change file"
+    },
+    {
+      "es": "Cancelar",
+      "en": "Cancel"
+    },
+    {
+      "es": "Cargar análisis guardado",
+      "en": "Load saved analysis"
+    },
+    {
+      "es": "Editar variables",
+      "en": "Edit variables"
+    },
+    {
+      "es": "Generar GEs",
+      "en": "Generate IGs"
+    },
+    {
+      "es": "Guardar",
+      "en": "Save"
+    },
+    {
+      "es": "Guardar cambios",
+      "en": "Save changes"
+    },
+    {
+      "es": "Guardar fila",
+      "en": "Save row"
+    },
+    {
+      "es": "Guardar preferencias",
+      "en": "Save preferences"
+    },
+    {
+      "es": "Ir",
+      "en": "Go"
+    },
+    {
+      "es": "Mostrar ejemplo_para_paper",
+      "en": "Show ejemplo_para_paper"
+    },
+    {
+      "es": "Ocultar ejemplo_para_paper",
+      "en": "Hide ejemplo_para_paper"
+    },
+    {
+      "es": "Refrescar desde disco",
+      "en": "Refresh from disk"
+    },
+    {
+      "es": "Regenerar GEs desde TextGrid",
+      "en": "Regenerate IGs from TextGrid"
+    },
+    {
+      "es": "Renderizar",
+      "en": "Render"
+    },
+    {
+      "es": "Reproducir segmento",
+      "en": "Play segment"
+    },
+    {
+      "es": "Restaurar por defecto",
+      "en": "Restore defaults"
+    },
+    {
+      "es": "⚙️ Parámetros acústicos",
+      "en": "⚙️ Acoustic parameters"
+    },
+    {
+      "es": "🎚️ Preferencias",
+      "en": "🎚️ Preferences"
+    },
+    {
+      "es": "Abrir análisis",
+      "en": "Open analysis"
+    },
+    {
+      "es": "Acuerdo entre anotadores (jueces)",
+      "en": "Agreement between annotators (judges)"
+    },
+    {
+      "es": "Agrupar por hasta 4 variables (tabla cruzada de descriptivos)",
+      "en": "Group by up to 4 variables (cross descriptives table)"
+    },
+    {
+      "es": "Análisis prosódico de la fila actual",
+      "en": "Prosodic analysis of the current row"
+    },
+    {
+      "es": "Descriptivos generales (variables numéricas)",
+      "en": "General descriptives (numeric variables)"
+    },
+    {
+      "es": "Gráfico",
+      "en": "Chart"
+    },
+    {
+      "es": "Navegación secuencial",
+      "en": "Sequential navigation"
+    },
+    {
+      "es": "(Opcional) Cargar otro consolidado:",
+      "en": "(Optional) Load another consolidated file:"
+    },
+    {
+      "es": "Agrupar gráfico por:",
+      "en": "Group chart by:"
+    },
+    {
+      "es": "Agrupar por (opcional):",
+      "en": "Group by (optional):"
+    },
+    {
+      "es": "Antes (s):",
+      "en": "Before (s):"
+    },
+    {
+      "es": "Despues (s):",
+      "en": "After (s):"
+    },
+    {
+      "es": "Archivos de análisis (2–10):",
+      "en": "Analysis files (2–10):"
+    },
+    {
+      "es": "Filas de contexto (+-):",
+      "en": "Context rows (±):"
+    },
+    {
+      "es": "Grupo 1:",
+      "en": "Group 1:"
+    },
+    {
+      "es": "Grupo 2:",
+      "en": "Group 2:"
+    },
+    {
+      "es": "Grupo 3:",
+      "en": "Group 3:"
+    },
+    {
+      "es": "Grupo 4:",
+      "en": "Group 4:"
+    },
+    {
+      "es": "Intensidad",
+      "en": "Intensity"
+    },
+    {
+      "es": "Oscilograma",
+      "en": "Oscillogram"
+    },
+    {
+      "es": "Espectrograma",
+      "en": "Spectrogram"
+    },
+    {
+      "es": "Ir a fila:",
+      "en": "Go to row:"
+    },
+    {
+      "es": "Label (texto):",
+      "en": "Label (text):"
+    },
+    {
+      "es": "Observaciones:",
+      "en": "Notes:"
+    },
+    {
+      "es": "Pausa mínima (s):",
+      "en": "Minimum pause (s):"
+    },
+    {
+      "es": "Reset F0 mínimo (st):",
+      "en": "F0 reset minimum (st):"
+    },
+    {
+      "es": "Tu propio mensaje (opcional):",
+      "en": "Your own message (optional):"
+    },
+    {
+      "es": "Variable categórica:",
+      "en": "Categorical variable:"
+    },
+    {
+      "es": "Variable numérica:",
+      "en": "Numeric variable:"
+    },
+    {
+      "es": "Variables a comparar:",
+      "en": "Variables to compare:"
+    },
+    {
+      "es": "Variables ordinales (kappa ponderado):",
+      "en": "Ordinal variables (weighted kappa):"
+    },
+    {
+      "es": "Porcentaje cuartiles (%):",
+      "en": "Quartile percentage (%):"
+    },
+    {
+      "es": "Mostrar como:",
+      "en": "Show as:"
+    },
+    {
+      "es": "Tamaño de letra de gráficos:",
+      "en": "Chart font size:"
+    },
+    {
+      "es": "Mostrar mensaje de ánimo al iniciar",
+      "en": "Show an encouraging message at startup"
+    },
+    {
+      "es": "Fila guardada",
+      "en": "Row saved"
+    },
+    {
+      "es": "Preferencias guardadas",
+      "en": "Preferences saved"
+    },
+    {
+      "es": "Anotaciones guardadas.",
+      "en": "Annotations saved."
+    },
+    {
+      "es": "Archivo no encontrado.",
+      "en": "File not found."
+    },
+    {
+      "es": "Error al leer TextGrid o audio no encontrado.",
+      "en": "Error reading TextGrid or audio not found."
+    },
+    {
+      "es": "Error al leer TextGrid.",
+      "en": "Error reading TextGrid."
+    },
+    {
+      "es": "Más de 10 archivos: se usan los 10 primeros.",
+      "en": "More than 10 files: only the first 10 are used."
+    },
+    {
+      "es": "No hay fila válida seleccionada.",
+      "en": "No valid row selected."
+    },
+    {
+      "es": "No se generaron GEs. Revisa los tiers del TextGrid.",
+      "en": "No IGs generated. Check the TextGrid tiers."
+    },
+    {
+      "es": "No se pudo leer el TextGrid.",
+      "en": "Could not read the TextGrid."
+    },
+    {
+      "es": "Primera fila.",
+      "en": "First row."
+    },
+    {
+      "es": "Sin fila válida.",
+      "en": "No valid row."
+    },
+    {
+      "es": "Tiempos inválidos.",
+      "en": "Invalid times."
+    },
+    {
+      "es": "Última fila.",
+      "en": "Last row."
+    },
+    {
+      "es": "Variables actualizadas y guardadas.",
+      "en": "Variables updated and saved."
+    },
+    {
+      "es": "Variables restauradas a los valores por defecto.",
+      "en": "Variables restored to defaults."
+    },
+    {
+      "es": "Tipo:",
+      "en": "Type:"
+    },
+    {
+      "es": "Absoluto",
+      "en": "Absolute"
+    },
+    {
+      "es": "Porcentaje",
+      "en": "Percentage"
+    },
+    {
+      "es": "Barras (frecuencias)",
+      "en": "Bars (frequencies)"
+    },
+    {
+      "es": "Matriz de confusión (solo 2 jueces):",
+      "en": "Confusion matrix (only 2 judges):"
+    },
+    {
+      "es": "Estructura",
+      "en": "Structure"
+    },
+    {
+      "es": "Pragmática",
+      "en": "Pragmatics"
+    },
+    {
+      "es": "Discurso e interaccion",
+      "en": "Discourse and interaction"
+    },
+    {
+      "es": "Paralinguistico / no verbal",
+      "en": "Paralinguistic / non-verbal"
+    },
+    {
+      "es": "Emociones",
+      "en": "Emotions"
+    },
+    {
+      "es": "El contexto se muestra en orden temporal con formato ",
+      "en": "The context is shown in temporal order with the format "
+    },
+    {
+      "es": "Calcula métricas acústicas para todas las filas.",
+      "en": "Computes acoustic metrics for all rows."
+    },
+    {
+      "es": "El paquete 'praatpicture' no está instalado.",
+      "en": "The 'praatpicture' package is not installed."
+    },
+    {
+      "es": "Instálalo con: ",
+      "en": "Install it with: "
+    },
+    {
+      "es": "Visión global del corpus consolidado (analisis/analisis_todos.txt).",
+      "en": "Global overview of the consolidated corpus (analisis/analisis_todos.txt)."
+    },
+    {
+      "es": "Sube de 2 a 10 archivos de análisis (analisis_*.txt) del MISMO corpus anotado por distintas personas. Se comparan los segmentos comunes (mismo start/end/label).",
+      "en": "Upload 2 to 10 analysis files (analisis_*.txt) of the SAME corpus annotated by different people. Common segments are compared (same start/end/label)."
+    },
+    {
+      "es": "Para ordinales conviene que los niveles sean numéricos (p. ej. 1–5); los niveles de texto se ordenan alfabéticamente.",
+      "en": "For ordinals, levels should be numeric (e.g. 1–5); text levels are sorted alphabetically."
+    },
+    {
+      "es": "¿Primer uso con un archivo nuevo?",
+      "en": "First time with a new file?"
+    },
+    {
+      "es": "Subir TextGrid:",
+      "en": "Upload TextGrid:"
+    },
+    {
+      "es": "Subir MP4:",
+      "en": "Upload MP4:"
+    },
+    {
+      "es": "Subir audio (si no está ya cargado):",
+      "en": "Upload audio (if not already loaded):"
+    },
+    {
+      "es": "Subir audio (si no está en www/audios):",
+      "en": "Upload audio (if not in www/audios):"
+    },
+    {
+      "es": "Análisis activo",
+      "en": "Active analysis"
+    },
+    {
+      "es": "%d grupos entonativos",
+      "en": "%d intonation groups"
+    },
+    {
+      "es": "Probar con una muestra",
+      "en": "Try a sample"
+    },
+    {
+      "es": "Cargar muestra de ejemplo",
+      "en": "Load sample"
+    },
+    {
+      "es": "¿No tienes material propio? Carga un ejemplo (audio + TextGrid).",
+      "en": "No material of your own? Load an example (audio + TextGrid)."
+    },
+    {
+      "es": "Tipo de enunciado (estructura):",
+      "en": "Utterance type (structure):"
+    },
+    {
+      "es": "Modalidad oracional:",
+      "en": "Sentence modality:"
+    },
+    {
+      "es": "Estatus informativo:",
+      "en": "Information status:"
+    },
+    {
+      "es": "Complejidad sintáctica:",
+      "en": "Syntactic complexity:"
+    },
+    {
+      "es": "Reformulación / expansión:",
+      "en": "Reformulation / expansion:"
+    },
+    {
+      "es": "Función discursiva global:",
+      "en": "Global discourse function:"
+    },
+    {
+      "es": "Referencia a discurso ajeno:",
+      "en": "Reference to others' discourse:"
+    },
+    {
+      "es": "Temporalidad del contenido:",
+      "en": "Temporality of the content:"
+    },
+    {
+      "es": "Función pragmática básica:",
+      "en": "Basic pragmatic function:"
+    },
+    {
+      "es": "Función interpersonal:",
+      "en": "Interpersonal function:"
+    },
+    {
+      "es": "Atenuación: presencia y tipo global:",
+      "en": "Mitigation: presence and overall type:"
+    },
+    {
+      "es": "Atenuación: orientación principal:",
+      "en": "Mitigation: main orientation:"
+    },
+    {
+      "es": "Atenuación: procedimiento dominante:",
+      "en": "Mitigation: dominant procedure:"
+    },
+    {
+      "es": "Intensificación:",
+      "en": "Intensification:"
+    },
+    {
+      "es": "Estrategia de cortesía:",
+      "en": "Politeness strategy:"
+    },
+    {
+      "es": "Imagen del otro:",
+      "en": "Other's face:"
+    },
+    {
+      "es": "Autoimagen:",
+      "en": "Self-face:"
+    },
+    {
+      "es": "Movimiento conversacional:",
+      "en": "Conversational move:"
+    },
+    {
+      "es": "Gestión del turno:",
+      "en": "Turn management:"
+    },
+    {
+      "es": "Relación con el turno previo:",
+      "en": "Relation to the previous turn:"
+    },
+    {
+      "es": "Dinámica interactiva (solapamiento/ritmo):",
+      "en": "Interactive dynamics (overlap/rhythm):"
+    },
+    {
+      "es": "Marcador discursivo principal:",
+      "en": "Main discourse marker:"
+    },
+    {
+      "es": "Función fática / de contacto:",
+      "en": "Phatic / contact function:"
+    },
+    {
+      "es": "Deixis dominante:",
+      "en": "Dominant deixis:"
+    },
+    {
+      "es": "Recursos coloquiales y muletillas:",
+      "en": "Colloquial resources and fillers:"
+    },
+    {
+      "es": "Paralenguaje (sonidos no verbales):",
+      "en": "Paralanguage (non-verbal sounds):"
+    },
+    {
+      "es": "Tono emocional (Ekman):",
+      "en": "Emotional tone (Ekman):"
+    },
+    {
+      "es": "Solapamientos no verbales:",
+      "en": "Non-verbal overlaps:"
+    },
+    {
+      "es": "Ruido articulatorio / gestual audible:",
+      "en": "Articulatory / audible gestural noise:"
+    },
+    {
+      "es": "Fenómenos respiratorios:",
+      "en": "Breathing phenomena:"
+    },
+    {
+      "es": "Sonidos no verbales como toma de turno:",
+      "en": "Non-verbal sounds as turn-taking:"
+    },
+    {
+      "es": "Ruido ambiental con impacto discursivo:",
+      "en": "Ambient noise with discourse impact:"
+    },
+    {
+      "es": "Actitud vocal no verbal:",
+      "en": "Non-verbal vocal attitude:"
+    },
+    {
+      "es": "Enunciado completo",
+      "en": "Complete utterance"
+    },
+    {
+      "es": "Fragmento",
+      "en": "Fragment"
+    },
+    {
+      "es": "Enunciado suspendido",
+      "en": "Suspended utterance"
+    },
+    {
+      "es": "Respuesta mínima (sí, ya, claro...)",
+      "en": "Minimal response (yes, right, sure...)"
+    },
+    {
+      "es": "Continuador (ajá, mhm, sí sí...)",
+      "en": "Continuer (uh-huh, mhm, yeah yeah...)"
+    },
+    {
+      "es": "Afirmativa",
+      "en": "Affirmative"
+    },
+    {
+      "es": "Negativa",
+      "en": "Negative"
+    },
+    {
+      "es": "Interrogativa total (sí/no)",
+      "en": "Polar interrogative (yes/no)"
+    },
+    {
+      "es": "Interrogativa parcial (qu-)",
+      "en": "Wh- interrogative"
+    },
+    {
+      "es": "Imperativa / directiva",
+      "en": "Imperative / directive"
+    },
+    {
+      "es": "Exclamativa",
+      "en": "Exclamative"
+    },
+    {
+      "es": "Dubitativa / mitigada",
+      "en": "Dubitative / hedged"
+    },
+    {
+      "es": "Optativa / desiderativa",
+      "en": "Optative / desiderative"
+    },
+    {
+      "es": "Información nueva",
+      "en": "New information"
+    },
+    {
+      "es": "Información dada",
+      "en": "Given information"
+    },
+    {
+      "es": "Recordatorio / reactivación",
+      "en": "Reminder / reactivation"
+    },
+    {
+      "es": "Reformulación de lo anterior",
+      "en": "Reformulation of the previous"
+    },
+    {
+      "es": "Comentario metadiscursivo (sobre cómo se dice)",
+      "en": "Metadiscursive comment (on how it is said)"
+    },
+    {
+      "es": "Simple",
+      "en": "Simple"
+    },
+    {
+      "es": "Yuxtaposición de enunciados",
+      "en": "Juxtaposition of utterances"
+    },
+    {
+      "es": "Coordinación",
+      "en": "Coordination"
+    },
+    {
+      "es": "Subordinación ligera",
+      "en": "Light subordination"
+    },
+    {
+      "es": "Subordinación elaborada / estilo cercano a escrito",
+      "en": "Elaborate subordination / near-written style"
+    },
+    {
+      "es": "Sin reformulación",
+      "en": "No reformulation"
+    },
+    {
+      "es": "Autocorrección puntual",
+      "en": "Occasional self-correction"
+    },
+    {
+      "es": "Paráfrasis (decir lo mismo de otra forma)",
+      "en": "Paraphrase (saying the same in another way)"
+    },
+    {
+      "es": "Expansión aclarativa / explicativa",
+      "en": "Clarifying / explanatory expansion"
+    },
+    {
+      "es": "Resumir / recapitular lo anterior",
+      "en": "Summarizing / recapitulating the previous"
+    },
+    {
+      "es": "Narrativa (contar hechos)",
+      "en": "Narrative (recounting events)"
+    },
+    {
+      "es": "Descriptiva",
+      "en": "Descriptive"
+    },
+    {
+      "es": "Explicativa / expositiva",
+      "en": "Explanatory / expository"
+    },
+    {
+      "es": "Argumentativa (defender un punto de vista)",
+      "en": "Argumentative (defending a viewpoint)"
+    },
+    {
+      "es": "Instruccional / directiva",
+      "en": "Instructional / directive"
+    },
+    {
+      "es": "No hay cita",
+      "en": "No quotation"
+    },
+    {
+      "es": "Cita directa (dijo: \"...\")",
+      "en": "Direct quotation (said: \"...\")"
+    },
+    {
+      "es": "Cita indirecta (dijo que...)",
+      "en": "Indirect quotation (said that...)"
+    },
+    {
+      "es": "Estilo libre / eco del otro",
+      "en": "Free style / echo of the other"
+    },
+    {
+      "es": "Presente / general",
+      "en": "Present / general"
+    },
+    {
+      "es": "Pasado (relato)",
+      "en": "Past (narration)"
+    },
+    {
+      "es": "Futuro / proyección",
+      "en": "Future / projection"
+    },
+    {
+      "es": "Hipotético / condicional",
+      "en": "Hypothetical / conditional"
+    },
+    {
+      "es": "Asertiva / informativa",
+      "en": "Assertive / informative"
+    },
+    {
+      "es": "Directiva (petición, orden, consejo)",
+      "en": "Directive (request, order, advice)"
+    },
+    {
+      "es": "Expresiva (emoción, reacción)",
+      "en": "Expressive (emotion, reaction)"
+    },
+    {
+      "es": "Fática (mantener contacto)",
+      "en": "Phatic (maintaining contact)"
+    },
+    {
+      "es": "Metapragmática (hablar del hablar)",
+      "en": "Metapragmatic (talking about talking)"
+    },
+    {
+      "es": "Neutra",
+      "en": "Neutral"
+    },
+    {
+      "es": "Gestión de acuerdo / desacuerdo",
+      "en": "Managing agreement / disagreement"
+    },
+    {
+      "es": "Gestión de cercanía / complicidad",
+      "en": "Managing closeness / rapport"
+    },
+    {
+      "es": "Gestión de conflicto / tensión",
+      "en": "Managing conflict / tension"
+    },
+    {
+      "es": "Sin atenuación",
+      "en": "No mitigation"
+    },
+    {
+      "es": "Atenuación débil",
+      "en": "Weak mitigation"
+    },
+    {
+      "es": "Atenuación media",
+      "en": "Moderate mitigation"
+    },
+    {
+      "es": "Atenuación fuerte",
+      "en": "Strong mitigation"
+    },
+    {
+      "es": "Orientada al yo (autoprotección)",
+      "en": "Self-oriented (self-protection)"
+    },
+    {
+      "es": "Orientada al tú (no dañar al otro)",
+      "en": "Other-oriented (not harming the other)"
+    },
+    {
+      "es": "Orientada al decir (presentación del enunciado)",
+      "en": "Utterance-oriented (framing the utterance)"
+    },
+    {
+      "es": "Orientada a la relación (cuidar el vínculo)",
+      "en": "Relationship-oriented (protecting the bond)"
+    },
+    {
+      "es": "Léxico (un poco, algo, más bien...)",
+      "en": "Lexical (a bit, somewhat, rather...)"
+    },
+    {
+      "es": "Modalizadores (creo, me parece, supongo...)",
+      "en": "Modalizers (I think, it seems to me, I guess...)"
+    },
+    {
+      "es": "Reformulación / rodeos",
+      "en": "Reformulation / roundabouts"
+    },
+    {
+      "es": "Marcadores atenuantes (bueno, hombre, oye...)",
+      "en": "Mitigating markers (well, come on, hey...)"
+    },
+    {
+      "es": "Cita / referencia a terceros (según dicen...)",
+      "en": "Quotation / reference to third parties (they say...)"
+    },
+    {
+      "es": "Otros procedimientos",
+      "en": "Other procedures"
+    },
+    {
+      "es": "Sin intensificación",
+      "en": "No intensification"
+    },
+    {
+      "es": "Cuantitativa (mucho, un montón...)",
+      "en": "Quantitative (a lot, loads...)"
+    },
+    {
+      "es": "Cualitativa (súper, re-, -ísimo...)",
+      "en": "Qualitative (super, mega-, -est...)"
+    },
+    {
+      "es": "Acto de habla (te lo juro, de verdad...)",
+      "en": "Speech act (I swear, really...)"
+    },
+    {
+      "es": "Evaluativa (es brutal, es horrible...)",
+      "en": "Evaluative (it's awesome, it's awful...)"
+    },
+    {
+      "es": "Múltiple (varias combinadas)",
+      "en": "Multiple (several combined)"
+    },
+    {
+      "es": "No relevante / neutra",
+      "en": "Not relevant / neutral"
+    },
+    {
+      "es": "Cortesía positiva (acercamiento, elogio)",
+      "en": "Positive politeness (approach, praise)"
+    },
+    {
+      "es": "Cortesía negativa (no imponer, minimizar daño)",
+      "en": "Negative politeness (non-imposition, minimizing harm)"
+    },
+    {
+      "es": "Ataque a la imagen del otro",
+      "en": "Attack on the other's face"
+    },
+    {
+      "es": "Autoimagen mitigada (autocrítica, modestia)",
+      "en": "Mitigated self-face (self-criticism, modesty)"
+    },
+    {
+      "es": "Apoyo / refuerzo del otro",
+      "en": "Support / reinforcement of the other"
+    },
+    {
+      "es": "Crítica indirecta",
+      "en": "Indirect criticism"
+    },
+    {
+      "es": "Crítica directa",
+      "en": "Direct criticism"
+    },
+    {
+      "es": "Broma / ironía sobre el otro",
+      "en": "Joke / irony about the other"
+    },
+    {
+      "es": "Autoelogio / autopromoción",
+      "en": "Self-praise / self-promotion"
+    },
+    {
+      "es": "Autocrítica seria",
+      "en": "Serious self-criticism"
+    },
+    {
+      "es": "Autocrítica irónica / lúdica",
+      "en": "Ironic / playful self-criticism"
+    },
+    {
+      "es": "Justificación / excusa",
+      "en": "Justification / excuse"
+    },
+    {
+      "es": "Inicio de tema / secuencia",
+      "en": "Topic / sequence opening"
+    },
+    {
+      "es": "Continuación / desarrollo",
+      "en": "Continuation / development"
+    },
+    {
+      "es": "Respuesta directa al otro",
+      "en": "Direct response to the other"
+    },
+    {
+      "es": "Reacción evaluativa",
+      "en": "Evaluative reaction"
+    },
+    {
+      "es": "Cambio de tema",
+      "en": "Topic shift"
+    },
+    {
+      "es": "Cierre de secuencia",
+      "en": "Sequence closing"
+    },
+    {
+      "es": "Toma de turno limpia",
+      "en": "Clean turn-taking"
+    },
+    {
+      "es": "Autoseguimiento (seguir con el turno)",
+      "en": "Self-continuation (holding the turn)"
+    },
+    {
+      "es": "Cesión de turno",
+      "en": "Turn yielding"
+    },
+    {
+      "es": "Interrupción",
+      "en": "Interruption"
+    },
+    {
+      "es": "Solapamiento cooperativo",
+      "en": "Cooperative overlap"
+    },
+    {
+      "es": "Solapamiento competitivo",
+      "en": "Competitive overlap"
+    },
+    {
+      "es": "Continuación lineal",
+      "en": "Linear continuation"
+    },
+    {
+      "es": "Contraste / oposición",
+      "en": "Contrast / opposition"
+    },
+    {
+      "es": "Aclaración / precisión",
+      "en": "Clarification / precision"
+    },
+    {
+      "es": "Respuesta a pregunta",
+      "en": "Answer to a question"
+    },
+    {
+      "es": "Desplazamiento temático",
+      "en": "Topic displacement"
+    },
+    {
+      "es": "Interacción pausada (pocos solapamientos)",
+      "en": "Slow-paced interaction (few overlaps)"
+    },
+    {
+      "es": "Interacción ágil (turnos breves)",
+      "en": "Fast-paced interaction (short turns)"
+    },
+    {
+      "es": "Alta densidad de solapamientos cooperativos",
+      "en": "High density of cooperative overlaps"
+    },
+    {
+      "es": "Solapamientos conflictivos / competitivos",
+      "en": "Conflicting / competitive overlaps"
+    },
+    {
+      "es": "Apertura (bueno, oye, mira...)",
+      "en": "Opening (well, hey, look...)"
+    },
+    {
+      "es": "Conectivo aditivo (y, además, encima...)",
+      "en": "Additive connective (and, also, on top of that...)"
+    },
+    {
+      "es": "Conectivo contrastivo (pero, sin embargo...)",
+      "en": "Contrastive connective (but, however...)"
+    },
+    {
+      "es": "Consecuencia (entonces, así que, por eso...)",
+      "en": "Consequence (so, therefore, that's why...)"
+    },
+    {
+      "es": "Reformulación (o sea, quiero decir...)",
+      "en": "Reformulation (that is, I mean...)"
+    },
+    {
+      "es": "Cierre (en fin, nada...)",
+      "en": "Closing (anyway, well...)"
+    },
+    {
+      "es": "No fática",
+      "en": "Non-phatic"
+    },
+    {
+      "es": "Asegurar contacto (¿sabes?, ¿no?, ¿eh?)",
+      "en": "Securing contact (you know?, right?, eh?)"
+    },
+    {
+      "es": "Apelación directa al otro",
+      "en": "Direct appeal to the other"
+    },
+    {
+      "es": "Confirmación / feedback mínimo",
+      "en": "Confirmation / minimal feedback"
+    },
+    {
+      "es": "Preguntas fáticas (¿vale?, ¿sí?)",
+      "en": "Phatic questions (okay?, yes?)"
+    },
+    {
+      "es": "Personal (yo, tú, nosotros...)",
+      "en": "Personal (I, you, we...)"
+    },
+    {
+      "es": "Espacial (aquí, ahí, allí...)",
+      "en": "Spatial (here, there, over there...)"
+    },
+    {
+      "es": "Temporal (ahora, luego, antes...)",
+      "en": "Temporal (now, later, before...)"
+    },
+    {
+      "es": "Textual / anafórica (eso, lo dicho, aquello...)",
+      "en": "Textual / anaphoric (that, as said, that one...)"
+    },
+    {
+      "es": "Exofórica (esto/eso de aquí y ahora)",
+      "en": "Exophoric (this/that here and now)"
+    },
+    {
+      "es": "Ninguno destacado",
+      "en": "None notable"
+    },
+    {
+      "es": "Interjecciones (¡ay!, ¡jo!, ¡uf!...)",
+      "en": "Interjections (ouch!, gee!, phew!...)"
+    },
+    {
+      "es": "Muletillas (en plan, ¿sabes?, ¿vale?, tío/tía...)",
+      "en": "Fillers (like, you know?, okay?, dude...)"
+    },
+    {
+      "es": "Frases hechas / proverbios",
+      "en": "Set phrases / proverbs"
+    },
+    {
+      "es": "Argot / jerga específica",
+      "en": "Slang / specific jargon"
+    },
+    {
+      "es": "Ninguno",
+      "en": "None"
+    },
+    {
+      "es": "Risa",
+      "en": "Laughter"
+    },
+    {
+      "es": "Risa leve / nasal",
+      "en": "Light / nasal laughter"
+    },
+    {
+      "es": "Risa solapada con habla",
+      "en": "Laughter overlapping speech"
+    },
+    {
+      "es": "Tos",
+      "en": "Cough"
+    },
+    {
+      "es": "Carraspeo",
+      "en": "Throat clearing"
+    },
+    {
+      "es": "Suspiro",
+      "en": "Sigh"
+    },
+    {
+      "es": "Resoplido",
+      "en": "Snort"
+    },
+    {
+      "es": "Chasquido / clic de lengua",
+      "en": "Click / tongue click"
+    },
+    {
+      "es": "Sollozo / llanto",
+      "en": "Sob / crying"
+    },
+    {
+      "es": "Otros sonidos no verbales",
+      "en": "Other non-verbal sounds"
+    },
+    {
+      "es": "Neutra / sin emoción marcada",
+      "en": "Neutral / no marked emotion"
+    },
+    {
+      "es": "Alegría",
+      "en": "Joy"
+    },
+    {
+      "es": "Tristeza",
+      "en": "Sadness"
+    },
+    {
+      "es": "Miedo",
+      "en": "Fear"
+    },
+    {
+      "es": "Ira / enfado",
+      "en": "Anger"
+    },
+    {
+      "es": "Asco",
+      "en": "Disgust"
+    },
+    {
+      "es": "Sorpresa",
+      "en": "Surprise"
+    },
+    {
+      "es": "Desprecio",
+      "en": "Contempt"
+    },
+    {
+      "es": "No hay",
+      "en": "None"
+    },
+    {
+      "es": "Risa solapada",
+      "en": "Overlapping laughter"
+    },
+    {
+      "es": "Suspiro solapado",
+      "en": "Overlapping sigh"
+    },
+    {
+      "es": "Sonidos incidentales del hablante",
+      "en": "Speaker's incidental sounds"
+    },
+    {
+      "es": "Solapamiento conflictivo",
+      "en": "Conflicting overlap"
+    },
+    {
+      "es": "Pensativo (mmm...)",
+      "en": "Thoughtful (mmm...)"
+    },
+    {
+      "es": "Desaprobación (tsk, clic)",
+      "en": "Disapproval (tsk, click)"
+    },
+    {
+      "es": "Llamada / atención (chss, besito)",
+      "en": "Calling / attention (psst, kiss sound)"
+    },
+    {
+      "es": "Esfuerzo / molestia",
+      "en": "Effort / discomfort"
+    },
+    {
+      "es": "Otros",
+      "en": "Other"
+    },
+    {
+      "es": "Inspiración audible",
+      "en": "Audible inhalation"
+    },
+    {
+      "es": "Expiración marcada",
+      "en": "Marked exhalation"
+    },
+    {
+      "es": "Suspiro largo",
+      "en": "Long sigh"
+    },
+    {
+      "es": "Hiperventilación ligera",
+      "en": "Slight hyperventilation"
+    },
+    {
+      "es": "Mhm / ajá (aceptación)",
+      "en": "Mhm / uh-huh (acceptance)"
+    },
+    {
+      "es": "¿Eh? (petición de aclaración)",
+      "en": "Eh? (request for clarification)"
+    },
+    {
+      "es": "Risa como toma de turno",
+      "en": "Laughter as turn-taking"
+    },
+    {
+      "es": "Sonidos que inician turno (chasquido, inspiración)",
+      "en": "Turn-initiating sounds (click, inhalation)"
+    },
+    {
+      "es": "Irrelevante",
+      "en": "Irrelevant"
+    },
+    {
+      "es": "Ruido que interfiere en el turno",
+      "en": "Noise interfering with the turn"
+    },
+    {
+      "es": "Risas de terceros",
+      "en": "Third-party laughter"
+    },
+    {
+      "es": "Golpes / choques / movimiento",
+      "en": "Knocks / bumps / movement"
+    },
+    {
+      "es": "Música / sonido que provoca reformulación",
+      "en": "Music / sound prompting reformulation"
+    },
+    {
+      "es": "Cercanía / intimidad",
+      "en": "Closeness / intimacy"
+    },
+    {
+      "es": "Tensión / ansiedad",
+      "en": "Tension / anxiety"
+    },
+    {
+      "es": "Confrontativa (bufidos, resoplidos)",
+      "en": "Confrontational (huffs, snorts)"
+    },
+    {
+      "es": "Desdén (risita nasal, clic)",
+      "en": "Disdain (nasal chuckle, click)"
+    },
+    {
+      "es": "Lúdica / irónica",
+      "en": "Playful / ironic"
+    },
+    {
+      "es": "Ira",
+      "en": "Anger"
+    },
+    {
+      "es": "Intensidad:",
+      "en": "Intensity:"
+    },
+    {
+      "es": "Valor guardado: ",
+      "en": "Saved value: "
+    },
+    {
+      "es": "(sin selección)",
+      "en": "(no selection)"
+    }
   ]
 }

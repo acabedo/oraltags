@@ -348,8 +348,17 @@ make_col_order <- function() {
     "observaciones")
 }
 
-make_select_from_def <- function(id, def) {
-  selectInput(id, def$label, choices = def$choices, width = "100%", multiple = TRUE)
+make_select_from_def <- function(id, def, lang = "es", dict = I18N_DICT) {
+  # Traducción SOLO visual: los nombres mostrados van en el idioma activo,
+  # pero el VALOR enviado/guardado sigue siendo la categoría en español
+  # (choices con nombres = etiqueta traducida, valores = texto canónico es),
+  # para no romper la comparabilidad entre corpus ni la pestaña Coincidencia.
+  lbl  <- tr(def$label, lang, dict)
+  disp <- vapply(def$choices,
+                 function(x) if (nzchar(x)) tr(x, lang, dict) else x,
+                 character(1), USE.NAMES = FALSE)
+  choices <- stats::setNames(def$choices, disp)
+  selectInput(id, lbl, choices = choices, width = "100%", multiple = TRUE)
 }
 
 ensure_annotation_cols <- function(df) {
@@ -901,7 +910,8 @@ server <- function(input, output, session) {
   selected_emotion <- reactiveVal(NULL)
 
   output$emotion_ui <- renderUI({
-    sel <- selected_emotion()
+    sel  <- selected_emotion()
+    lang <- session_lang()   # re-renderiza al cambiar de idioma
     div(class = "emo-row",
       lapply(emo_list, function(e) {
         is_sel <- !is.null(sel) && sel == e$label
@@ -910,22 +920,27 @@ server <- function(input, output, session) {
           tags$button(e$emoji,
             id     = paste0("emo_btn_", e$id),
             class  = btn_class,
+            # el valor enviado sigue siendo la etiqueta canónica en español
             onclick = sprintf(
               "Shiny.setInputValue('emo_clicked', '%s', {priority: 'event'});",
               e$label)
           ),
-          div(class = "emo-label", e$label)
+          div(class = "emo-label", tr(e$label, lang, I18N_DICT))
         )
       })
     )
   })
 
   output$emotion_value_display <- renderUI({
-    sel <- selected_emotion()
+    sel  <- selected_emotion()
+    lang <- session_lang()
     lik <- if (!is.null(input$emotion_likert)) input$emotion_likert else 3L
-    val <- if (!is.null(sel)) sprintf("%s - %d", sel, lik) else "(sin selección)"
+    # el valor guardado se muestra con la etiqueta traducida, pero anot27
+    # sigue almacenando la etiqueta canónica en español (ver write_emotion_to_anot27)
+    val <- if (!is.null(sel)) sprintf("%s - %d", tr(sel, lang, I18N_DICT), lik)
+           else tr("(sin selección)", lang, I18N_DICT)
     div(style = "margin-top:6px; font-size:13px; color:#374151;",
-      tags$b("Valor guardado: "), val)
+      tags$b(tr("Valor guardado: ", lang, I18N_DICT)), val)
   })
 
   write_emotion_to_anot27 <- function() {
@@ -1338,7 +1353,7 @@ server <- function(input, output, session) {
   output$annotation_tabs_ui <- renderUI({
     defs <- rv$anot_defs
     lang <- session_lang()   # re-renderiza el formulario al cambiar de idioma
-    mk <- function(id) make_select_from_def(id, defs[[id]])
+    mk <- function(id) make_select_from_def(id, defs[[id]], lang, I18N_DICT)
 
     div(class = "anot-box",
     tabsetPanel(type = "pills",
@@ -1381,9 +1396,9 @@ server <- function(input, output, session) {
       ),
       tabPanel(tr("Emociones", lang, I18N_DICT),
         br(),
-        h6("Tono emocional (Ekman)"),
+        h6(sub(":$", "", tr("Tono emocional (Ekman):", lang, I18N_DICT))),
         uiOutput("emotion_ui"),
-        sliderInput("emotion_likert", "Intensidad:", min = 1, max = 5,
+        sliderInput("emotion_likert", tr("Intensidad:", lang, I18N_DICT), min = 1, max = 5,
                     value = 3, step = 1, width = "55%", ticks = TRUE),
         uiOutput("emotion_value_display")
       )
