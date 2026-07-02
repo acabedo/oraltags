@@ -10,7 +10,9 @@ Aplicación Shiny en R para la anotación lingüística y el análisis acústico
 > `remotes::install_github("acabedo/oraltags", subdir = "package")`
 > y después `oraltags::run_app()`. Las dependencias se instalan solas y se incluyen tres muestras de audio + TextGrid para probarlo al instante. Todos los detalles en [Instalación y uso](#instalación-y-uso).
 
-![Pantalla inicial del etiquetador](imgs/1_etiquetador_pantalla_inicial.png)
+> **📖 Documentación completa:** la guía de usuario detallada (cada operación de la app, todas las variables anotadas y computadas, archivos de entrada/salida y el código R del paquete) está publicada en **<https://acabedo.github.io/oraltags/>** (generada con pkgdown desde [`package/vignettes/`](package/vignettes/) hacia [`docs/`](docs/)).
+
+![Pantalla inicial del etiquetador](imgs/1_pantalla_inicial.png)
 
 ---
 
@@ -36,7 +38,7 @@ La app se organiza en seis pestañas superiores:
 | **Análisis fonético** | Subpestañas **Imágenes** (oscilograma, espectrograma, F0), **Métricas** (informe prosódico) y **Praatpicture** (figura multipanel). |
 | **Estadísticas** | Subpestañas **Este archivo** (barras/boxplots del corpus cargado) y **Corpus completo** (visión global de `analisis_todos.txt`). |
 | **Coincidencia** | Acuerdo entre 2–10 jueces (archivos de análisis de otros equipos): % de acuerdo, Cohen's Kappa (ponderado para ordinales), Fleiss' Kappa y Krippendorff's α (opcional). |
-| **Configuración** | Editor de variables de anotación: personaliza etiquetas y categorías. |
+| **Configuración** | Editor de variables de anotación (personaliza etiquetas y categorías), preferencias de gráficos y **gestión de análisis guardados** (eliminar análisis previos). |
 
 ### Carga de material y navegación
 
@@ -55,11 +57,11 @@ Las métricas se recalculan automáticamente al cambiar de fila:
 - Intensidad media (dB)
 - Velocidad de habla (palabras/s y fonemas/s) y pausas anterior/posterior
 
-![Análisis fonético: oscilograma, espectrograma y curva melódica](imgs/5_analisis_fonetico.png)
+![Análisis fonético: oscilograma, espectrograma y curva melódica](imgs/4_analisis_fonetico.png)
 
-![Métricas: informe prosódico textual de la fila activa](imgs/6_valores_foneticos.png)
+![Métricas: informe prosódico textual de la fila activa](imgs/5_metricas.png)
 
-![Praatpicture: figura multipanel al estilo Praat](imgs/7_praatpicture.png)
+![Praatpicture: figura multipanel al estilo Praat](imgs/6_praatpicture.png)
 
 ### Anotación
 
@@ -73,25 +75,35 @@ El formulario de **Anotaciones** se divide en cinco bloques. Las categorías que
 | **Paralingüístico / no verbal** | Sonidos no verbales, solapamientos no verbales, ruido articulatorio, fenómenos respiratorios, turnos no verbales, ruido ambiental, actitud vocal |
 | **Emociones** | Tono emocional de Ekman (Neutra, Alegría, Tristeza, Miedo, Ira, Asco, Sorpresa, Desprecio) e intensidad (1–5) |
 
-![Anotación: bloque de Emociones (tono emocional de Ekman e intensidad)](imgs/2_anotacion.png)
+![Formulario de anotación (bloque Estructura)](imgs/2_anotacion.png)
 
-### Tablas y contexto
+### Contexto
 
-![Tabla de anotación con columna de contexto](imgs/3_tabla_anotacion_contexto.png)
+La pestaña **Contexto** muestra las filas anteriores/posteriores al segmento activo (resaltado), permite editar el hablante/etiqueta de la fila activa y añadir una columna `ejemplo_para_paper` con cita `(corpus, inicio-fin)`.
 
-![Vista de contexto: N filas anteriores y posteriores a la selección actual](imgs/4_tabla_contexto.png)
+![Vista de contexto: filas anteriores y posteriores a la selección actual](imgs/3_contexto.png)
 
 ### Estadísticas
 
-![Estadísticas: gráfico de barras de una variable categórica](imgs/8_grafico_barras.png)
+![Estadísticas: gráfico de barras de una variable categórica](imgs/7_grafico_barras.png)
 
-![Estadísticas: diagrama de caja de una variable numérica](imgs/9_grafico_boxplot.png)
+![Estadísticas: diagrama de caja de una variable numérica](imgs/8_grafico_boxplot.png)
 
-### Configuración (editor de variables)
+En **Estadísticas → Corpus completo** ahora puedes **elegir qué archivos** del consolidado (`analisis_todos.txt`) se incluyen: un selector múltiple lista todos los archivos y todas las tablas y gráficos se recalculan con tu selección (por defecto se incluyen todos).
+
+### Coincidencia (acuerdo entre jueces)
+
+Sube 2–10 archivos `analisis_*.txt` de anotadores del mismo corpus (o carga la muestra incluida con 3 jueces): la app empareja los segmentos comunes y calcula % de acuerdo, kappa de Cohen/Fleiss, kappa por pares y alfa de Krippendorff por variable, además de un gráfico de kappa y matrices de confusión por pares.
+
+![Acuerdo entre jueces](imgs/9_acuerdo_jueces.png)
+
+![Kappa de Fleiss por variable y matriz de confusión](imgs/10_acuerdo_kappa.png)
+
+### Configuración (editor de variables y gestión de análisis)
 
 Cada variable de anotación (`anot1`, `anot2`, …) tiene una etiqueta editable y su lista de categorías (una por línea). Así, el mismo etiquetador sirve para esquemas de anotación distintos sin reprogramar nada.
 
-![Editor de variables de anotación](imgs/10_edicion_variables.png)
+**Configuración** incluye además la **gestión de análisis guardados**: selecciona uno o varios análisis previos (`analisis_*.txt`) y elimínalos — antes de borrar se guarda una copia con marca temporal en `backup/`, sus filas se retiran del consolidado `analisis_todos.txt` y, opcionalmente, se elimina también el audio asociado.
 
 ### Persistencia y exportación
 
@@ -106,6 +118,12 @@ Cada variable de anotación (`anot1`, `anot2`, …) tiene una etiqueta editable 
 - **Tamaño de letra de los gráficos** ajustable con un deslizador global en *Configuración*.
 - **Mensaje de ánimo** opcional al iniciar (frase al azar o mensaje propio), activable en *Configuración*.
 - **Idioma de la interfaz**: selector **Español / English** en la cabecera (cambio en caliente; recuerda la elección). El esquema de anotación permanece en español.
+
+### Novedades de la v2.2
+
+- **Gestión de análisis guardados** (*Configuración*): elimina análisis previos con confirmación, backup automático, limpieza del consolidado y borrado opcional del audio asociado.
+- **Selección de archivos en las estadísticas de *Corpus completo***: elige qué archivos de `analisis_todos.txt` entran en las tablas y gráficos.
+- **Sitio de documentación** generado con pkgdown en <https://acabedo.github.io/oraltags/> (fuentes en `package/vignettes/`, salida en `docs/`).
 
 ---
 
@@ -165,6 +183,7 @@ oraltags/
 ├── etiquetador_oral.R       # Código principal de la app (Shiny en un solo archivo)
 ├── package/                 # Paquete de R instalable (Opción A): oraltags::run_app()
 ├── R/                       # Funciones auxiliares puras
+├── docs/                    # Sitio de documentación (pkgdown; GitHub Pages)
 ├── imgs/                    # Capturas de ejemplo (este README)
 ├── samples/                 # Pares de ejemplo audio + TextGrid
 ├── www/

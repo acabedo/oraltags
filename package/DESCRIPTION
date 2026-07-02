@@ -11,6 +11,8 @@ Description: Aplicación Shiny para etiquetar corpus oral a partir de audio y
     usuario en la carpeta estándar del sistema (tools::R_user_dir). Incluye
     muestras de audio y TextGrid para probar la aplicación.
 License: GPL-3
+URL: https://acabedo.github.io/oraltags/, https://github.com/acabedo/oraltags
+BugReports: https://github.com/acabedo/oraltags/issues
 Encoding: UTF-8
 Imports:
     shiny,
@@ -27,6 +29,9 @@ Imports:
     tools
 Suggests:
     praatpicture,
-    irr
+    irr,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
 SystemRequirements: ffmpeg (opcional, para conversión de vídeo/audio)
 Config/roxygen2/version: 8.0.0

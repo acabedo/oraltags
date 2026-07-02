@@ -660,6 +660,12 @@ ui <- fluidPage(
                   ),
                   fileInput("corpus_file", i18n$t("(Opcional) Cargar otro consolidado:"),
                             accept = c(".txt", ".tsv", ".csv"), width = "100%"),
+                  selectizeInput("corpus_files_sel",
+                                 i18n$t("Archivos incluidos en las estadísticas:"),
+                                 choices = NULL, multiple = TRUE, width = "100%",
+                                 options = list(plugins = list("remove_button"))),
+                  div(class = "small-helper-text",
+                      i18n$t("Por defecto se incluyen todos los archivos del consolidado. Quita o añade archivos para recalcular todas las tablas y gráficos.")),
                   hr(),
                   verbatimTextOutput("corpus_summary"),
                   DTOutput("corpus_perfile"),
@@ -779,6 +785,20 @@ ui <- fluidPage(
                   actionButton("reset_var_defs", i18n$t("Restaurar por defecto"),
                                class = "btn-danger btn-sm", style = "width:100%;")
                 )
+              ),
+              hr(),
+              h6(i18n$t("🗑️ Gestión de análisis guardados")),
+              div(class = "small-helper-text",
+                  i18n$t("Elimina análisis previos (analisis_*.txt). Antes de borrar se guarda una copia en backup/ y sus filas se retiran del consolidado analisis_todos.txt.")),
+              fluidRow(
+                column(8, selectInput("delete_analysis_sel", NULL,
+                                      choices = NULL, multiple = TRUE,
+                                      width = "100%")),
+                column(4, actionButton("delete_analysis_btn",
+                                       i18n$t("Eliminar seleccionados"),
+                                       icon  = icon("trash"),
+                                       class = "btn-danger btn-sm",
+                                       style = "width:100%;"))
               ),
               hr(),
               h6(i18n$t("🎚️ Preferencias")),
@@ -3004,9 +3024,98 @@ server <- function(input, output, session) {
     print(tbl)
   })
 
+  # ============== GESTIÓN DE ANÁLISIS GUARDADOS (eliminación) ==============
+  # Mantiene actualizado el selector de análisis a eliminar (Configuración)
+  observe({
+    ch  <- scan_analysis_files()
+    ch  <- ch[nzchar(ch)]
+    sel <- intersect(isolate(input$delete_analysis_sel) %||% character(0), ch)
+    updateSelectInput(session, "delete_analysis_sel", choices = ch, selected = sel)
+  })
+
+  observeEvent(input$delete_analysis_btn, {
+    files <- input$delete_analysis_sel
+    if (length(files) == 0) {
+      showNotification(tr("Selecciona al menos un análisis.", session_lang(), I18N_DICT),
+                       type = "warning")
+      return()
+    }
+    lang <- session_lang()
+    showModal(modalDialog(
+      title = tr("Confirmar eliminación", lang, I18N_DICT),
+      p(tr("Se eliminarán definitivamente estos análisis:", lang, I18N_DICT)),
+      tags$ul(lapply(files, tags$li)),
+      checkboxInput("delete_analysis_audio",
+                    tr("Eliminar también el audio asociado", lang, I18N_DICT),
+                    value = FALSE),
+      p(class = "small-helper-text",
+        tr("Antes de borrar se guarda una copia en backup/.", lang, I18N_DICT)),
+      footer = tagList(
+        actionButton("delete_analysis_confirm",
+                     tr("Eliminar definitivamente", lang, I18N_DICT),
+                     class = "btn-danger"),
+        modalButton(tr("Cancelar", lang, I18N_DICT))
+      )
+    ))
+  })
+
+  # Retira del consolidado analisis_todos.txt las filas de los archivos borrados.
+  # La columna filename guarda nombres heterogéneos (analisis_x.txt, x.TextGrid…),
+  # por lo que se compara por nombre base normalizado.
+  remove_from_consolidated <- function(files) {
+    cf <- file.path(ANALISIS_DIR, "analisis_todos.txt")
+    if (!file.exists(cf)) return(invisible(NULL))
+    existing <- tryCatch(
+      read.table(cf, sep = "\t", header = TRUE, stringsAsFactors = FALSE,
+                 fileEncoding = "UTF-8", quote = "", na.strings = ""),
+      error = function(e) NULL)
+    if (is.null(existing) || !"filename" %in% names(existing)) return(invisible(NULL))
+    base_of    <- function(fn) sub("^analisis_", "", tools::file_path_sans_ext(basename(fn)))
+    drop_bases <- vapply(files, base_of, character(1))
+    keep <- !(vapply(as.character(existing$filename), base_of, character(1)) %in% drop_bases)
+    existing <- existing[keep, , drop = FALSE]
+    write.table(existing, cf, sep = "\t", row.names = FALSE,
+                quote = FALSE, na = "", fileEncoding = "UTF-8")
+  }
+
+  observeEvent(input$delete_analysis_confirm, {
+    removeModal()
+    files <- input$delete_analysis_sel
+    req(length(files) > 0)
+    n_ok <- 0L
+    for (f in files) {
+      path <- file.path(ANALISIS_DIR, f)
+      if (!file.exists(path)) next
+      make_backup(path)
+      if (file.remove(path)) n_ok <- n_ok + 1L
+      if (isTRUE(input$delete_analysis_audio)) {
+        base <- tools::file_path_sans_ext(sub("^analisis_", "", f))
+        ap   <- find_audio_for_base(base)
+        if (!is.null(ap)) try(file.remove(ap), silent = TRUE)
+      }
+    }
+    remove_from_consolidated(files)
+    # Si el análisis activo se ha eliminado, volver al estado inicial
+    if (!is.null(rv$current_filename) && basename(rv$current_filename) %in% files) {
+      rv$current_filename   <- NULL
+      rv$df_full            <- NULL
+      rv$df                 <- NULL
+      rv$audio_cached       <- NULL
+      rv$audio_path         <- NULL
+      rv$sequential_index   <- 1
+      rv$selected_row_index <- NULL
+      shinyjs::hide("sidebar_active_section")
+    }
+    rv$analysis_scan_trigger <- rv$analysis_scan_trigger + 1
+    showNotification(
+      sprintf(tr("Análisis eliminados: %d", session_lang(), I18N_DICT), n_ok),
+      type = "message")
+  })
+
   # ====================== CORPUS (visión global) ======================
-  corpus_df <- reactive({
+  corpus_df_raw <- reactive({
     input$corpus_refresh
+    rv$analysis_scan_trigger   # re-lee tras guardar o eliminar análisis
     if (!is.null(input$corpus_file)) {
       return(tryCatch(read_analysis_file(input$corpus_file$datapath),
                       error = function(e) NULL))
@@ -3014,6 +3123,35 @@ server <- function(input, output, session) {
     cf <- file.path(ANALISIS_DIR, "analisis_todos.txt")
     if (!file.exists(cf)) return(NULL)
     tryCatch(read_analysis_file(cf), error = function(e) NULL)
+  })
+
+  corpus_avail_files <- reactive({
+    df <- corpus_df_raw()
+    if (is.null(df) || !"filename" %in% names(df)) return(character(0))
+    sort(unique(as.character(df$filename)))
+  })
+
+  # Mantiene el selector de archivos incluidos; por defecto, todos.
+  observeEvent(corpus_avail_files(), {
+    files <- corpus_avail_files()
+    sel   <- intersect(isolate(input$corpus_files_sel) %||% character(0), files)
+    if (length(sel) == 0) sel <- files
+    updateSelectizeInput(session, "corpus_files_sel",
+                         choices = files, selected = sel)
+  }, ignoreNULL = FALSE)
+
+  # Consolidado filtrado por los archivos seleccionados (vacío = todos)
+  corpus_df <- reactive({
+    df <- corpus_df_raw()
+    if (is.null(df)) return(NULL)
+    files <- corpus_avail_files()
+    sel   <- input$corpus_files_sel
+    if (length(files) > 0 && length(sel) > 0 && "filename" %in% names(df) &&
+        !setequal(sel, files)) {
+      df <- df[as.character(df$filename) %in% sel, , drop = FALSE]
+    }
+    if (nrow(df) == 0) return(NULL)
+    df
   })
 
   # Refrescar limpia el archivo subido para volver al consolidado en disco

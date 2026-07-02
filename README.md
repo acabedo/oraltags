@@ -10,7 +10,9 @@ An R/Shiny application for the linguistic annotation and acoustic analysis of or
 > `remotes::install_github("acabedo/oraltags", subdir = "package")`
 > and then `oraltags::run_app()`. Dependencies install automatically and three audio + TextGrid samples are bundled so you can try it right away. Full details in [Installation and use](#installation-and-use).
 
-![Oraltags initial screen](imgs/1_etiquetador_pantalla_inicial.png)
+> **📖 Full documentation:** the detailed user guide (every operation in the app, all annotated and computed variables, input/output files and the R code of the package) is published at **<https://acabedo.github.io/oraltags/>** (built with pkgdown from the sources in [`package/vignettes/`](package/vignettes/) into [`docs/`](docs/)).
+
+![Oraltags initial screen](imgs/1_pantalla_inicial.png)
 
 ---
 
@@ -36,7 +38,7 @@ The app is organised into six top-level tabs:
 | **Phonetic analysis** | Subtabs **Images** (oscillogram, spectrogram, F0), **Metrics** (prosodic report) and **Praatpicture** (multi-panel figure). |
 | **Statistics** | Subtabs **This file** (bars/boxplots of the loaded corpus) and **Full corpus** (global overview of `analisis_todos.txt`). |
 | **Agreement** | Agreement between 2–10 judges (analysis files from other teams): percentage agreement, Cohen's Kappa (weighted for ordinals), Fleiss' Kappa and Krippendorff's α (optional). |
-| **Settings** | Annotation-variable editor: customise labels and categories. |
+| **Settings** | Annotation-variable editor (customise labels and categories), chart preferences and **saved-analyses manager** (delete previous analyses). |
 
 ### Material loading and navigation
 
@@ -55,11 +57,11 @@ Metrics are recomputed automatically when you change row:
 - Mean intensity (dB)
 - Speech rate (words/s and phonemes/s) and preceding/following pauses
 
-![Phonetic analysis: oscillogram, spectrogram and pitch curve](imgs/5_analisis_fonetico.png)
+![Phonetic analysis: oscillogram, spectrogram and pitch curve](imgs/4_analisis_fonetico.png)
 
-![Metrics: textual prosodic report of the active row](imgs/6_valores_foneticos.png)
+![Metrics: textual prosodic report of the active row](imgs/5_metricas.png)
 
-![Praatpicture: multi-panel Praat-style figure](imgs/7_praatpicture.png)
+![Praatpicture: multi-panel Praat-style figure](imgs/6_praatpicture.png)
 
 ### Annotation
 
@@ -73,25 +75,35 @@ The **Annotations** form is divided into five blocks. The categories shown are t
 | **Paralinguistic / non-verbal** | Non-verbal sounds, non-verbal overlaps, articulatory noise, breathing phenomena, non-verbal turns, ambient noise, vocal attitude |
 | **Emotions** | Ekman emotional tone (Neutral, Joy, Sadness, Fear, Anger, Disgust, Surprise, Contempt) and intensity (1–5) |
 
-![Annotation: Emotions block (Ekman emotional tone and intensity)](imgs/2_anotacion.png)
+![Annotation form (Structure block)](imgs/2_anotacion.png)
 
-### Tables and context
+### Context
 
-![Annotation table with a context column](imgs/3_tabla_anotacion_contexto.png)
+The **Context** tab shows the rows before/after the active segment (highlighted), lets you edit the speaker/label of the active row and can add an `ejemplo_para_paper` column with a `(corpus, start-end)` citation.
 
-![Context view: N rows before and after the current selection](imgs/4_tabla_contexto.png)
+![Context view: rows before and after the current selection](imgs/3_contexto.png)
 
 ### Statistics
 
-![Statistics: bar chart of a categorical variable](imgs/8_grafico_barras.png)
+![Statistics: bar chart of a categorical variable](imgs/7_grafico_barras.png)
 
-![Statistics: box plot of a numeric variable](imgs/9_grafico_boxplot.png)
+![Statistics: box plot of a numeric variable](imgs/8_grafico_boxplot.png)
 
-### Settings (variable editor)
+In **Statistics → Full corpus** you can now **choose which files** of the consolidated corpus (`analisis_todos.txt`) are included: a multi-select lists every file and all tables and charts are recomputed with your selection (all files are included by default).
+
+### Agreement between judges
+
+Upload 2–10 `analisis_*.txt` files from annotators of the same corpus (or load the bundled 3-judge sample): the app matches the common segments and computes % agreement, Cohen's/Fleiss' kappa, pairwise kappa and Krippendorff's α per variable, plus a kappa chart and pairwise confusion matrices.
+
+![Agreement between judges](imgs/9_acuerdo_jueces.png)
+
+![Fleiss' kappa per variable and confusion matrix](imgs/10_acuerdo_kappa.png)
+
+### Settings (variable editor and analysis management)
 
 Each annotation variable (`anot1`, `anot2`, …) has an editable label and its list of categories (one per line). This way, the same tagger works for different annotation schemes without any reprogramming.
 
-![Annotation-variable editor](imgs/10_edicion_variables.png)
+**Settings** also includes a **saved-analyses manager**: select one or more previous analyses (`analisis_*.txt`) and delete them — a timestamped copy is stored in `backup/` first, their rows are removed from the consolidated `analisis_todos.txt`, and you can optionally delete the associated audio.
 
 ### Persistence and export
 
@@ -106,6 +118,12 @@ Each annotation variable (`anot1`, `anot2`, …) has an editable label and its l
 - **Chart font size** adjustable with a global slider in *Settings*.
 - **Encouraging message** shown optionally at startup (random phrase or your own), enabled in *Settings*.
 - **Interface language**: a **Spanish / English** selector in the header (hot switching; remembers your choice). The annotation scheme stays in Spanish.
+
+### New in v2.2
+
+- **Saved-analyses manager** (*Settings*): delete previous analyses with confirmation, automatic backup, cleanup of the consolidated file and optional deletion of the associated audio.
+- **File selection in *Full corpus* statistics**: choose which files of `analisis_todos.txt` enter the tables and charts.
+- **Documentation site** built with pkgdown at <https://acabedo.github.io/oraltags/> (sources in `package/vignettes/`, output in `docs/`).
 
 ---
 
@@ -165,6 +183,7 @@ oraltags/
 ├── etiquetador_oral.R       # Main app code (single-file Shiny app)
 ├── package/                 # Installable R package (Option A): oraltags::run_app()
 ├── R/                       # Pure helper functions
+├── docs/                    # Documentation site (pkgdown; GitHub Pages)
 ├── imgs/                    # Example screenshots (this README)
 ├── samples/                 # Example audio + TextGrid pairs
 ├── www/

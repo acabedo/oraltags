@@ -99,6 +99,6 @@ application (\autoref{fig:main}):
   whole-corpus descriptive statistics, with export to CSV and Excel. The interface is bilingual
   (Spanish/English).
 
-![The main annotation and analysis interface of Oraltags.\label{fig:main}](../imgs/1_etiquetador_pantalla_inicial.png)
+![The main annotation and analysis interface of Oraltags.\label{fig:main}](../imgs/1_pantalla_inicial.png)
 
 # References

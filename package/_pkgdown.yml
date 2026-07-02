@@ -1,0 +1,44 @@
+url: https://acabedo.github.io/oraltags/
+
+destination: ../docs
+
+lang: es
+
+template:
+  bootstrap: 5
+  bslib:
+    primary: "#c2410c"
+
+home:
+  title: "oraltags — etiquetador de corpus oral y explorador prosódico"
+  description: >
+    Aplicación Shiny para anotar corpus orales, calcular métricas prosódicas
+    (F0, intensidad, velocidad de habla) y medir el acuerdo entre jueces.
+
+navbar:
+  structure:
+    left: [intro, articles, reference]
+    right: [search, github]
+  components:
+    articles:
+      text: Guía
+      menu:
+        - text: Guía completa de la aplicación
+          href: articles/guia-aplicacion.html
+        - text: Variables y archivos (entradas y salidas)
+          href: articles/variables-y-archivos.html
+        - text: Uso desde R (código del paquete)
+          href: articles/uso-con-r.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/acabedo/oraltags
+      aria-label: GitHub
+
+reference:
+  - title: Funciones exportadas
+    desc: >
+      El paquete expone dos funciones; el resto de la funcionalidad vive en la
+      interfaz Shiny que se lanza con run_app().
+    contents:
+      - run_app
+      - oraltags_data_dir

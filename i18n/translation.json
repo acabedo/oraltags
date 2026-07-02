@@ -1459,6 +1459,54 @@
     {
       "es": "Juez (columnas):",
       "en": "Judge (columns):"
+    },
+    {
+      "es": "🗑️ Gestión de análisis guardados",
+      "en": "🗑️ Manage saved analyses"
+    },
+    {
+      "es": "Elimina análisis previos (analisis_*.txt). Antes de borrar se guarda una copia en backup/ y sus filas se retiran del consolidado analisis_todos.txt.",
+      "en": "Delete previous analyses (analisis_*.txt). A copy is saved to backup/ before deleting and their rows are removed from the consolidated analisis_todos.txt."
+    },
+    {
+      "es": "Eliminar seleccionados",
+      "en": "Delete selected"
+    },
+    {
+      "es": "Selecciona al menos un análisis.",
+      "en": "Select at least one analysis."
+    },
+    {
+      "es": "Confirmar eliminación",
+      "en": "Confirm deletion"
+    },
+    {
+      "es": "Se eliminarán definitivamente estos análisis:",
+      "en": "These analyses will be permanently deleted:"
+    },
+    {
+      "es": "Eliminar también el audio asociado",
+      "en": "Also delete the associated audio"
+    },
+    {
+      "es": "Antes de borrar se guarda una copia en backup/.",
+      "en": "A copy is saved to backup/ before deleting."
+    },
+    {
+      "es": "Eliminar definitivamente",
+      "en": "Delete permanently"
+    },
+    {
+      "es": "Análisis eliminados: %d",
+      "en": "Analyses deleted: %d"
+    },
+    {
+      "es": "Archivos incluidos en las estadísticas:",
+      "en": "Files included in the statistics:"
+    },
+    {
+      "es": "Por defecto se incluyen todos los archivos del consolidado. Quita o añade archivos para recalcular todas las tablas y gráficos.",
+      "en": "All files in the consolidated corpus are included by default. Remove or add files to recompute every table and chart."
     }
   ]
 }

@@ -1,0 +1,149 @@
+# Uso desde R (código del paquete)
+
+oraltags es ante todo una aplicación interactiva, pero todo lo que
+produce son **TSV planos** que puedes explotar desde R. Esta página
+recoge las funciones exportadas del paquete y recetas de código para
+trabajar con tus análisis fuera de la app.
+
+## Funciones exportadas
+
+### `run_app()`
+
+Lanza la aplicación Shiny. Acepta los argumentos de
+[`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html):
+
+``` r
+
+library(oraltags)
+
+run_app()                          # uso normal
+run_app(port = 4321)               # puerto fijo
+run_app(launch.browser = FALSE)    # sin abrir el navegador
+```
+
+### `oraltags_data_dir()`
+
+Devuelve (y crea si no existe) la carpeta de datos del usuario, donde la
+app guarda análisis, backups, configuración y audios:
+
+``` r
+
+oraltags_data_dir()
+list.files(oraltags_data_dir(), recursive = TRUE)
+```
+
+## Leer tus análisis en R
+
+Cada corpus es un TSV (UTF-8, tabulador, sin comillas):
+
+``` r
+
+dir_analisis <- file.path(oraltags_data_dir(), "analisis")
+
+# Un corpus concreto
+df <- read.delim(file.path(dir_analisis, "analisis_muestra_1.txt"),
+                 fileEncoding = "UTF-8", quote = "", na.strings = "")
+
+# El consolidado de todos los corpus (columna extra `filename`)
+todos <- read.delim(file.path(dir_analisis, "analisis_todos.txt"),
+                    fileEncoding = "UTF-8", quote = "", na.strings = "")
+```
+
+La descripción de cada columna está en [Variables y
+archivos](https://acabedo.github.io/oraltags/articles/variables-y-archivos.md).
+
+### Ejemplos de análisis
+
+``` r
+
+# Duración media de los grupos entonativos por hablante
+df$duracion <- df$end - df$start
+aggregate(duracion ~ speaker, df, mean)
+
+# Frecuencias de la modalidad oracional (anot2)
+sort(table(df$anot2), decreasing = TRUE)
+
+# F0 medio por tipo de enunciado (anot1)
+aggregate(as.numeric(F0_mean) ~ anot1, df, mean)
+
+# Reproducir la selección de archivos de la pestaña "Corpus completo":
+sub_corpus <- subset(todos, filename %in% c("analisis_muestra_1.txt",
+                                            "analisis_muestra_2.txt"))
+```
+
+## Muestras incluidas en el paquete
+
+Los materiales de ejemplo están en `inst/extdata`:
+
+``` r
+
+# Audio + TextGrid de las tres muestras
+system.file("extdata", "samples", package = "oraltags") |> list.files()
+
+# Análisis simulados de 3 jueces (para la pestaña Coincidencia)
+system.file("extdata", "jueces", package = "oraltags") |>
+  list.files(recursive = TRUE, full.names = TRUE)
+```
+
+## Usar los helpers internos (avanzado)
+
+Las funciones puras que la app utiliza para los descriptivos y el
+acuerdo entre jueces viven en `inst/app/helpers` y pueden cargarse con
+[`source()`](https://rdrr.io/r/base/source.html). No forman parte de la
+API exportada (pueden cambiar entre versiones), pero son útiles para
+reproducir los cálculos de la app en un script:
+
+``` r
+
+helpers <- system.file("app", "helpers", package = "oraltags")
+source(file.path(helpers, "stats_utils.R"))   # freq_table, skewness…
+source(file.path(helpers, "agreement.R"))     # kappa, alfa, matriz de jueces
+source(file.path(helpers, "corpus_stats.R"))  # describe_numeric, resumen por archivo
+```
+
+### Acuerdo entre jueces desde código
+
+``` r
+
+jueces_dir <- system.file("extdata", "jueces", package = "oraltags")
+archivos <- list.files(jueces_dir, pattern = "^analisis_.*\\.txt$",
+                       recursive = TRUE, full.names = TRUE)
+
+# Leer los análisis (autodetecta TSV/CSV)
+dfs <- lapply(archivos, read_analysis_file)
+names(dfs) <- tools::file_path_sans_ext(basename(archivos))
+
+# Matriz segmentos-comunes × jueces para una variable
+mat <- build_rater_matrix(dfs, "anot1")
+
+compute_agreement_for_var(mat)                  # nominal
+compute_agreement_for_var(mat, ordinal = TRUE)  # ordinal (kappa ponderado)
+
+# Medidas sueltas
+agreement_percent(mat)     # % de acuerdo total
+fleiss_kappa(mat)          # kappa de Fleiss (m jueces)
+cohen_kappa(mat[, 1], mat[, 2])   # kappa de Cohen entre dos jueces
+krippendorff_alpha(mat)    # alfa de Krippendorff (requiere `irr`)
+interpret_kappa(0.64)      # "Substantial" (Landis & Koch)
+```
+
+### Descriptivos de corpus desde código
+
+``` r
+
+todos <- read_analysis_file(file.path(oraltags_data_dir(),
+                                      "analisis", "analisis_todos.txt"))
+
+corpus_file_summary(todos)              # nº de archivos, filas y variables
+describe_numeric(todos, "F0_mean")      # descriptivos de una numérica
+describe_numeric(todos, "F0_mean",
+                 c("speaker", "anot2")) # cruzados por hasta 4 grupos
+freq_table(todos$anot1)                 # frecuencias de una categórica
+```
+
+## Dónde está el código
+
+- Aplicación: `system.file("app", "app.R", package = "oraltags")`.
+- Helpers puros: `system.file("app", "helpers", package = "oraltags")`.
+- Repositorio (con la versión ejecutable desde fuente,
+  `etiquetador_oral.R`): <https://github.com/acabedo/oraltags>.

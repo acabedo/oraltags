@@ -1,0 +1,266 @@
+---
+title: "Guía completa de la aplicación"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Guía completa de la aplicación}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+```
+
+Esta guía describe **todas las operaciones** disponibles en la interfaz de
+oraltags, organizadas como en la propia aplicación: primero la barra
+lateral (carga de material y navegación) y después cada pestaña principal
+(**Anotaciones**, **Contexto**, **Análisis fonético**, **Estadísticas**,
+**Coincidencia** y **Configuración**).
+
+Los nombres de los controles se citan en español; la interfaz puede
+mostrarse también en inglés (selector de la cabecera).
+
+## Barra lateral: cargar material y navegar
+
+![Pantalla inicial](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/1_pantalla_inicial.png)
+
+### Abrir un análisis existente
+
+Si ya has trabajado con un corpus, aparece en el desplegable **«Abrir
+análisis»**. Al pulsar **Abrir**, la app carga el TSV guardado
+(`analisis_<nombre>.txt`) y busca el audio con el mismo nombre base en la
+carpeta de audios. Es la vía rápida: no se recalcula nada.
+
+### Probar con una muestra
+
+El paquete incluye tres pares audio + TextGrid (`muestra_1..3`). Elige una
+en **«Probar con una muestra»** y pulsa **«Cargar muestra de ejemplo»**.
+
+### Primer uso con un archivo nuevo
+
+1. **Subir TextGrid**: acepta TextGrid de Praat. Si el TextGrid contiene
+   los tiers `phones` y `words` (salida típica de *Montreal Forced
+   Aligner*), la app ofrece **generar los grupos entonativos (GE)
+   automáticamente**; puedes ajustar el umbral de **pausa mínima (s)**
+   (por defecto 0,3 s) que separa dos GE. Si ya existía un análisis para
+   ese nombre, la app pregunta si quieres **cargar el guardado** o
+   **regenerar los GE** desde el TextGrid.
+2. **Subir audio**: WAV o MP3 (el MP3 se convierte a WAV para el análisis).
+   Solo hace falta si el audio no está ya cargado de una sesión anterior.
+3. **Subir MP4**: además del análisis de audio, activa un visor de vídeo en
+   la barra lateral. Con `ffmpeg` instalado, el visor reproduce el clip
+   exacto del segmento activo.
+
+El audio y la transcripción se emparejan por **nombre base**: `entrevista.wav`
++ `entrevista.TextGrid` → análisis `analisis_entrevista.txt`.
+
+### Escucha y navegación
+
+Con un análisis activo, la barra lateral muestra:
+
+- La tarjeta **«Análisis activo»** con el nombre y el número de grupos
+  entonativos, y el botón **«Cambiar archivo»** para volver al estado
+  inicial.
+- El **segmento actual** (hablante y transcripción).
+- **▶ Segmento**: reproduce solo el segmento activo. **▶ Contexto**:
+  lo reproduce ampliado con los segundos indicados en **Antes (s)** y
+  **Después (s)**.
+- **Navegación secuencial**: botones **⬅ Anterior / Siguiente ➡**,
+  indicador «Fila X de N» y salto directo con **«Ir a fila»**.
+- **Descargar CSV**: exporta el análisis completo de este corpus.
+
+Al cambiar de fila, la app **calcula automáticamente** las métricas
+acústicas del segmento y **autoguarda** el trabajo.
+
+## Pestaña Anotaciones
+
+![Formulario de anotación](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/2_anotacion.png)
+
+El formulario de etiquetado está dividido en **cinco bloques temáticos**:
+
+| Bloque | Contenido |
+|---|---|
+| **Estructura** | Tipo de enunciado, modalidad oracional, estatus informativo, complejidad sintáctica, reformulación/expansión, función discursiva global, referencia a discurso ajeno, temporalidad |
+| **Pragmática** | Función pragmática básica, función interpersonal, atenuación (presencia, orientación y procedimiento), intensificación, cortesía, imagen del otro, autoimagen |
+| **Discurso e interacción** | Movimiento conversacional, gestión del turno, relación con el turno previo, dinámica interactiva, marcador discursivo, función fática, deixis, recursos coloquiales |
+| **Paralingüístico / no verbal** | Paralenguaje, solapamientos no verbales, ruido articulatorio, fenómenos respiratorios, sonidos no verbales como toma de turno, ruido ambiental, actitud vocal |
+| **Emociones** | Tono emocional de Ekman (Neutra, Alegría, Tristeza, Miedo, Ira, Asco, Sorpresa, Desprecio) e **intensidad** en escala 1–5 |
+
+Operaciones:
+
+- Rellena los desplegables del bloque y pulsa **Guardar** (o simplemente
+  navega: hay autoguardado, con aviso «✓ Auto-guardado (fila N)»).
+- En **Emociones**, haz clic en un emoji y ajusta la intensidad con el
+  deslizador; el valor se guarda como `Emoción - intensidad`
+  (p. ej. `Alegría - 4`).
+- El campo **Observaciones** admite notas libres por segmento.
+- Todas las categorías son **configurables** desde *Configuración →
+  Editar variables* (véase más abajo). La lista completa de variables está
+  en [Variables y archivos](variables-y-archivos.html).
+
+## Pestaña Contexto
+
+![Contexto del segmento](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/3_contexto.png)
+
+- **Hablante** y **Etiqueta (texto)**: permiten **editar** el hablante y la
+  transcripción de la fila activa; se guardan con **«Guardar fila»**.
+- **Filas de contexto (±)**: cuántas filas anteriores y posteriores se
+  muestran en la tabla (la fila activa aparece resaltada).
+- **«Mostrar ejemplo_para_paper»**: añade una columna con el ejemplo
+  formateado para citar en un artículo, con la referencia
+  `(corpus, inicio-fin)`.
+- Botones **Copy / CSV / Excel**: exportan la tabla completa.
+
+## Pestaña Análisis fonético
+
+Tres subpestañas sobre el segmento activo:
+
+### Imágenes
+
+![Oscilograma, espectrograma y curva de F0](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/4_analisis_fonetico.png)
+
+- **Oscilograma**, **espectrograma** y **curva melódica (F0)** del segmento.
+- **▶ Reproducir segmento** y el botón **«Calcular F0/Int de todos los
+  segmentos»**, que computa las métricas acústicas de **todas** las filas
+  del corpus de una vez (útil antes de ir a Estadísticas).
+
+### Métricas
+
+![Informe prosódico textual](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/5_metricas.png)
+
+Informe prosódico textual completo de la fila actual: hablante,
+inicio/fin/duración, pausas anterior y posterior, número de palabras,
+velocidad (palabras/s y fonemas/s), F0 (media, mediana, desviación, rango
+p10–p90 en semitonos, inflexión global, tonema final y patrón melódico) e
+intensidad. El detalle de cada medida está en
+[Variables y archivos](variables-y-archivos.html).
+
+### Praatpicture
+
+![Figura multipanel estilo Praat](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/6_praatpicture.png)
+
+Figura multipanel al estilo Praat (requiere el paquete `praatpicture`).
+Marca los paneles que quieras — **Oscilograma**, **Espectrograma**, **F0**,
+**Intensidad** — y pulsa **Render**.
+
+## Pestaña Estadísticas
+
+Dos ámbitos: **Este archivo** (el corpus activo) y **Corpus completo**
+(el consolidado de todos tus corpus).
+
+### Este archivo
+
+![Gráfico de barras](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/7_grafico_barras.png)
+
+- **Barras**: frecuencias de una **variable categórica** (hablante o
+  cualquier variable de anotación), en valores **absolutos** o
+  **porcentaje**. Botón **Actualizar** para redibujar.
+- **Boxplots**: distribución de una **variable numérica** (duración, F0,
+  intensidad, velocidad…), opcionalmente **agrupada** por una variable
+  categórica; debajo se muestra un resumen descriptivo.
+
+![Boxplot agrupado](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/8_grafico_boxplot.png)
+
+Todos los gráficos se descargan en **PNG (300 dpi)** y **PDF vectorial**;
+las tablas, con **Copy / CSV / Excel**.
+
+### Corpus completo
+
+Visión global del consolidado `analisis_todos.txt`, que reúne todas las
+filas de todos tus corpus (columna `filename` identifica el origen).
+
+- **Refrescar desde disco**: relee el consolidado.
+- **(Opcional) Cargar otro consolidado**: analiza un archivo externo (por
+  ejemplo, el consolidado de otro equipo).
+- **Archivos incluidos en las estadísticas**: selector múltiple con los
+  archivos presentes en el consolidado. Por defecto se incluyen **todos**;
+  quita o añade archivos (cada uno lleva su botón ✕) y todas las tablas y
+  gráficos de la pestaña se recalculan solo con los seleccionados.
+- **Resumen** (archivos, filas y variables) y **tabla por archivo**.
+- **Descriptivos generales** de todas las variables numéricas.
+- **Gráfico**: barras (frecuencias absolutas o %) o boxplot con agrupación.
+- **Tabla cruzada**: descriptivos de una variable numérica agrupando por
+  hasta **4 variables** simultáneas.
+
+## Pestaña Coincidencia (acuerdo entre jueces)
+
+![Acuerdo entre jueces](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/9_acuerdo_jueces.png)
+
+Mide la fiabilidad de la anotación cuando **2–10 personas** etiquetan el
+mismo corpus:
+
+1. Cada juez trabaja sobre el **mismo audio y TextGrid** y guarda su
+   `analisis_*.txt` (basta con copiar el archivo de la carpeta `analisis/`
+   de cada anotador).
+2. Sube los archivos en **«Archivos de análisis (2–10)»** — o pulsa
+   **«Cargar análisis de muestra (jueces)»** para ver el ejemplo con 3
+   jueces incluido en el paquete.
+3. La app **empareja los segmentos comunes** por inicio, fin y etiqueta
+   (`start`/`end`/`label`).
+4. Elige las **variables a comparar** y, si alguna es ordinal (niveles
+   numéricos, p. ej. 1–5), márcala en **«Variables ordinales»** para usar
+   **kappa ponderado**.
+5. Pulsa **«Calcular acuerdo»**.
+
+Resultados:
+
+- Resumen: número de jueces, segmentos comunes emparejados, variables
+  comparadas y kappa medio.
+- Tabla por variable: **n**, **% de acuerdo**, **kappa de Cohen** (2 jueces
+  o media por pares), **kappa de Fleiss**, **kappa por pares**, **alfa de
+  Krippendorff** (requiere el paquete `irr`) e **interpretación**
+  (escala de Landis y Koch: *Slight*, *Fair*, *Moderate*, *Substantial*,
+  *Almost perfect*).
+- **Gráfico de kappa por variable** (descargable en PNG/PDF).
+- **Matriz de confusión** entre dos jueces cualesquiera para una variable:
+  elige la variable, el juez de las filas y el de las columnas.
+
+![Kappa por variable y matriz de confusión](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/10_acuerdo_kappa.png)
+
+## Pestaña Configuración
+
+### Parámetros acústicos
+
+- **Porcentaje cuartiles (%)**: tamaño de la ventana inicial/final (por
+  defecto 20 %) usada para el tonema y los promedios por tramos
+  (`F0_ini_q*`, `F0_fin_q*`, `Int_ini_q*`, `Int_fin_q*`).
+
+### Editor de variables de anotación
+
+- **«Editar variables»** abre un editor con las 33 variables (`anot1` …
+  `anot33`): para cada una puedes cambiar la **etiqueta** y la lista de
+  **categorías** (una por línea). Así el mismo etiquetador sirve para
+  esquemas de anotación distintos sin tocar código.
+- El esquema personalizado se guarda en `config/etiquetas_variables.txt`.
+- **«Restaurar por defecto»** vuelve al esquema original.
+
+### Gestión de análisis guardados
+
+Para **eliminar análisis previos**:
+
+1. Selecciona uno o varios archivos en el desplegable (múltiple).
+2. Pulsa **«Eliminar seleccionados»**.
+3. En el diálogo de confirmación puedes marcar **«Eliminar también el audio
+   asociado»**.
+
+Al confirmar, la app: guarda una **copia de seguridad** de cada archivo en
+`backup/`, borra el `analisis_*.txt`, retira sus filas del consolidado
+`analisis_todos.txt` y, si el análisis eliminado era el activo, vuelve a la
+pantalla inicial.
+
+### Preferencias
+
+- **Tamaño de letra de gráficos**: deslizador global (0,7×–2×).
+- **Mensaje de ánimo al iniciar**: frase aleatoria o un texto propio.
+- **«Guardar preferencias»** persiste estos ajustes (y el idioma elegido en
+  la cabecera) en `config/preferencias.txt`.
+
+## Idioma de la interfaz
+
+El selector **Español / English** de la cabecera cambia la interfaz al
+momento y recuerda tu elección. Importante: **los valores que se guardan en
+los archivos de análisis se mantienen en español** (esquema canónico), de
+modo que dos anotadores que usen idiomas de interfaz distintos producen
+archivos comparables.
