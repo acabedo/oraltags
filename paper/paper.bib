@@ -1,4 +1,4 @@
-% --- Technical / software references (verify exact fields with citation("pkg")) ---
+% --- Software / R environment ---
 
 @Manual{rcore,
   title  = {R: A Language and Environment for Statistical Computing},
@@ -13,7 +13,6 @@
   title  = {shiny: Web Application Framework for R},
   author = {Winston Chang and Joe Cheng and JJ Allaire and Carson Sievert and Barret Schloerke and Yihui Xie and Jeff Allen and Jonathan McPherson and Alan Dipert and Barbara Borges},
   year   = {2024},
-  note   = {R package; verify version/authors with citation("shiny")},
   url    = {https://shiny.posit.co/}
 }
 
@@ -32,7 +31,6 @@
   title  = {wrassp: Interface to the 'ASSP' Library},
   author = {Raphael Winkelmann and Lasse Bombien and Markus J{\"a}ger},
   year   = {2024},
-  note   = {R package; verify exact authors/year with citation("wrassp")},
   url    = {https://CRAN.R-project.org/package=wrassp}
 }
 
@@ -40,7 +38,6 @@
   title  = {tuneR: Analysis of Music and Speech},
   author = {Uwe Ligges and Sebastian Krey and Olaf Mersmann and Sarah Schnackenberg},
   year   = {2023},
-  note   = {R package; verify with citation("tuneR")},
   url    = {https://CRAN.R-project.org/package=tuneR}
 }
 
@@ -53,11 +50,22 @@
   doi       = {10.1007/978-3-319-45510-5_42}
 }
 
+@InProceedings{praatpicture,
+  title     = {praatpicture: A library for making flexible Praat Picture-style figures in R},
+  author    = {Puggaard-Rode, Rasmus},
+  booktitle = {Proceedings of the International Seminar on Speech Production},
+  volume    = {13},
+  pages     = {145--148},
+  year      = {2024},
+  url       = {https://CRAN.R-project.org/package=praatpicture}
+}
+
+% --- Comparable tools for spoken-corpus annotation and prosody ---
+
 @Manual{praat,
   title  = {Praat: doing phonetics by computer},
   author = {Boersma, Paul and Weenink, David},
   year   = {2024},
-  note   = {Computer program; verify version in your release},
   url    = {https://www.praat.org/}
 }
 
@@ -68,6 +76,84 @@
   pages     = {1556--1559},
   year      = {2006}
 }
+
+@Article{elviragarcia,
+  title   = {A tool for automatic transcription of intonation: Eti\_ToBI a ToBI transcriber for Spanish and Catalan},
+  author  = {Elvira-Garc{\'i}a, Wendy and Roseano, Paolo and Fern{\'a}ndez-Planas, Ana Mar{\'i}a and Mart{\'i}nez-Celdr{\'a}n, Eugenio},
+  journal = {Language Resources and Evaluation},
+  volume  = {50},
+  number  = {4},
+  pages   = {767--792},
+  year    = {2016},
+  doi     = {10.1007/s10579-015-9320-9}
+}
+
+@InProceedings{hirst,
+  title     = {A Praat plugin for Momel and INTSINT with improved algorithms for modelling and coding intonation},
+  author    = {Hirst, Daniel},
+  booktitle = {Proceedings of the 16th International Congress of Phonetic Sciences (ICPhS)},
+  pages     = {1233--1236},
+  year      = {2007}
+}
+
+% --- Corpus-tool design, usability and reproducibility ---
+
+@Article{hardie,
+  title   = {CQPweb — combining power, flexibility and usability in a corpus analysis tool},
+  author  = {Hardie, Andrew},
+  journal = {International Journal of Corpus Linguistics},
+  volume  = {17},
+  number  = {3},
+  pages   = {380--409},
+  year    = {2012},
+  doi     = {10.1075/ijcl.17.3.04har}
+}
+
+@InCollection{anthony,
+  title     = {Programming for Corpus Linguistics},
+  author    = {Anthony, Laurence},
+  booktitle = {A Practical Handbook of Corpus Linguistics},
+  editor    = {Paquot, Magali and Gries, Stefan Th.},
+  publisher = {Springer International Publishing},
+  address   = {Cham},
+  pages     = {181--207},
+  year      = {2020},
+  doi       = {10.1007/978-3-030-46216-1_9}
+}
+
+@Book{gries,
+  title     = {Quantitative Corpus Linguistics with R: A Practical Introduction},
+  author    = {Gries, Stefan Th.},
+  edition   = {2nd},
+  publisher = {Routledge},
+  address   = {New York},
+  year      = {2016},
+  doi       = {10.4324/9781315746210}
+}
+
+% --- Difficulty of prosodic annotation ---
+
+@InCollection{garrido,
+  title     = {Using Large Corpora and Computational Tools to Describe Prosody: An Exciting Challenge for the Future with Some (Important) Pending Problems to Solve},
+  author    = {Garrido Almi{\~n}ana, Juan Mar{\'i}a},
+  booktitle = {Prosodic Studies: Challenges and Prospects},
+  publisher = {Routledge},
+  year      = {2018},
+  doi       = {10.5281/ZENODO.1441335}
+}
+
+@Book{mary,
+  title     = {Extraction of Prosody for Automatic Speaker, Language, Emotion and Speech Recognition},
+  author    = {Mary, Leena},
+  edition   = {2nd},
+  series    = {SpringerBriefs in Speech Technology},
+  publisher = {Springer International Publishing},
+  address   = {Cham},
+  year      = {2018},
+  doi       = {10.1007/978-3-319-91171-7}
+}
+
+% --- Annotation scheme and agreement statistics ---
 
 @Article{ekman,
   title   = {An argument for basic emotions},
