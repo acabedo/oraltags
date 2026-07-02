@@ -13,6 +13,9 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
 ```
 
+> 🇬🇧 *This page is also available in English:
+> [Using oraltags from R](using-r.html).*
+
 oraltags es ante todo una aplicación interactiva, pero todo lo que produce
 son **TSV planos** que puedes explotar desde R. Esta página recoge las
 funciones exportadas del paquete y recetas de código para trabajar con tus

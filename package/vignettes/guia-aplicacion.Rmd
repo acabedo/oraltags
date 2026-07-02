@@ -13,6 +13,9 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
 ```
 
+> 🇬🇧 *This page is also available in English:
+> [Complete guide to the application](app-guide.html).*
+
 Esta guía describe **todas las operaciones** disponibles en la interfaz de
 oraltags, organizadas como en la propia aplicación: primero la barra
 lateral (carga de material y navegación) y después cada pestaña principal
@@ -141,9 +144,10 @@ intensidad. El detalle de cada medida está en
 
 ![Figura multipanel estilo Praat](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/6_praatpicture.png)
 
-Figura multipanel al estilo Praat (requiere el paquete `praatpicture`).
-Marca los paneles que quieras — **Oscilograma**, **Espectrograma**, **F0**,
-**Intensidad** — y pulsa **Render**.
+Figura multipanel al estilo Praat, generada con el paquete
+[praatpicture](https://github.com/rpuggaardrode/praatpicture) de
+**Rasmus Puggaard-Rode**. Marca los paneles que quieras — **Oscilograma**,
+**Espectrograma**, **F0**, **Intensidad** — y pulsa **Render**.
 
 ## Pestaña Estadísticas
 

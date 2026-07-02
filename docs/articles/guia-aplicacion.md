@@ -1,5 +1,8 @@
 # Guía completa de la aplicación
 
+> 🇬🇧 *This page is also available in English: [Complete guide to the
+> application](https://acabedo.github.io/oraltags/articles/app-guide.md).*
+
 Esta guía describe **todas las operaciones** disponibles en la interfaz
 de oraltags, organizadas como en la propia aplicación: primero la barra
 lateral (carga de material y navegación) y después cada pestaña
@@ -152,9 +155,11 @@ Praat](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/6_praatpictu
 
 Figura multipanel estilo Praat
 
-Figura multipanel al estilo Praat (requiere el paquete `praatpicture`).
-Marca los paneles que quieras — **Oscilograma**, **Espectrograma**,
-**F0**, **Intensidad** — y pulsa **Render**.
+Figura multipanel al estilo Praat, generada con el paquete
+[praatpicture](https://github.com/rpuggaardrode/praatpicture) de
+**Rasmus Puggaard-Rode**. Marca los paneles que quieras —
+**Oscilograma**, **Espectrograma**, **F0**, **Intensidad** — y pulsa
+**Render**.
 
 ## Pestaña Estadísticas
 

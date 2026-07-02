@@ -1,5 +1,8 @@
 # Uso desde R (código del paquete)
 
+> 🇬🇧 *This page is also available in English: [Using oraltags from
+> R](https://acabedo.github.io/oraltags/articles/using-r.md).*
+
 oraltags es ante todo una aplicación interactiva, pero todo lo que
 produce son **TSV planos** que puedes explotar desde R. Esta página
 recoge las funciones exportadas del paquete y recetas de código para

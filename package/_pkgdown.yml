@@ -2,7 +2,7 @@ url: https://acabedo.github.io/oraltags/
 
 destination: ../docs
 
-lang: es
+lang: en
 
 template:
   bootstrap: 5
@@ -10,10 +10,12 @@ template:
     primary: "#c2410c"
 
 home:
-  title: "oraltags — etiquetador de corpus oral y explorador prosódico"
+  title: "Oraltags — oral data tagger & prosody explorer"
   description: >
+    Shiny app for annotating oral corpora, computing prosodic metrics
+    (F0, intensity, speech rate) and measuring inter-annotator agreement.
     Aplicación Shiny para anotar corpus orales, calcular métricas prosódicas
-    (F0, intensidad, velocidad de habla) y medir el acuerdo entre jueces.
+    y medir el acuerdo entre jueces.
 
 navbar:
   structure:
@@ -21,8 +23,21 @@ navbar:
     right: [search, github]
   components:
     articles:
-      text: Guía
+      text: Docs / Documentación
       menu:
+        - text: "🇬🇧 English"
+        - text: Getting started
+          href: articles/oraltags.html
+        - text: Complete guide to the application
+          href: articles/app-guide.html
+        - text: Variables and files (inputs and outputs)
+          href: articles/variables-and-files.html
+        - text: Using oraltags from R (code)
+          href: articles/using-r.html
+        - text: "---"
+        - text: "🇪🇸 Español"
+        - text: Primeros pasos
+          href: articles/primeros-pasos.html
         - text: Guía completa de la aplicación
           href: articles/guia-aplicacion.html
         - text: Variables y archivos (entradas y salidas)
@@ -34,11 +49,28 @@ navbar:
       href: https://github.com/acabedo/oraltags
       aria-label: GitHub
 
+articles:
+  - title: "🇬🇧 English"
+    navbar: ~
+    contents:
+      - oraltags
+      - app-guide
+      - variables-and-files
+      - using-r
+  - title: "🇪🇸 Español"
+    navbar: ~
+    contents:
+      - primeros-pasos
+      - guia-aplicacion
+      - variables-y-archivos
+      - uso-con-r
+
 reference:
-  - title: Funciones exportadas
+  - title: Exported functions / Funciones exportadas
     desc: >
-      El paquete expone dos funciones; el resto de la funcionalidad vive en la
-      interfaz Shiny que se lanza con run_app().
+      The package exports two functions; the rest of the functionality lives
+      in the Shiny interface launched with run_app(). El paquete exporta dos
+      funciones; el resto vive en la interfaz Shiny que se lanza con run_app().
     contents:
       - run_app
       - oraltags_data_dir

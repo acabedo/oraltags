@@ -1,33 +1,37 @@
-# Primeros pasos con oraltags
+# Getting started with oraltags
 
-**oraltags** es una aplicación R/Shiny para la anotación lingüística y
-el análisis acústico de corpus orales. Esta página cubre la instalación
-y la primera sesión; la [guía completa de la
-aplicación](https://acabedo.github.io/oraltags/articles/guia-aplicacion.md)
-describe cada operación en detalle.
+> 🇪🇸 *Esta página también está disponible en español: [Primeros
+> pasos](https://acabedo.github.io/oraltags/articles/primeros-pasos.md).*
 
-## Instalación
+**oraltags** is an R/Shiny application for the linguistic annotation and
+acoustic analysis of oral corpora. This page covers installation and
+your first session; the [complete guide to the
+application](https://acabedo.github.io/oraltags/articles/app-guide.md)
+describes every operation in detail.
 
-Instala el paquete directamente desde GitHub; las dependencias de R se
-instalan automáticamente:
+## Installation
+
+Install the package straight from GitHub; the R dependencies are
+installed automatically:
 
 ``` r
 
-# install.packages("remotes")   # si aún no lo tienes
+# install.packages("remotes")   # if you don't have it yet
 remotes::install_github("acabedo/oraltags", subdir = "package")
 ```
 
-Dependencias opcionales:
+Optional dependencies:
 
-- **`praatpicture`**: habilita la subpestaña *Praatpicture* (figuras
-  multipanel al estilo Praat).
-- **`irr`**: habilita el alfa de Krippendorff en la pestaña
-  *Coincidencia*. Sin él, esa columna aparece como N/A.
-- **`ffmpeg`** (binario externo, no un paquete de R): si está en el
-  `PATH`, al cargar un MP4 el visor lateral corta y reproduce el clip
-  exacto de cada grupo entonativo. Sin él la app funciona igualmente.
+- **`praatpicture`** (by Rasmus Puggaard-Rode,
+  <https://github.com/rpuggaardrode/praatpicture>): enables the
+  *Praatpicture* subtab (multi-panel Praat-style figures).
+- **`irr`**: enables Krippendorff’s α in the *Agreement* tab. Without
+  it, that column shows as N/A.
+- **`ffmpeg`** (an external binary, not an R package): if it is on the
+  `PATH`, when an MP4 is loaded the sidebar viewer cuts and plays the
+  exact clip of each intonation group. The app works fine without it.
 
-## Lanzar la aplicación
+## Launching the application
 
 ``` r
 
@@ -35,72 +39,70 @@ oraltags::run_app()
 ```
 
 [`run_app()`](https://acabedo.github.io/oraltags/reference/run_app.md)
-acepta los argumentos habituales de
-[`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html) (`port`,
-`host`, `launch.browser`…).
+accepts the usual
+[`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html) arguments
+(`port`, `host`, `launch.browser`…).
 
-La interfaz está disponible en **español e inglés**: el selector de
-idioma está en la cabecera, a la derecha. El cambio es inmediato y la
-elección se recuerda entre sesiones. El esquema de anotación (los
-valores que se guardan en el archivo de análisis) se mantiene siempre en
-español para que los corpus sean comparables entre equipos.
+The interface is available in **English and Spanish**: the language
+selector is in the header, on the right. Switching is instant and your
+choice is remembered across sessions. The annotation scheme (the values
+stored in the analysis file) always stays in Spanish so that corpora
+remain comparable across teams.
 
-## Probar con las muestras incluidas
+## Trying the bundled samples
 
-El paquete incluye **tres pares de audio + TextGrid** (`muestra_1`,
-`muestra_2`, `muestra_3`). En la barra lateral, sección **«Probar con
-una muestra»**, elige una y pulsa **«Cargar muestra de ejemplo»**: la
-app genera los grupos entonativos y puedes explorar todas las pestañas
-sin material propio.
+The package ships **three audio + TextGrid pairs** (`muestra_1`,
+`muestra_2`, `muestra_3`). In the sidebar, section **“Try a sample”**,
+pick one and click **“Load sample”**: the app generates the intonation
+groups and you can explore every tab without your own material.
 
-![Pantalla
-inicial](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/1_pantalla_inicial.png)
+![Initial
+screen](https://raw.githubusercontent.com/acabedo/oraltags/main/imgs/1_pantalla_inicial.png)
 
-Pantalla inicial
+Initial screen
 
-Para la pestaña **Coincidencia** (acuerdo entre jueces) también se
-incluyen tres análisis simulados de tres jueces sobre `muestra_1` (botón
-**«Cargar análisis de muestra (jueces)»**).
+For the **Agreement** tab, three simulated analyses by three judges of
+`muestra_1` are also included (button **“Load sample analyses
+(judges)”**).
 
-## Dónde se guardan tus datos
+## Where your data is stored
 
-La app nunca escribe dentro del paquete instalado. Todos los datos del
-usuario (análisis, copias de seguridad, preferencias y audios subidos)
-se guardan en una carpeta estándar por usuario:
+The app never writes inside the installed package. All user data
+(analyses, backups, preferences and uploaded audio) is stored in a
+standard per-user folder:
 
 ``` r
 
 oraltags::oraltags_data_dir()
-#> p. ej. "~/Library/Application Support/org.R-project.R/R/oraltags"  (macOS)
-#>        "~/.local/share/R/oraltags"                                 (Linux)
-#>        "C:\\Users\\<usuario>\\AppData\\Roaming\\R\\data\\R\\oraltags" (Windows)
+#> e.g. "~/Library/Application Support/org.R-project.R/R/oraltags"  (macOS)
+#>      "~/.local/share/R/oraltags"                                 (Linux)
+#>      "C:\\Users\\<user>\\AppData\\Roaming\\R\\data\\R\\oraltags" (Windows)
 ```
 
-Dentro de esa carpeta encontrarás:
+Inside that folder you will find:
 
-| Subcarpeta | Contenido |
+| Subfolder | Content |
 |----|----|
-| `analisis/` | Un TSV por corpus (`analisis_<nombre>.txt`) y el consolidado `analisis_todos.txt` |
-| `backup/` | Copias de seguridad con marca temporal (también antes de eliminar un análisis) |
-| `config/` | Esquema de variables personalizado (`etiquetas_variables.txt`) y preferencias (`preferencias.txt`) |
-| `audios/` | Audios subidos, para reutilizarlos en sesiones futuras |
+| `analisis/` | One TSV per corpus (`analisis_<name>.txt`) and the consolidated `analisis_todos.txt` |
+| `backup/` | Timestamped backup copies (also made before deleting an analysis) |
+| `config/` | Custom variable scheme (`etiquetas_variables.txt`) and preferences (`preferencias.txt`) |
+| `audios/` | Uploaded audio files, reused in future sessions |
 
-Consulta [Variables y
-archivos](https://acabedo.github.io/oraltags/articles/variables-y-archivos.md)
-para el detalle de cada formato.
+See [Variables and
+files](https://acabedo.github.io/oraltags/articles/variables-and-files.md)
+for the details of each format.
 
-## Flujo de trabajo típico
+## Typical workflow
 
-1.  Carga el audio y la transcripción (o una muestra incluida).
-2.  Navega con **⬅ Anterior / Siguiente ➡** o salta a una fila concreta.
-3.  Escucha el segmento aislado (**▶ Segmento**) o con contexto
-    ajustable.
-4.  Las métricas acústicas se calculan solas al cambiar de fila.
-5.  Rellena las anotaciones y pulsa **Guardar** (hay autoguardado al
-    navegar).
-6.  Ajusta el esquema de etiquetas en **Configuración**, si lo
-    necesitas.
-7.  Explora resultados en **Estadísticas** y expórtalos (CSV, Excel,
+1.  Load the audio and the transcription (or a bundled sample).
+2.  Navigate with **⬅ Previous / Next ➡** or jump to a specific row.
+3.  Listen to the isolated segment (**▶ Segment**) or with adjustable
+    context.
+4.  Acoustic metrics are computed automatically when you change row.
+5.  Fill in the annotations and click **Save** (navigation autosaves
+    too).
+6.  Adjust the label scheme in **Settings** if needed.
+7.  Explore the results in **Statistics** and export them (CSV, Excel,
     PNG, PDF).
-8.  Para estudios de fiabilidad, reúne los `analisis_*.txt` de varios
-    jueces y calcula el acuerdo en **Coincidencia**.
+8.  For reliability studies, gather the `analisis_*.txt` files of
+    several judges and compute agreement in **Agreement**.

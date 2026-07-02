@@ -1,22 +1,22 @@
-# Autores y Citas
+# Authors and Citation
 
-## Autores
+## Authors
 
-- **Adrián Cabedo**. Autor-a, mantenedor-a.
+- **Adrián Cabedo-Nebot**. Author, maintainer.
+  [](https://orcid.org/0000-0002-3881-9308)
 
-## Cita
+## Citation
 
-Código:
-[`DESCRIPTION`](https://github.com/acabedo/oraltags/blob/HEAD/DESCRIPTION)
+Source:
+[`inst/CITATION`](https://github.com/acabedo/oraltags/blob/HEAD/inst/CITATION)
 
-Cabedo A (2026). *oraltags: Etiquetador de Corpus Oral con Análisis
-Prosódico y Acuerdo entre Jueces*. R package version 0.1.0,
-<https://acabedo.github.io/oraltags/>.
+Cabedo-Nebot, A. (2026). Oraltags: oral data tagger and prosody
+explorer. R package version 2.2.0. https://github.com/acabedo/oraltags
 
     @Manual{,
-      title = {oraltags: Etiquetador de Corpus Oral con Análisis Prosódico y Acuerdo entre Jueces},
-      author = {Adrián Cabedo},
+      title = {Oraltags: oral data tagger and prosody explorer},
+      author = {Adrián Cabedo-Nebot},
       year = {2026},
-      note = {R package version 0.1.0},
-      url = {https://acabedo.github.io/oraltags/},
+      note = {R package version 2.2.0},
+      url = {https://github.com/acabedo/oraltags},
     }

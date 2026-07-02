@@ -1,5 +1,8 @@
 # Variables y archivos (entradas y salidas)
 
+> 🇬🇧 *This page is also available in English: [Variables and
+> files](https://acabedo.github.io/oraltags/articles/variables-and-files.md).*
+
 Esta página documenta el **modelo de datos** de oraltags: qué archivos
 necesita la aplicación, qué archivos crea, y todas las variables — de
 anotación manual y computadas automáticamente — que se guardan en cada

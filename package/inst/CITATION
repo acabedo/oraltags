@@ -1,0 +1,17 @@
+citHeader("To cite oraltags in publications, please use: / Para citar oraltags en publicaciones, por favor usa:")
+
+bibentry(
+  bibtype = "Manual",
+  title   = "Oraltags: oral data tagger and prosody explorer",
+  author  = person("Adrián", "Cabedo-Nebot",
+                   comment = c(ORCID = "0000-0002-3881-9308")),
+  year    = "2026",
+  note    = "R package version 2.2.0",
+  url     = "https://github.com/acabedo/oraltags",
+  textVersion = paste(
+    "Cabedo-Nebot, A. (2026).",
+    "Oraltags: oral data tagger and prosody explorer.",
+    "R package version 2.2.0.",
+    "https://github.com/acabedo/oraltags"
+  )
+)

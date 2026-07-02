@@ -1,15 +1,18 @@
 Package: oraltags
 Type: Package
-Title: Etiquetador de Corpus Oral con Análisis Prosódico y Acuerdo entre Jueces
-Version: 0.1.0
-Authors@R: person("Adrián", "Cabedo", role = c("aut", "cre"),
-                  email = "cabedoadrian@gmail.com")
-Description: Aplicación Shiny para etiquetar corpus oral a partir de audio y
-    TextGrids, con análisis prosódico (F0, intensidad, velocidad de habla),
-    descriptivos de corpus y cálculo del acuerdo entre jueces (kappa de Cohen
-    y alfa de Krippendorff). Se lanza con run_app() y guarda los datos del
-    usuario en la carpeta estándar del sistema (tools::R_user_dir). Incluye
-    muestras de audio y TextGrid para probar la aplicación.
+Title: Oral Data Tagger and Prosody Explorer
+Version: 2.2.0
+Authors@R: person("Adrián", "Cabedo-Nebot", role = c("aut", "cre"),
+                  email = "cabedoadrian@gmail.com",
+                  comment = c(ORCID = "0000-0002-3881-9308"))
+Description: Shiny application for the linguistic annotation and
+    acoustic-prosodic analysis of oral corpora from audio and Praat TextGrids:
+    navigation by intonation groups, automatic prosodic metrics (F0, intensity,
+    speech rate), configurable annotation scheme, corpus descriptives and
+    inter-annotator agreement (Cohen/Fleiss kappa, Krippendorff alpha).
+    Launch it with run_app(); user data is stored in the standard per-user
+    folder (tools::R_user_dir). Bundles audio + TextGrid samples to try the
+    application. Interface available in English and Spanish.
 License: GPL-3
 URL: https://acabedo.github.io/oraltags/, https://github.com/acabedo/oraltags
 BugReports: https://github.com/acabedo/oraltags/issues

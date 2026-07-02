@@ -13,7 +13,9 @@ authors:
     orcid: "https://orcid.org/0000-0002-3881-9308"
     affiliation: "Universitat de València"
 license: GPL-3.0
+version: "2.2.0"
 repository-code: "https://github.com/acabedo/oraltags"
+url: "https://acabedo.github.io/oraltags/"
 keywords:
   - "oral corpora"
   - "linguistic annotation"

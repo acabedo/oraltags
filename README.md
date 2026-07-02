@@ -1,4 +1,4 @@
-# Oraltags. Oral data tagger — v2.0
+# Oraltags. Oral data tagger — v2.2
 
 **🌐 Language / Idioma:** 🇬🇧 **English** · [🇪🇸 Español](README_ES.md)
 
@@ -139,7 +139,7 @@ install.packages(c(
 ))
 ```
 
-> `rPraat` is only needed to read Praat TextGrid files; `praatpicture` only for the *Praatpicture* tab.
+> `rPraat` is only needed to read Praat TextGrid files; `praatpicture` (by [Rasmus Puggaard-Rode](https://github.com/rpuggaardrode/praatpicture)) only for the *Praatpicture* tab.
 > `irr` is optional: it enables Krippendorff's α in the *Agreement* tab. Without it, that column shows as N/A.
 > `ffmpeg` is optional (an external binary, not an R package): if it is on the `PATH`, when an MP4 is loaded the sidebar viewer cuts and plays the exact clip of each intonation group. Without it the app still works, but the segment video uses the full file (approximate synchronisation). Audio and the rest of the analysis do not need it.
 
@@ -217,6 +217,17 @@ The transcription must include at least these columns:
 7. Explore the results in **Statistics** and export as CSV, TXT or Google Sheets.
 
 ---
+
+## Acknowledgements
+
+- The *Praatpicture* tab is powered by the [praatpicture](https://github.com/rpuggaardrode/praatpicture) package by **Rasmus Puggaard-Rode**.
+- **AI assistance**: the R package infrastructure and parts of the application code and documentation were developed with the assistance of generative AI (Anthropic's Claude), under the design, supervision and review of the author.
+
+## How to cite
+
+> Cabedo-Nebot, A. (2026). *Oraltags: oral data tagger and prosody explorer*. R package version 2.2.0. <https://github.com/acabedo/oraltags>
+
+In R: `citation("oraltags")`. See also [`CITATION.cff`](CITATION.cff).
 
 ## License
 

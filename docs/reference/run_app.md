@@ -4,13 +4,13 @@ Inicia la aplicación Shiny de etiquetado de corpus oral. Los datos del
 usuario se guardan en
 [`oraltags_data_dir()`](https://acabedo.github.io/oraltags/reference/oraltags_data_dir.md).
 
-## Uso
+## Usage
 
 ``` r
 run_app(...)
 ```
 
-## Argumentos
+## Arguments
 
 - ...:
 
@@ -18,11 +18,11 @@ run_app(...)
   [`shiny::runApp()`](https://rdrr.io/pkg/shiny/man/runApp.html) (por
   ejemplo `launch.browser`, `port`, `host`).
 
-## Valor
+## Value
 
 Invisible. Se llama por su efecto: lanza la app.
 
-## Ejemplos
+## Examples
 
 ``` r
 if (FALSE) { # \dontrun{

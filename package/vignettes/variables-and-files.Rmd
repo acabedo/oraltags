@@ -1,0 +1,178 @@
+---
+title: "Variables and files (inputs and outputs)"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Variables and files (inputs and outputs)}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+```
+
+> 🇪🇸 *Esta página también está disponible en español:
+> [Variables y archivos](variables-y-archivos.html).*
+
+This page documents the **data model** of oraltags: which files the
+application needs, which files it creates, and all the variables — manually
+annotated and automatically computed — stored in each analysis.
+
+## Input files
+
+| File | Format | Required | Notes |
+|---|---|---|---|
+| Audio | `.wav`, `.mp3` | Yes | MP3 is converted to WAV internally (`av` package) |
+| Video | `.mp4` | No | Enables the video viewer; with `ffmpeg` the exact segment clip is cut |
+| Transcription | `.TextGrid` (Praat) | Yes (first time) | If it contains the `phones` and `words` tiers (Montreal Forced Aligner), the app generates the intonation groups automatically with a configurable minimum-pause threshold |
+| Transcription | `.csv` / `.txt` | Alternative | Must include at least the columns `speaker`, `start`, `end`, `label` (times in seconds) |
+
+Audio and transcription are paired by **base name**
+(`interview.wav` ↔ `interview.TextGrid`).
+
+## Output files
+
+All are created under the user data folder
+(`oraltags::oraltags_data_dir()` in the package version; the repository
+folders if you run the source script):
+
+| File | When it is created | Content |
+|---|---|---|
+| `analisis/analisis_<name>.txt` | When generating the IGs or saving the first annotation | TSV with one row per intonation group and all the variables (see below) |
+| `analisis/analisis_todos.txt` | Updated on every save | Consolidated file of all corpora; adds the `filename` column with the source file. It feeds *Statistics → Full corpus* |
+| `backup/<name>_backup_<date>.txt` | When reloading data and **before deleting an analysis** | Timestamped backup copy |
+| `config/etiquetas_variables.txt` | When saving changes in the variable editor | Custom scheme (labels and categories of `anot1`–`anot33`) |
+| `config/preferencias.txt` | When saving preferences | Language, chart font size, encouraging message |
+| `audios/<name>.wav` | When uploading audio (package version) | Copy of the audio, reused in future sessions |
+
+Analysis files are **plain TSV (UTF-8)**: you can open them in R, Excel or
+any editor. The app also exports directly to **CSV** (sidebar button), each
+table has **Copy / CSV / Excel** buttons, and charts can be downloaded as
+**PNG (300 dpi)** and **PDF**.
+
+## Structure of the analysis file
+
+Each row of `analisis_<name>.txt` is an **intonation group (IG)** with
+these columns:
+
+### Identification and text
+
+| Column | Description |
+|---|---|
+| `speaker` | Speaker identifier (from the TextGrid or CSV) |
+| `start`, `end` | Start and end times in seconds |
+| `label` | Transcription of the segment |
+| `contexto` | Discourse context (`speaker: text | …`) generated automatically |
+| `observaciones` | Free notes by the annotator |
+| `filename` | Consolidated file only: source file |
+
+### Acoustic and speech-rate metrics (computed)
+
+Computed automatically while navigating (or in bulk with **"Compute F0/Int
+for all segments"**). F0 is estimated with `wrassp::ksvF0` and intensity
+with `wrassp`/`seewave`:
+
+| Column | Description |
+|---|---|
+| `n_palabras` | Number of words in the segment |
+| `palabras_por_seg` | Speech rate in words/second |
+| `fonemas_por_seg` | Speech rate in phonemes/second |
+| `F0_mean`, `F0_median`, `F0_sd` | Mean, median and standard deviation of F0 (Hz) |
+| `F0_range_st` | p10–p90 pitch range in **semitones** |
+| `F0_delta_st` | Global inflection of the segment (semitones) |
+| `F0_final_delta_st` | Movement of the **toneme** (final stretch, 20 % by default) in semitones |
+| `F0_final_pattern` | Melodic pattern of the toneme (sequence of rises/falls/plateaus, e.g. `PPP`) |
+| `Int_mean`, `Int_median`, `Int_sd` | Mean, median and standard deviation of intensity (dB) |
+| `F0_ini_q1`–`F0_ini_q4` | Mean F0 in the 4 quarters of the **initial window** of the segment |
+| `F0_fin_q1`–`F0_fin_q4` | Mean F0 in the 4 quarters of the **final window** |
+| `Int_ini_q1`–`Int_ini_q4`, `Int_fin_q1`–`Int_fin_q4` | Same for intensity |
+
+The size of the initial/final windows is controlled with **Settings →
+Quartile percentage (%)** (20 % of the segment by default).
+
+In addition, the report of the **Metrics** subtab shows the preceding and
+following **pauses** (computed from the times of adjacent IGs).
+
+### Annotation variables (`anot1`–`anot33`)
+
+These are the manual variables of the **Annotations** form. The following
+labels and categories are the **defaults**; all can be modified in
+*Settings → Edit variables* (the TSV always stores the text of the
+category, not a code):
+
+**Structure block**
+
+| Column | Variable |
+|---|---|
+| `anot1` | Utterance type (structure) |
+| `anot2` | Sentence modality |
+| `anot3` | Information status |
+| `anot4` | Syntactic complexity |
+| `anot5` | Reformulation / expansion |
+| `anot6` | Global discourse function |
+| `anot7` | Reference to others' discourse |
+| `anot8` | Temporality of the content |
+
+**Pragmatics block**
+
+| Column | Variable |
+|---|---|
+| `anot9` | Basic pragmatic function |
+| `anot10` | Interpersonal function |
+| `anot11` | Mitigation: presence and overall type |
+| `anot12` | Mitigation: main orientation |
+| `anot13` | Mitigation: dominant procedure |
+| `anot14` | Intensification |
+| `anot15` | Politeness strategy |
+| `anot16` | Other's face |
+| `anot17` | Self-image |
+
+**Discourse and interaction block**
+
+| Column | Variable |
+|---|---|
+| `anot18` | Conversational move |
+| `anot19` | Turn management |
+| `anot20` | Relation to the previous turn |
+| `anot21` | Interactive dynamics (overlap/rhythm) |
+| `anot22` | Main discourse marker |
+| `anot23` | Phatic / contact function |
+| `anot24` | Dominant deixis |
+| `anot25` | Colloquial resources and fillers |
+
+**Paralinguistic / non-verbal block**
+
+| Column | Variable |
+|---|---|
+| `anot26` | Paralanguage (non-verbal sounds) |
+| `anot28` | Non-verbal overlaps |
+| `anot29` | Audible articulatory / gestural noise |
+| `anot30` | Breathing phenomena |
+| `anot31` | Non-verbal sounds as turn-taking |
+| `anot32` | Ambient noise with discourse impact |
+| `anot33` | Non-verbal vocal attitude |
+
+**Emotions block**
+
+| Column | Variable |
+|---|---|
+| `anot27` | Ekman emotional tone + intensity, stored as `Emotion - N` (e.g. `Alegría - 4`) |
+
+> **Note on language:** although the interface can be displayed in English,
+> categories are always stored with their **canonical Spanish text**, so
+> that analyses by different annotators (and different interface languages)
+> are directly comparable.
+
+## Derived variables in Statistics and Agreement
+
+- **Statistics** treats as numeric the duration, the speech rates and all
+  F0/intensity metrics, and as categorical the speaker, the file
+  (`filename`, in the full corpus) and any `anot*` with between 2 and 30
+  observed levels.
+- **Agreement** matches the segments of 2–10 judges by
+  `start`/`end`/`label` and computes per variable: **% agreement**,
+  **Cohen's kappa** (weighted if the variable is marked as ordinal),
+  **Fleiss' kappa**, **mean pairwise kappa** and **Krippendorff's α**
+  (requires `irr`), with the Landis & Koch interpretation.
