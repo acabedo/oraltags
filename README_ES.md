@@ -1,4 +1,4 @@
-# Oraltags. Oral data tagger — v2.2
+# Oraltags. Oral data tagger — v2.0
 
 **🌐 Idioma / Language:** [🇬🇧 English](README.md) · 🇪🇸 **Español**
 
