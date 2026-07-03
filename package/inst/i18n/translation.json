@@ -381,10 +381,6 @@
       "en": "Bars (frequencies)"
     },
     {
-      "es": "Matriz de confusión (solo 2 jueces):",
-      "en": "Confusion matrix (only 2 judges):"
-    },
-    {
       "es": "Estructura",
       "en": "Structure"
     },
@@ -467,6 +463,10 @@
     {
       "es": "Cargar muestra de ejemplo",
       "en": "Load sample"
+    },
+    {
+      "es": "Muestra no encontrada en el paquete.",
+      "en": "Sample not found in the package."
     },
     {
       "es": "¿No tienes material propio? Carga un ejemplo (audio + TextGrid).",

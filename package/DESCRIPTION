@@ -1,7 +1,7 @@
 Package: oraltags
 Type: Package
 Title: Oral Data Tagger and Prosody Explorer
-Version: 2.2.0
+Version: 2.0
 Authors@R: person("Adrián", "Cabedo-Nebot", role = c("aut", "cre"),
                   email = "cabedoadrian@gmail.com",
                   comment = c(ORCID = "0000-0002-3881-9308"))
